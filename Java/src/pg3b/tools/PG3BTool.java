@@ -195,6 +195,7 @@ public class PG3BTool extends JFrame {
 	}
 
 	void exit () {
+		CalibrationResultsFrame.close();
 		if (pg3b != null) pg3b.close();
 		dispose();
 	}

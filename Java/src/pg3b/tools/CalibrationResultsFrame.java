@@ -20,13 +20,15 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 
 public class CalibrationResultsFrame extends JFrame {
+	static private CalibrationResultsFrame openFrame;
+
 	Map<String, String> nameToURL;
 	JComboBox chartCombo;
 	DefaultComboBoxModel chartComboModel;
 	JLabel imageLabel;
 
 	public CalibrationResultsFrame (Map<String, String> nameToURL) {
-		super("Calibration Results");
+		super("PG3B - Calibration Results");
 		this.nameToURL = nameToURL;
 
 		initializeLayout();
@@ -34,6 +36,9 @@ public class CalibrationResultsFrame extends JFrame {
 
 		for (String name : nameToURL.keySet())
 			chartComboModel.addElement(name);
+
+		close();
+		openFrame = this;
 	}
 
 	private void initializeEvents () {
@@ -51,6 +56,7 @@ public class CalibrationResultsFrame extends JFrame {
 	private void initializeLayout () {
 		setSize(664, 405);
 		setResizable(false);
+		setIconImage(new ImageIcon(getClass().getResource("/chart.png")).getImage());
 		getContentPane().setBackground(Color.white);
 		getContentPane().setLayout(new GridBagLayout());
 		{
@@ -69,5 +75,9 @@ public class CalibrationResultsFrame extends JFrame {
 				new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 6, 6,
 					6), 0, 0));
 		}
+	}
+
+	static public void close () {
+		if (openFrame != null) openFrame.dispose();
 	}
 }

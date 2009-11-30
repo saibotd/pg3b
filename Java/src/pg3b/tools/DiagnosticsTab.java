@@ -89,25 +89,22 @@ public class DiagnosticsTab extends JPanel {
 					LinkedHashMap<String, String> nameToURL = new LinkedHashMap();
 
 					public void load () throws Exception {
+						CalibrationResultsFrame.close();
 						PG3B pg3b = owner.getPg3b();
 						XboxController controller = owner.getController();
-						if (false) {
-							int i = 0;
-							Target[] values = Target.values();
-							for (Target target : values) {
-								setMessage("Calibrating " + target + "...");
-								setPercentageComplete(i++ / (float)values.length);
-								throwCancelled();
-								String url = pg3b.calibrate(target, controller);
-								nameToURL.put(target.toString(), url);
-							}
-						} else {
-							String url = pg3b.calibrate(Target.leftStickY, controller);
-							nameToURL.put(Target.leftStickY.toString(), url);
+						int i = 0;
+						Target[] values = Target.values();
+						for (Target target : values) {
+							setMessage("Calibrating " + target + "...");
+							throwCancelled();
+							String url = pg3b.calibrate(target, controller);
+							nameToURL.put(target.toString(), url);
+							setPercentageComplete(++i / (float)values.length);
 						}
 					}
 
 					public void complete () {
+						if (failed()) return;
 						CalibrationResultsFrame frame = new CalibrationResultsFrame(nameToURL);
 						frame.setLocationRelativeTo(owner);
 						frame.setVisible(true);
@@ -139,8 +136,7 @@ public class DiagnosticsTab extends JPanel {
 		try {
 			pg3b.set(target, value);
 			long startTime = System.currentTimeMillis();
-			while (controller.get(target) != value) {
-				controller.poll();
+			while (Math.abs(controller.get(target) - value) > 0.05f) {
 				if (System.currentTimeMillis() - startTime > TIMEOUT) {
 					if (WARN) warn("Timed out setting target: " + target);
 					return false;
@@ -176,10 +172,12 @@ public class DiagnosticsTab extends JPanel {
 	public void setPg3b (PG3B pg3b) {
 		roundTripTestButton.setEnabled(pg3b != null && owner.getController() != null);
 		clearButton.setEnabled(roundTripTestButton.isEnabled());
+		calibrateButton.setEnabled(roundTripTestButton.isEnabled());
 	}
 
 	public void setController (XboxController controller) {
 		roundTripTestButton.setEnabled(controller != null && owner.getPg3b() != null);
 		clearButton.setEnabled(roundTripTestButton.isEnabled());
+		calibrateButton.setEnabled(roundTripTestButton.isEnabled());
 	}
 }

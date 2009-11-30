@@ -119,10 +119,10 @@ public class PG3B {
 
 		float wiperValue;
 		if (target == Target.leftTrigger || target == Target.rightTrigger)
-			wiperValue = 256 - state * 256;
+			wiperValue = 255 - state * 255;
 		else {
-			wiperValue = (state + 1) * 128;
-			if (target != Target.leftStickY && target != Target.rightStickY) wiperValue = 256 - wiperValue;
+			wiperValue = (state + 1) * 127;
+			if (target != Target.leftStickY && target != Target.rightStickY) wiperValue = 255 - wiperValue;
 		}
 
 		short actionKey = getActionKey(Device.xbox, (short)target.ordinal());
@@ -146,37 +146,47 @@ public class PG3B {
 	}
 
 	public String calibrate (Target target, XboxController controller) throws IOException {
-		float[] actualValues = new float[256];
-		int[] calibrationTable = new int[256];
+		boolean isTrigger = target == Target.leftTrigger || target == Target.rightTrigger;
+		boolean isInverted = target == Target.leftStickY || target == Target.rightStickY;
 
+		if (isTrigger) {
+			// The triggers are mapped to the same Z axis by the MS driver and interfere with each other if not zero.
+			set(Target.leftTrigger, 0);
+			set(Target.rightTrigger, 0);
+		}
+
+		float[] actualValues = new float[256];
 		for (int wiper = 0; wiper <= 255; wiper++) {
-			set(target, wiper / 255f * 2 - 1);
+			float deflection = isTrigger ? wiper / 255f : wiper / 255f * 2 - 1;
+			set(target, deflection);
 			try {
 				Thread.sleep(16);
 			} catch (InterruptedException ignored) {
 			}
-			actualValues[wiper] = controller.get(target);
+			actualValues[isInverted ? 255 - wiper : wiper] = controller.get(target);
 		}
 		set(target, 0);
 
+		int[] calibrationTable = new int[256];
 		int minusOneIndex = findClosestIndex(actualValues, -1);
 		int zeroIndex = findClosestIndex(actualValues, 0);
 		int plusOneIndex = findClosestIndex(actualValues, 1);
 		for (int wiper = 0; wiper <= 255; wiper++) {
-			float deflection = wiper / 255f * 2 - 1;
+			float deflection = isTrigger ? wiper / 255f : wiper / 255f * 2 - 1;
 			int match = zeroIndex;
 			for (int index = minusOneIndex; index <= plusOneIndex; index++)
 				if (Math.abs(actualValues[index] - deflection) < Math.abs(actualValues[match] - deflection)) match = index;
 			calibrationTable[wiper] = match;
 		}
-
 		calibrationTable[0] = minusOneIndex;
 		calibrationTable[127] = zeroIndex;
 		calibrationTable[255] = plusOneIndex;
 
+		// BOZO - Move out of this class.
 		StringBuilder raw = new StringBuilder(1024);
 		StringBuilder calibrated = new StringBuilder(1024);
-		for (int wiper = 0; wiper <= 255; wiper += 2) {
+		for (int i = 0; i <= 255; i += 2) {
+			int wiper = isInverted ? 255 - i : i;
 			raw.append((int)(actualValues[wiper] * 100 + 100) / 2);
 			raw.append(",");
 			calibrated.append((int)(actualValues[calibrationTable[wiper]] * 100 + 100) / 2);

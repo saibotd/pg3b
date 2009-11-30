@@ -335,6 +335,7 @@ public class ControllerPanel extends JPanel {
 				BufferedImage image = entry.getValue() ? checkImage : xImage;
 				g.drawImage(image, x - (entry.getValue() ? 13 : 16), y - (entry.getValue() ? 24 : 16), null);
 			}
+			// BOZO - Need to show marks for stick axes.
 		}
 
 		if (dragStartX != -1 && !overImageName.endsWith("Trigger"))

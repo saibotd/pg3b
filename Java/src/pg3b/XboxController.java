@@ -139,7 +139,7 @@ public class XboxController implements Runnable {
 		case leftTrigger:
 		case rightTrigger:
 			float value = controller.getComponent(Identifier.Axis.Z).getPollData();
-			if (value < 0) return target == Target.leftTrigger ? -value : 0;
+			if (value > 0) return target == Target.leftTrigger ? value : 0;
 			return target == Target.rightTrigger ? -value : 0;
 		}
 		return controller.getComponent(id).getPollData();
