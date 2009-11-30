@@ -53,6 +53,9 @@ public class PG3BTool extends JFrame {
 		initializeLayout();
 		initializeEvents();
 
+		setPg3b(null);
+		setController(null);
+
 		controllerPanel.setVisible(settings.showController);
 		showControllerMenuItem.setSelected(settings.showController);
 
@@ -148,9 +151,7 @@ public class PG3BTool extends JFrame {
 
 		controllerConnectMenuItem.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
-				ConnectControllerDialog dialog = new ConnectControllerDialog(PG3BTool.this);
-				dialog.setVisible(true);
-				controller = dialog.getController();
+				new ConnectControllerDialog(PG3BTool.this).setVisible(true);
 			}
 		});
 		statusBar.setControllerClickedListener(new Runnable() {

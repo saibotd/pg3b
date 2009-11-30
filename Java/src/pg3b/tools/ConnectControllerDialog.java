@@ -24,7 +24,6 @@ public class ConnectControllerDialog extends JDialog {
 	PG3BTool owner;
 	JList controllerList;
 	DefaultComboBoxModel controllerListModel;
-	XboxController controller;
 	private JButton connectButton, cancelButton;
 
 	public ConnectControllerDialog (PG3BTool owner) {
@@ -36,10 +35,6 @@ public class ConnectControllerDialog extends JDialog {
 
 		for (Controller controller : XboxController.getAllControllers())
 			controllerListModel.addElement(controller);
-	}
-
-	public XboxController getController () {
-		return controller;
 	}
 
 	private void initializeEvents () {
@@ -60,7 +55,7 @@ public class ConnectControllerDialog extends JDialog {
 	}
 
 	private void initializeLayout () {
-		setSize(320, 250);
+		setSize(360, 250);
 		setLocationRelativeTo(getOwner());
 
 		getContentPane().setLayout(new GridBagLayout());
