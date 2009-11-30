@@ -53,8 +53,13 @@ public class PG3BTool extends JFrame {
 		initializeLayout();
 		initializeEvents();
 
-		setPg3b(null);
-		setController(null);
+		controllerPanel.setPg3b(null);
+		diagnosticsTab.setPg3b(null);
+		statusBar.setPg3b(null);
+
+		controllerPanel.setController(null);
+		diagnosticsTab.setController(null);
+		statusBar.setController(null);
 
 		controllerPanel.setVisible(settings.showController);
 		showControllerMenuItem.setSelected(settings.showController);
@@ -79,6 +84,7 @@ public class PG3BTool extends JFrame {
 				});
 
 				XboxController.getAllControllers(); // Always load all the controllers at startup, not on the EDT.
+
 				boolean reconnectController = settings.controllerName != null && settings.controllerName.length() > 0;
 				if (reconnectController) {
 					for (Controller controller : XboxController.getAllControllers()) {
@@ -189,7 +195,7 @@ public class PG3BTool extends JFrame {
 	}
 
 	void exit () {
-		setPg3b(null);
+		if (pg3b != null) pg3b.close();
 		dispose();
 	}
 
@@ -275,7 +281,7 @@ public class PG3BTool extends JFrame {
 	}
 
 	public static void main (String[] args) throws Exception {
-		Log.set(LEVEL_DEBUG);
+		Log.set(LEVEL_INFO);
 		new PG3BTool().setVisible(true);
 	}
 }

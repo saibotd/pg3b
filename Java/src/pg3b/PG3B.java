@@ -57,7 +57,7 @@ public class PG3B {
 		}
 	}
 
-	private void primitive (Command command, int commandArgument, int argumentSize) throws IOException {
+	private synchronized void primitive (Command command, int commandArgument, int argumentSize) throws IOException {
 		String commandFormat = argumentSize == 2 ? "X %04X %C %02X\r" : "X %04X %C %04X\r";
 		if (TRACE) trace("pg3b", "Sent: " + String.format(commandFormat, sequenceNumber, command.code, commandArgument).trim());
 		output.format(commandFormat, sequenceNumber, command.code, commandArgument);
@@ -141,25 +141,80 @@ public class PG3B {
 		return port;
 	}
 
-	public static void main (String[] args) throws Exception {
-		Log.set(LEVEL_INFO);
-
-		XboxController controller = new XboxController(XboxController.getAllControllers().get(0));
-		PG3B pg3b = new PG3B("COM3");
-
-		for (float i = -1; i <= 1; i += 0.05) {
-			pg3b.set(Target.leftStickX, i);
-			Thread.sleep(50);
-			controller.poll();
-			float value = controller.get(Target.leftStickX);
-			System.out.println(i + ", " + value);
-		}
-
-		pg3b.close();
-	}
-
 	public void close () {
 		if (serialPort != null) serialPort.close();
+	}
+
+	public String calibrate (Target target, XboxController controller) throws IOException {
+		float[] actualValues = new float[256];
+		int[] calibrationTable = new int[256];
+
+		for (int wiper = 0; wiper <= 255; wiper++) {
+			set(target, wiper / 255f * 2 - 1);
+			try {
+				Thread.sleep(16);
+			} catch (InterruptedException ignored) {
+			}
+			actualValues[wiper] = controller.get(target);
+		}
+		set(target, 0);
+
+		int minusOneIndex = findClosestIndex(actualValues, -1);
+		int zeroIndex = findClosestIndex(actualValues, 0);
+		int plusOneIndex = findClosestIndex(actualValues, 1);
+		for (int wiper = 0; wiper <= 255; wiper++) {
+			float deflection = wiper / 255f * 2 - 1;
+			int match = zeroIndex;
+			for (int index = minusOneIndex; index <= plusOneIndex; index++)
+				if (Math.abs(actualValues[index] - deflection) < Math.abs(actualValues[match] - deflection)) match = index;
+			calibrationTable[wiper] = match;
+		}
+
+		calibrationTable[0] = minusOneIndex;
+		calibrationTable[127] = zeroIndex;
+		calibrationTable[255] = plusOneIndex;
+
+		StringBuilder raw = new StringBuilder(1024);
+		StringBuilder calibrated = new StringBuilder(1024);
+		for (int wiper = 0; wiper <= 255; wiper += 2) {
+			raw.append((int)(actualValues[wiper] * 100 + 100) / 2);
+			raw.append(",");
+			calibrated.append((int)(actualValues[calibrationTable[wiper]] * 100 + 100) / 2);
+			calibrated.append(",");
+		}
+		raw.setLength(raw.length() - 1);
+		calibrated.setLength(calibrated.length() - 1);
+		return "http://chart.apis.google.com/chart?chs=640x320&chf=bg,s,ffffff|c,s,ffffff&chxt=x,y&"
+			+ "chxl=0:|0|63|127|191|255|1:|-1|0|1&cht=lc&chdl=Calibrated|Raw&chco=0000ff,ff0000&chdlp=b&chd=t:" + calibrated + "|"
+			+ raw;
+	}
+
+	private int findClosestIndex (float[] actualValues, int target) {
+		// If target is negative, finds index of the last number closest to the target.
+		// Otherwise, finds index of the first number closest to the target.
+		int closestIndex = -1;
+		float closestToZero = Float.MAX_VALUE;
+		for (int i = 0; i < actualValues.length; i++) {
+			float absValue = Math.abs(actualValues[i] - target);
+			boolean isLess = target < 0 ? absValue <= closestToZero : absValue < closestToZero;
+			if (isLess) {
+				closestToZero = absValue;
+				closestIndex = i;
+			}
+		}
+		if (target == 0) {
+			// If looking for zero, handle the closest value to zero appearing multiple times in a row.
+			int zeroCount = 0;
+			for (int i = closestIndex + 1; i < actualValues.length; i++) {
+				float absValue = Math.abs(actualValues[i]);
+				if (absValue == closestToZero)
+					zeroCount++;
+				else
+					break;
+			}
+			closestIndex += zeroCount / 2;
+		}
+		return closestIndex;
 	}
 
 	static public enum Button {
@@ -199,5 +254,22 @@ public class PG3B {
 		private Command (char code) {
 			this.code = code;
 		}
+	}
+
+	public static void main (String[] args) throws Exception {
+		Log.set(LEVEL_INFO);
+
+		XboxController controller = new XboxController(XboxController.getAllControllers().get(0));
+		PG3B pg3b = new PG3B("COM3");
+
+		for (float i = -1; i <= 1; i += 0.05) {
+			pg3b.set(Target.leftStickX, i);
+			Thread.sleep(50);
+			controller.poll();
+			float value = controller.get(Target.leftStickX);
+			System.out.println(i + ", " + value);
+		}
+
+		pg3b.close();
 	}
 }

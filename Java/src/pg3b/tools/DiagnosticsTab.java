@@ -10,6 +10,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 import javax.swing.JButton;
 import javax.swing.JPanel;
@@ -23,9 +24,12 @@ import pg3b.tools.util.LoaderDialog;
 import com.esotericsoftware.minlog.Log;
 
 public class DiagnosticsTab extends JPanel {
+	static private final int TIMEOUT = 250;
+
 	PG3BTool owner;
 	private JButton roundTripTestButton;
 	private JButton clearButton;
+	private JButton calibrateButton;
 
 	public DiagnosticsTab (PG3BTool owner) {
 		this.owner = owner;
@@ -39,6 +43,7 @@ public class DiagnosticsTab extends JPanel {
 				new LoaderDialog("Round trip diagnostic") {
 					public void load () throws Exception {
 						owner.getControllerPanel().setStatus(null);
+
 						PG3B pg3b = owner.getPg3b();
 						XboxController controller = owner.getController();
 						HashMap<String, Boolean> status = new HashMap();
@@ -46,16 +51,22 @@ public class DiagnosticsTab extends JPanel {
 						for (Button button : Button.values()) {
 							if (button == Button.start || button == Button.guide) continue;
 							setMessage("Testing " + button + "...");
+							throwCancelled();
 							boolean success = waitForButton(pg3b, controller, button, false);
+							throwCancelled();
 							if (success) success = waitForButton(pg3b, controller, button, true);
+							throwCancelled();
 							if (success) success = waitForButton(pg3b, controller, button, false);
 							status.put(button.toString(), success);
 						}
 
 						for (Target target : Target.values()) {
 							setMessage("Testing " + target + "...");
+							throwCancelled();
 							boolean success = waitForTarget(pg3b, controller, target, 0);
+							throwCancelled();
 							if (success) success = waitForTarget(pg3b, controller, target, 1);
+							throwCancelled();
 							if (success) success = waitForTarget(pg3b, controller, target, 0);
 							status.put(target.toString(), success);
 						}
@@ -71,6 +82,39 @@ public class DiagnosticsTab extends JPanel {
 				owner.getControllerPanel().setStatus(null);
 			}
 		});
+
+		calibrateButton.addActionListener(new ActionListener() {
+			public void actionPerformed (ActionEvent event) {
+				new LoaderDialog("Calibration") {
+					LinkedHashMap<String, String> nameToURL = new LinkedHashMap();
+
+					public void load () throws Exception {
+						PG3B pg3b = owner.getPg3b();
+						XboxController controller = owner.getController();
+						if (false) {
+							int i = 0;
+							Target[] values = Target.values();
+							for (Target target : values) {
+								setMessage("Calibrating " + target + "...");
+								setPercentageComplete(i++ / (float)values.length);
+								throwCancelled();
+								String url = pg3b.calibrate(target, controller);
+								nameToURL.put(target.toString(), url);
+							}
+						} else {
+							String url = pg3b.calibrate(Target.leftStickY, controller);
+							nameToURL.put(Target.leftStickY.toString(), url);
+						}
+					}
+
+					public void complete () {
+						CalibrationResultsFrame frame = new CalibrationResultsFrame(nameToURL);
+						frame.setLocationRelativeTo(owner);
+						frame.setVisible(true);
+					}
+				}.start("Calibrate");
+			}
+		});
 	}
 
 	boolean waitForButton (PG3B pg3b, XboxController controller, Button button, boolean pressed) {
@@ -78,7 +122,7 @@ public class DiagnosticsTab extends JPanel {
 			pg3b.set(button, pressed);
 			long startTime = System.currentTimeMillis();
 			while (controller.get(button) != pressed) {
-				if (System.currentTimeMillis() - startTime > 300) {
+				if (System.currentTimeMillis() - startTime > TIMEOUT) {
 					if (WARN) warn("Timed out setting button: " + button);
 					return false;
 				}
@@ -97,7 +141,7 @@ public class DiagnosticsTab extends JPanel {
 			long startTime = System.currentTimeMillis();
 			while (controller.get(target) != value) {
 				controller.poll();
-				if (System.currentTimeMillis() - startTime > 300) {
+				if (System.currentTimeMillis() - startTime > TIMEOUT) {
 					if (WARN) warn("Timed out setting target: " + target);
 					return false;
 				}
@@ -114,13 +158,18 @@ public class DiagnosticsTab extends JPanel {
 		setLayout(new GridBagLayout());
 		{
 			roundTripTestButton = new JButton("Round Trip");
-			add(roundTripTestButton, new GridBagConstraints(0, 1, 1, 1, 0.0, 1.0, GridBagConstraints.NORTHWEST,
+			add(roundTripTestButton, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST,
 				GridBagConstraints.NONE, new Insets(6, 6, 6, 6), 0, 0));
 		}
 		{
 			clearButton = new JButton("Clear");
-			add(clearButton, new GridBagConstraints(1, 1, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
+			add(clearButton, new GridBagConstraints(1, 0, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
 				new Insets(6, 0, 6, 6), 0, 0));
+		}
+		{
+			calibrateButton = new JButton("Calibrate");
+			this.add(calibrateButton, new GridBagConstraints(0, 1, 2, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST,
+				GridBagConstraints.NONE, new Insets(0, 6, 6, 6), 0, 0));
 		}
 	}
 
