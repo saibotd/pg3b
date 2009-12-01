@@ -14,6 +14,8 @@ import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
 import java.util.Formatter;
 
+import net.java.games.input.Version;
+
 import com.esotericsoftware.minlog.Log;
 
 public class PG3B {
@@ -34,9 +36,6 @@ public class PG3B {
 
 		try {
 			CommPortIdentifier identifier = CommPortIdentifier.getPortIdentifier(port);
-			// if (identifier.isCurrentlyOwned())
-			// throw new IOException("Port is already in use: " + portID, new PortInUseException());
-
 			CommPort commPort = identifier.open("PG3B", 2000);
 			if (!(commPort instanceof SerialPort)) throw new IOException("Port is not serial: " + port);
 
@@ -275,7 +274,6 @@ public class PG3B {
 		for (float i = -1; i <= 1; i += 0.05) {
 			pg3b.set(Target.leftStickX, i);
 			Thread.sleep(50);
-			controller.poll();
 			float value = controller.get(Target.leftStickX);
 			System.out.println(i + ", " + value);
 		}

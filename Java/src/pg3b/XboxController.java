@@ -17,7 +17,7 @@ import pg3b.PG3B.Button;
 import pg3b.PG3B.Target;
 import pg3b.tools.util.Listeners;
 
-public class XboxController implements Runnable {
+public class XboxController {
 	static final int DPAD_UP = 4, DPAD_DOWN = 8, DPAD_LEFT = 16, DPAD_RIGHT = 32;
 
 	static final HashMap<Identifier.Button, Button> idToButton = new HashMap();
@@ -50,7 +50,7 @@ public class XboxController implements Runnable {
 	int dpadDirection;
 	private Listeners<Listener> listeners = new Listeners(Listener.class);
 
-	public static void main (String[] args) {
+	public static void main (String[] args) throws Exception {
 		XboxController controller = new XboxController(getAllControllers().get(0));
 		controller.addListener(new Listener() {
 			public void button (Button button, boolean pressed) {
@@ -61,20 +61,18 @@ public class XboxController implements Runnable {
 				System.out.println(target + " " + state);
 			}
 		});
-		new Thread(controller).start();
+		while (true) {
+			controller.poll();
+			Thread.sleep(100);
+		}
 	}
 
 	public XboxController (Controller controller) {
 		this.controller = controller;
 	}
 
-	public void run () {
-		while (poll()) {
-		}
-	}
-
 	public boolean get (Button button) {
-		poll();
+		if (!poll()) return false;
 		Identifier.Button id = null;
 		switch (button) {
 		case up:
@@ -87,7 +85,7 @@ public class XboxController implements Runnable {
 			return (dpadDirection & DPAD_RIGHT) == DPAD_RIGHT;
 		case start:
 		case guide:
-			// The Xbox controller driver doesn't expose these buttons.
+			// The Xbox controller driver doesn't expose these buttons!
 			return false;
 		case a:
 			id = Identifier.Button._0;
@@ -121,7 +119,7 @@ public class XboxController implements Runnable {
 	}
 
 	public float get (Target target) {
-		poll();
+		if (!poll()) return 0;
 		Identifier.Axis id = null;
 		switch (target) {
 		case leftStickX:
@@ -146,7 +144,12 @@ public class XboxController implements Runnable {
 	}
 
 	public boolean poll () {
-		if (!controller.poll()) return false;
+		if (!controller.poll()) {
+			Listener[] listeners = this.listeners.toArray();
+			for (int i = 0, n = listeners.length; i < n; i++)
+				listeners[i].disconnected();
+			return false;
+		}
 		EventQueue eventQueue = controller.getEventQueue();
 		Event event = new Event();
 		while (eventQueue.getNextEvent(event)) {
@@ -227,6 +230,7 @@ public class XboxController implements Runnable {
 	static public List<Controller> getAllControllers () {
 		ArrayList<Controller> list = new ArrayList();
 		ControllerEnvironment ce = ControllerEnvironment.getDefaultEnvironment();
+		// PG3B uses a patched JInput JAR that reloads the controller list each call to getControllers.
 		Controller[] controllers = ce.getControllers();
 		for (Controller controller : controllers)
 			if (controller.getType() == Controller.Type.GAMEPAD) list.add(controller);
@@ -235,6 +239,9 @@ public class XboxController implements Runnable {
 
 	static public class Listener {
 		public void button (Button button, boolean pressed) {
+		}
+
+		public void disconnected () {
 		}
 
 		public void target (Target target, float state) {

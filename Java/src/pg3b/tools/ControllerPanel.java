@@ -20,6 +20,7 @@ import pg3b.PG3B;
 import pg3b.XboxController;
 import pg3b.PG3B.Button;
 import pg3b.PG3B.Target;
+import pg3b.XboxController.Listener;
 import pg3b.tools.util.PackedImages;
 import pg3b.tools.util.Sound;
 import pg3b.tools.util.PackedImages.PackedImage;
@@ -43,13 +44,23 @@ public class ControllerPanel extends JPanel {
 	Map<String, Boolean> nameToStatus;
 	BufferedImage checkImage, xImage;
 
-	public ControllerPanel () {
-		Sound.register("click");
+	Listener controllerListener = new Listener() {
+		public void button (Button button, boolean pressed) {
+			repaint();
+		}
 
+		public void target (Target target, float state) {
+			repaint();
+		}
+	};
+
+	public ControllerPanel () {
 		setMinimumSize(new Dimension(497, 337));
 		setMaximumSize(new Dimension(497, 337));
 		setPreferredSize(new Dimension(497, 337));
 		setOpaque(false);
+
+		Sound.register("click");
 
 		try {
 			checkImage = ImageIO.read(getClass().getResource("/check.png"));
@@ -200,7 +211,7 @@ public class ControllerPanel extends JPanel {
 					if (overImageName.endsWith("Trigger")) {
 						triggerDragged(Target.valueOf(overImageName), 1);
 						triggerDragged(Target.valueOf(overImageName), 0);
-						Sound.play("click");
+						if (pg3b != null) Sound.play("click");
 					} else {
 						Button stickButton = Button.valueOf(overImageName);
 						buttonClicked(stickButton, true);
@@ -233,7 +244,7 @@ public class ControllerPanel extends JPanel {
 	}
 
 	protected void buttonClicked (Button button, boolean pressed) {
-		if (pressed) Sound.play("click");
+		if (pressed && pg3b != null) Sound.play("click");
 		repaint();
 		try {
 			if (pg3b != null) pg3b.set(button, pressed);
@@ -323,10 +334,14 @@ public class ControllerPanel extends JPanel {
 			}
 		} else if (controller != null) {
 			// No drag in progress, show controller input.
-			if (controller.get(Button.a)) packedImages.get("a").draw(g, 0, 0);
+			for (Button button : Button.values()) {
+				if (controller.get(button)) packedImages.get(button.toString()).draw(g, 0, 0);
+			}
+
 		}
 
 		if (nameToStatus != null) {
+			// Show button status.
 			for (Entry<String, Boolean> entry : nameToStatus.entrySet()) {
 				PackedImage packedImage = packedImages.get(entry.getKey());
 				if (packedImage == null) continue;
@@ -335,7 +350,11 @@ public class ControllerPanel extends JPanel {
 				BufferedImage image = entry.getValue() ? checkImage : xImage;
 				g.drawImage(image, x - (entry.getValue() ? 13 : 16), y - (entry.getValue() ? 24 : 16), null);
 			}
-			// BOZO - Need to show marks for stick axes.
+			// Show axes status.
+			Boolean status;
+			status = nameToStatus.get("rightStickX");
+			if (status != null) {
+			}
 		}
 
 		if (dragStartX != -1 && !overImageName.endsWith("Trigger"))
@@ -356,7 +375,9 @@ public class ControllerPanel extends JPanel {
 	}
 
 	public void setController (XboxController controller) {
+		if (this.controller != null) this.controller.removeListener(controllerListener);
 		this.controller = controller;
+		if (controller != null) controller.addListener(controllerListener);
 	}
 
 	public void setStatus (Map<String, Boolean> nameToStatus) {

@@ -8,6 +8,7 @@ import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.io.File;
 
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
@@ -18,14 +19,33 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
+import pg3b.tools.util.DirectoryMonitor;
+import pg3b.tools.util.UI;
+
 public class ScriptsTab extends JPanel {
 	private JList scriptsList;
-	private DefaultComboBoxModel scriptsListModel;
+	DefaultComboBoxModel scriptsListModel;
 	private JTextArea scriptDescriptionText, scriptText;
 	private JTextField scriptNameText;
 	private JButton newScriptButton, deleteScriptButton, recordScriptButton;
 
 	public ScriptsTab () {
+		initializeLayout();
+
+		new DirectoryMonitor<Script>(".script") {
+			protected Script load (File file) {
+				return new Script(file);
+			}
+
+			protected void updated () {
+				scriptsListModel.removeAllElements();
+				for (Script script : getItems())
+					scriptsListModel.addElement(script);
+			}
+		}.scan(new File("scripts"), 3000);
+	}
+
+	private void initializeLayout () {
 		setLayout(new GridBagLayout());
 		{
 			JScrollPane scroll = new JScrollPane();
@@ -89,5 +109,8 @@ public class ScriptsTab extends JPanel {
 				}
 			}
 		}
+
+		UI.enableWhenListHasSelection(scriptsList, deleteScriptButton, scriptText, recordScriptButton, scriptNameText,
+			scriptDescriptionText);
 	}
 }

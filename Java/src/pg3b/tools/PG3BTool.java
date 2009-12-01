@@ -10,7 +10,9 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 
 import javax.swing.ImageIcon;
 import javax.swing.JCheckBoxMenuItem;
@@ -26,7 +28,9 @@ import javax.swing.UIManager.LookAndFeelInfo;
 import net.java.games.input.Controller;
 import pg3b.PG3B;
 import pg3b.XboxController;
+import pg3b.XboxController.Listener;
 import pg3b.tools.util.LoaderDialog;
+import pg3b.tools.util.MultiplexOutputStream;
 
 import com.esotericsoftware.minlog.Log;
 
@@ -46,6 +50,12 @@ public class PG3BTool extends JFrame {
 	ConfigurationTab configTab;
 	ScriptsTab scriptsTab;
 	DiagnosticsTab diagnosticsTab;
+
+	Listener controllerListener = new Listener() {
+		public void disconnected () {
+			setController(null);
+		}
+	};
 
 	public PG3BTool () {
 		super("PG3B");
@@ -103,6 +113,7 @@ public class PG3BTool extends JFrame {
 		if (pg3b != null) pg3b.close();
 
 		pg3b = newPg3b;
+
 		EventQueue.invokeLater(new Runnable() {
 			public void run () {
 				controllerPanel.setPg3b(pg3b);
@@ -120,7 +131,11 @@ public class PG3BTool extends JFrame {
 	}
 
 	public void setController (XboxController newController) {
+		if (controller != null) controller.removeListener(controllerListener);
+
 		controller = newController;
+		if (controller != null) controller.addListener(controllerListener);
+
 		EventQueue.invokeLater(new Runnable() {
 			public void run () {
 				controllerPanel.setController(controller);
@@ -283,6 +298,11 @@ public class PG3BTool extends JFrame {
 
 	public static void main (String[] args) throws Exception {
 		Log.set(LEVEL_INFO);
+
+		FileOutputStream logOutput = new FileOutputStream("pg3b.log");
+		System.setOut(new PrintStream(new MultiplexOutputStream(System.out, logOutput), true));
+		System.setErr(new PrintStream(new MultiplexOutputStream(System.err, logOutput), true));
+
 		new PG3BTool().setVisible(true);
 	}
 }

@@ -10,6 +10,7 @@ import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.io.File;
 
 import javax.swing.BorderFactory;
 import javax.swing.DefaultComboBoxModel;
@@ -23,7 +24,13 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
+
+import pg3b.tools.Config.Input;
+import pg3b.tools.util.DirectoryMonitor;
+import pg3b.tools.util.UI;
 
 public class ConfigurationTab extends JPanel {
 	private CardLayout configTabLayout;
@@ -37,16 +44,49 @@ public class ConfigurationTab extends JPanel {
 	}
 
 	static private class ConfigCard extends JPanel {
-		private JList configsList;
-		private DefaultComboBoxModel configsListModel;
-		private JTextField configNameText;
-		private JScrollPane configDescriptionScroll;
-		private JTable inputsTable;
-		private DefaultTableModel inputsTableModel;
-		private JButton newConfigButton, deleteConfigButton, newInputButton, deleteInputButton;
-		private JTextArea configCommentText;
+		JList configsList;
+		DefaultComboBoxModel configsListModel;
+		JTextField configNameText;
+		JTable inputsTable;
+		DefaultTableModel inputsTableModel;
+		JButton newConfigButton, deleteConfigButton, newInputButton, deleteInputButton;
+		JTextArea configDescriptionText;
 
 		public ConfigCard () {
+			initializeLayout();
+			initializeEvents();
+
+			new DirectoryMonitor<Config>(".config") {
+				protected Config load (File file) {
+					Config config = new Config();
+					config.setFile(file);
+					return config;
+				}
+
+				protected void updated () {
+					configsListModel.removeAllElements();
+					for (Config config : getItems())
+						configsListModel.addElement(config);
+				}
+			}.scan(new File("config"), 3000);
+		}
+
+		private void initializeEvents () {
+			configsList.addListSelectionListener(new ListSelectionListener() {
+				public void valueChanged (ListSelectionEvent event) {
+					if (event.getValueIsAdjusting()) return;
+					Config config = (Config)configsList.getSelectedValue();
+					if (config == null) config = new Config();
+					configNameText.setText(config.getName());
+					configDescriptionText.setText(config.getDescription());
+					inputsTableModel.setRowCount(0);
+					for (Input input : config.getInputs())
+						inputsTableModel.addRow(new Object[] {input.getDescription()});
+				}
+			});
+		}
+
+		private void initializeLayout () {
 			setLayout(new GridBagLayout());
 			{
 				JScrollPane scroll = new JScrollPane();
@@ -64,8 +104,8 @@ public class ConfigurationTab extends JPanel {
 				add(scroll, new GridBagConstraints(2, 2, 1, 1, 1.0, 1.0, CENTER, BOTH, new Insets(6, 0, 0, 6), 0, 0));
 				{
 					scroll.setViewportView(inputsTable = new JTable());
-					inputsTable.setModel(inputsTableModel = new DefaultTableModel(new String[][] { {"Grenade", "G", "X button"},
-						{"Jump", "Spacebar", "B button"}}, new String[] {"Description", "Input", "Action"}));
+					inputsTable.setModel(inputsTableModel = new DefaultTableModel(new String[][] {}, new String[] {"Description",
+						"Input", "Action"}));
 				}
 			}
 			{
@@ -104,16 +144,19 @@ public class ConfigurationTab extends JPanel {
 						6, 0, 6), 0, 0));
 				}
 				{
-					panel.add(configDescriptionScroll = new JScrollPane(), new GridBagConstraints(1, 1, 1, 1, 1.0, 0.0, CENTER,
-						HORIZONTAL, new Insets(6, 0, 0, 6), 0, 0));
-					configDescriptionScroll.setMinimumSize(new Dimension(3, 50));
-					configDescriptionScroll.setMaximumSize(new Dimension(3, 50));
-					configDescriptionScroll.setPreferredSize(new Dimension(3, 50));
+					JScrollPane scroll = new JScrollPane();
+					panel.add(scroll, new GridBagConstraints(1, 1, 1, 1, 1.0, 0.0, CENTER, HORIZONTAL, new Insets(6, 0, 0, 6), 0, 0));
+					scroll.setMinimumSize(new Dimension(3, 50));
+					scroll.setMaximumSize(new Dimension(3, 50));
+					scroll.setPreferredSize(new Dimension(3, 50));
 					{
-						configDescriptionScroll.setViewportView(configCommentText = new JTextArea());
+						scroll.setViewportView(configDescriptionText = new JTextArea());
 					}
 				}
 			}
+
+			UI.enableWhenListHasSelection(configsList, deleteConfigButton, inputsTable, newInputButton, deleteInputButton,
+				configNameText, configDescriptionText);
 		}
 	}
 
