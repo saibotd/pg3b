@@ -5,7 +5,9 @@ import static com.esotericsoftware.minlog.Log.*;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Timer;
@@ -18,6 +20,7 @@ public abstract class DirectoryMonitor<T> {
 	static private final Timer timer = new Timer("DirectoryMonitor", true);
 
 	private final TreeSet<Item> items = new TreeSet();
+	private final ArrayList<Item> ignoredItems = new ArrayList();
 	final String fileExtension;
 
 	private final FileFilter fileFilter = new FileFilter() {
@@ -42,7 +45,7 @@ public abstract class DirectoryMonitor<T> {
 		return task;
 	}
 
-	public void scan (File dir) {
+	public synchronized void scan (File dir) {
 		if (dir == null) throw new IllegalArgumentException("dir cannot be null.");
 		if (!dir.exists()) dir.mkdirs();
 		if (!dir.exists() || !dir.isDirectory()) throw new IllegalArgumentException("Directory does not exist: " + dir);
@@ -53,18 +56,19 @@ public abstract class DirectoryMonitor<T> {
 			if (!item.file.exists()) {
 				updated = true;
 				iter.remove();
-				if (TRACE) trace("Removed item: " + item);
+				if (INFO) info("Removed file: " + item);
 				continue;
 			}
 			long lastModified = item.file.lastModified();
 			if (lastModified == item.lastModified) continue;
 			updated = true;
 			try {
-				item.object = load(item.file);
 				item.lastModified = lastModified;
-				if (TRACE) trace("Updated item: " + item);
+				item.object = load(item.file);
+				if (INFO) info("Updated file: " + item);
 			} catch (Exception ex) {
-				if (ERROR) error("Item ignored: " + item, ex);
+				if (ERROR) error("File ignored: " + item, ex);
+				ignoredItems.add(item);
 				iter.remove();
 			}
 		}
@@ -77,13 +81,21 @@ public abstract class DirectoryMonitor<T> {
 			Item item = new Item();
 			item.file = file;
 			item.lastModified = file.lastModified();
+
+			int ignoredIndex = ignoredItems.indexOf(item);
+			if (ignoredIndex != -1) {
+				if (ignoredItems.get(ignoredIndex).lastModified == item.lastModified) continue;
+				ignoredItems.remove(ignoredIndex);
+			}
+
 			if (!items.add(item)) continue;
 			try {
 				item.object = load(file);
 				updated = true;
-				if (TRACE) trace("Added item: " + item);
+				if (INFO) info("Added file: " + item);
 			} catch (Exception ex) {
-				if (ERROR) error("Item ignored: " + item, ex);
+				if (ERROR) error("File ignored: " + item, ex);
+				ignoredItems.add(item);
 				items.remove(item);
 			}
 		}
@@ -93,7 +105,7 @@ public abstract class DirectoryMonitor<T> {
 	protected void updated () {
 	}
 
-	abstract protected T load (File file);
+	abstract protected T load (File file) throws IOException;
 
 	public List<T> getItems () {
 		ArrayList<T> list = new ArrayList();
@@ -128,7 +140,7 @@ public abstract class DirectoryMonitor<T> {
 	}
 
 	public static void main (String[] args) throws Exception {
-		Log.set(LEVEL_TRACE);
+		Log.set(LEVEL_INFO);
 		DirectoryMonitor monitor = new DirectoryMonitor(".config") {
 			protected Object load (File file) {
 				return file.getName();

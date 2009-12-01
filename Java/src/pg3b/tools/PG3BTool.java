@@ -157,6 +157,10 @@ public class PG3BTool extends JFrame {
 		return controllerPanel;
 	}
 
+	public JToggleButton getCaptureButton () {
+		return captureButton;
+	}
+
 	private void initializeEvents () {
 		pg3bConnectMenuItem.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
@@ -258,26 +262,26 @@ public class PG3BTool extends JFrame {
 
 		getContentPane().setLayout(new GridBagLayout());
 		{
+			captureButton = new JToggleButton("Capture");
+			getContentPane().add(
+				captureButton,
+				new GridBagConstraints(0, 1, 1, 1, 0.0, 0.0, GridBagConstraints.SOUTH, GridBagConstraints.NONE,
+					new Insets(6, 0, 0, 0), 0, 0));
+		}
+		{
 			tabs = new JTabbedPane();
 			getContentPane().add(
 				tabs,
 				new GridBagConstraints(0, 2, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0,
 					0), 0, 0));
 			{
-				configTab = new ConfigurationTab();
+				configTab = new ConfigurationTab(this);
 				tabs.addTab("Configuration", null, configTab, null);
 				scriptsTab = new ScriptsTab();
 				tabs.addTab("Scripts", null, scriptsTab, null);
 				diagnosticsTab = new DiagnosticsTab(this);
 				tabs.addTab("Diagnostics", null, diagnosticsTab, null);
 			}
-		}
-		{
-			captureButton = new JToggleButton("Capture");
-			getContentPane().add(
-				captureButton,
-				new GridBagConstraints(0, 1, 1, 1, 0.0, 0.0, GridBagConstraints.SOUTH, GridBagConstraints.NONE,
-					new Insets(6, 0, 0, 0), 0, 0));
 		}
 		{
 			controllerPanel = new ControllerPanel();

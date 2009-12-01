@@ -189,7 +189,7 @@ public class XboxController {
 				if (id == Identifier.Axis.RY) target = Target.rightStickY;
 				if (id == Identifier.Axis.Z) target = value < 0 ? Target.leftTrigger : Target.rightTrigger;
 				if (target != null) {
-					// notifyListeners(target, value);
+					notifyListeners(target, value);
 					continue;
 				}
 			}

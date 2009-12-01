@@ -48,8 +48,8 @@ public class PG3B {
 			input = new BufferedReader(new InputStreamReader(serialPort.getInputStream(), ascii), 256);
 			output = new Formatter(new OutputStreamWriter(serialPort.getOutputStream(), ascii));
 
-			command(Command.SetCalibrationEnabled, 0);
-			command(Command.SetIsWireless, 1);
+			command(Command.setCalibrationEnabled, 0);
+			command(Command.setIsWireless, 1);
 		} catch (Exception ex) {
 			close();
 			throw new IOException("Error opening connection on port: " + port, ex);
@@ -78,7 +78,7 @@ public class PG3B {
 	}
 
 	private void action (int actionCode) throws IOException {
-		primitive(Command.Action, actionCode, 4);
+		primitive(Command.action, actionCode, 4);
 	}
 
 	private short getActionCode (short key, short value) {
@@ -92,7 +92,7 @@ public class PG3B {
 
 	public boolean isConnected () {
 		try {
-			command(Command.SetDebugMessagesEnabled, 0);
+			command(Command.setDebugMessagesEnabled, 0);
 			return true;
 		} catch (IOException ignored) {
 			return false;
@@ -246,17 +246,17 @@ public class PG3B {
 	}
 
 	static private enum Command {
-		Action('A'), //
-		EventAction('E'), //
-		SetCalibrationEnabled('C'), //
-		SetDebugMessagesEnabled('D'), //
-		SetFrequency('F'), //
-		SetIsWireless('G'), //
-		SetResolution('R'), //
-		SetScaling('S'), //
-		InitializeProfile('P'), //
-		FinalizeProfile('Q'), //
-		WriteEeprom('W');
+		action('A'), //
+		eventAction('E'), //
+		setCalibrationEnabled('C'), //
+		setDebugMessagesEnabled('D'), //
+		setFrequency('F'), //
+		setIsWireless('G'), //
+		setResolution('R'), //
+		setScaling('S'), //
+		initializeProfile('P'), //
+		finalizeProfile('Q'), //
+		writeEeprom('W');
 
 		char code;
 

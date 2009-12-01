@@ -72,8 +72,8 @@ public class ConnectPG3BDialog extends JDialog {
 							ConnectPG3BDialog.this.dispose();
 							return;
 						}
-						JOptionPane.showMessageDialog(ConnectPG3BDialog.this,
-							"An error occurred while attempting to connect to the PG3B.", "Connect Error", JOptionPane.ERROR_MESSAGE);
+						UI.errorDialog(ConnectPG3BDialog.this, "Connect Error",
+							"An error occurred while attempting to connect to the PG3B.");
 					}
 				}.start("Pg3bConnect");
 			}

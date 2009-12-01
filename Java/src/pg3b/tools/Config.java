@@ -2,20 +2,38 @@
 package pg3b.tools;
 
 import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import net.sourceforge.yamlbeans.YamlConfig;
+import net.sourceforge.yamlbeans.YamlException;
+import net.sourceforge.yamlbeans.YamlReader;
+import net.sourceforge.yamlbeans.YamlWriter;
+
 public class Config {
-	private File file;
+	static private final YamlConfig yamlConfig = new YamlConfig();
+	static {
+		yamlConfig.writeConfig.setWriteRootTags(false);
+		yamlConfig.writeConfig.setWriteDefaultValues(true);
+		yamlConfig.setPropertyElementType(Config.class, "inputs", Input.class);
+	}
+
+	private transient File file;
 	private String description;
 	private List<Input> inputs = new ArrayList();
 
-	public File getFile () {
-		return file;
+	public Config () {
 	}
 
-	public void setFile (File file) {
+	public Config (File file) {
 		this.file = file;
+	}
+
+	public File getFile () {
+		return file;
 	}
 
 	public String getName () {
@@ -42,8 +60,62 @@ public class Config {
 		this.inputs = inputs;
 	}
 
+	public int hashCode () {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((file == null) ? 0 : file.hashCode());
+		return result;
+	}
+
+	public boolean equals (Object obj) {
+		if (this == obj) return true;
+		if (obj == null) return false;
+		if (getClass() != obj.getClass()) return false;
+		Config other = (Config)obj;
+		if (file == null) {
+			if (other.file != null) return false;
+		} else if (!file.equals(other.file)) return false;
+		return true;
+	}
+
 	public String toString () {
 		return getName();
+	}
+
+	public void save () throws IOException {
+		YamlWriter writer = null;
+		try {
+			try {
+				writer = new YamlWriter(new FileWriter(file), yamlConfig);
+				writer.write(this);
+			} finally {
+				if (writer != null) writer.close();
+			}
+		} catch (YamlException ex) {
+			IOException ioEx = new IOException();
+			ioEx.initCause(ex);
+			throw ioEx;
+		}
+	}
+
+	static public Config load (File file) throws IOException {
+		YamlReader reader = null;
+		try {
+			reader = new YamlReader(new FileReader(file), yamlConfig);
+			Config config = reader.read(Config.class);
+			if (config == null) config = new Config();
+			config.file = file;
+			return config;
+		} catch (YamlException ex) {
+			IOException ioEx = new IOException();
+			ioEx.initCause(ex);
+			throw ioEx;
+		} finally {
+			try {
+				if (reader != null) reader.close();
+			} catch (IOException ignored) {
+			}
+		}
 	}
 
 	static public class Input {

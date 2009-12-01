@@ -11,6 +11,8 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.Map.Entry;
 
 import javax.imageio.ImageIO;
@@ -19,6 +21,7 @@ import javax.swing.JPanel;
 import pg3b.PG3B;
 import pg3b.XboxController;
 import pg3b.PG3B.Button;
+import pg3b.PG3B.Stick;
 import pg3b.PG3B.Target;
 import pg3b.XboxController.Listener;
 import pg3b.tools.util.PackedImages;
@@ -31,8 +34,8 @@ public class ControllerPanel extends JPanel {
 	static final List<String> clickOnlyButtons = Arrays.asList("leftStick", "leftTrigger", "rightStick", "rightTrigger", "up",
 		"down", "left", "right");
 	static final int deadzone = 10, stickDistance = 80;
-
 	static final int DPAD_NONE = 0, DPAD_DEADZONE = 2, DPAD_UP = 4, DPAD_DOWN = 8, DPAD_LEFT = 16, DPAD_RIGHT = 32;
+	static final Timer timer = new Timer("PollController", true);
 
 	PG3B pg3b;
 	XboxController controller;
@@ -74,6 +77,13 @@ public class ControllerPanel extends JPanel {
 		} catch (IOException ex) {
 			throw new RuntimeException(ex);
 		}
+
+		timer.scheduleAtFixedRate(new TimerTask() {
+			public void run () {
+				if (controller == null) return;
+				controller.poll();
+			}
+		}, 0, 64);
 
 		MouseAdapter mouseListener = new MouseAdapter() {
 			public void mouseMoved (MouseEvent event) {
@@ -289,55 +299,35 @@ public class ControllerPanel extends JPanel {
 			if (overImageName != null) packedImages.get(overImageName).draw(g, 0, 0);
 		}
 
+		float leftTrigger = controller == null ? 0 : controller.get(Target.leftTrigger);
+		float rightTrigger = controller == null ? 0 : controller.get(Target.rightTrigger);
+		float leftStickX = controller == null ? 0 : controller.get(Target.leftStickX);
+		float leftStickY = controller == null ? 0 : controller.get(Target.leftStickY);
+		float rightStickX = controller == null ? 0 : controller.get(Target.rightStickX);
+		float rightStickY = controller == null ? 0 : controller.get(Target.rightStickY);
 		if (dragStartX != -1) {
-			// Drag in progress, don't show controller input.
-			g.setColor(Color.black);
 			Object dragObject = getDragObject();
-			if (dragObject == Target.leftTrigger) {
-				drawString(g, toPercent(lastTriggerValue), 104, 32);
-			} else if (dragObject == Target.rightTrigger) {
-				drawString(g, toPercent(lastTriggerValue), 392, 32);
-			} else if (dragObject == Target.leftStickX) {
-				int x = 0;
-				int y = 129;
-				if (lastValueY < 0) {
-					packedImages.get("upArrow").draw(g, x, y);
-					drawString(g, toPercent(lastValueY), x + 62, y + 27);
-				} else if (lastValueY > 0) {
-					packedImages.get("downArrow").draw(g, x, y);
-					drawString(g, toPercent(lastValueY), x + 62, y + 27 + 77);
-				}
-				if (lastValueX < 0) {
-					packedImages.get("leftArrow").draw(g, x, y);
-					drawString(g, toPercent(lastValueX), x + 62 - 44, y + 27 + 39);
-				} else if (lastValueX > 0) {
-					packedImages.get("rightArrow").draw(g, x, y);
-					drawString(g, toPercent(lastValueX), x + 62 + 43, y + 27 + 39);
-				}
+			if (dragObject == Target.leftTrigger)
+				leftTrigger = lastTriggerValue;
+			else if (dragObject == Target.rightTrigger)
+				rightTrigger = lastTriggerValue;
+			else if (dragObject == Target.leftStickX) {
+				leftStickX = lastValueX;
+				leftStickY = lastValueY;
 			} else if (dragObject == Target.rightStickX) {
-				int x = 268;
-				int y = 213;
-				if (lastValueY < 0) {
-					packedImages.get("upArrow").draw(g, x, y);
-					drawString(g, toPercent(lastValueY), x + 62, y + 27);
-				} else if (lastValueY > 0) {
-					packedImages.get("downArrow").draw(g, x, y);
-					drawString(g, toPercent(lastValueY), x + 62, y + 27 + 77);
-				}
-				if (lastValueX < 0) {
-					packedImages.get("leftArrow").draw(g, x, y);
-					drawString(g, toPercent(lastValueX), x + 62 - 44, y + 27 + 39);
-				} else if (lastValueX > 0) {
-					packedImages.get("rightArrow").draw(g, x, y);
-					drawString(g, toPercent(lastValueX), x + 62 + 43, y + 27 + 39);
-				}
+				rightStickX = lastValueX;
+				rightStickY = lastValueY;
 			}
-		} else if (controller != null) {
-			// No drag in progress, show controller input.
-			for (Button button : Button.values()) {
-				if (controller.get(button)) packedImages.get(button.toString()).draw(g, 0, 0);
-			}
+		}
+		g.setColor(Color.black);
+		drawTrigger(g, Target.leftTrigger, leftTrigger);
+		drawTrigger(g, Target.rightTrigger, rightTrigger);
+		drawStickArrows(g, Stick.left, leftStickX, leftStickY);
+		drawStickArrows(g, Stick.right, rightStickX, rightStickY);
 
+		if (controller != null) {
+			for (Button button : Button.values())
+				if (controller.get(button)) packedImages.get(button.toString()).draw(g, 0, 0);
 		}
 
 		if (nameToStatus != null) {
@@ -354,11 +344,37 @@ public class ControllerPanel extends JPanel {
 			Boolean status;
 			status = nameToStatus.get("rightStickX");
 			if (status != null) {
+				// FIXME
 			}
 		}
 
 		if (dragStartX != -1 && !overImageName.endsWith("Trigger"))
 			packedImages.get("crosshair").draw(g, dragStartX - 11, dragStartY - 11);
+	}
+
+	private void drawTrigger (Graphics g, Target target, float value) {
+		if ((int)(value * 100) == 0) return;
+		packedImages.get(target.toString()).draw(g, 0, 0);
+		drawString(g, toPercent(value), target == Target.leftTrigger ? 104 : 392, 32);
+	}
+
+	private void drawStickArrows (Graphics g, Stick stick, float valueX, float valueY) {
+		int x = stick == Stick.left ? 0 : 268;
+		int y = stick == Stick.left ? 129 : 213;
+		if (valueY < 0) {
+			packedImages.get("upArrow").draw(g, x, y);
+			drawString(g, toPercent(valueY), x + 62, y + 27);
+		} else if (valueY > 0) {
+			packedImages.get("downArrow").draw(g, x, y);
+			drawString(g, toPercent(valueY), x + 62, y + 27 + 77);
+		}
+		if (valueX < 0) {
+			packedImages.get("leftArrow").draw(g, x, y);
+			drawString(g, toPercent(valueX), x + 62 - 44, y + 27 + 39);
+		} else if (valueX > 0) {
+			packedImages.get("rightArrow").draw(g, x, y);
+			drawString(g, toPercent(valueX), x + 62 + 43, y + 27 + 39);
+		}
 	}
 
 	private String toPercent (float value) {
