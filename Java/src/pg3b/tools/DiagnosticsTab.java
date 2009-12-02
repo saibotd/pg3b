@@ -28,12 +28,12 @@ import com.esotericsoftware.minlog.Log;
 public class DiagnosticsTab extends JPanel {
 	static private final int TIMEOUT = 250;
 
-	PG3BTool owner;
+	PG3BUI owner;
 	private JButton roundTripTestButton;
 	private JButton clearButton;
 	private JButton calibrateButton;
 
-	public DiagnosticsTab (PG3BTool owner) {
+	public DiagnosticsTab (PG3BUI owner) {
 		this.owner = owner;
 		initializeLayout();
 		initializeEvents();

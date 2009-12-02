@@ -20,10 +20,10 @@ import javax.swing.JPanel;
 
 import pg3b.PG3B;
 import pg3b.XboxController;
+import pg3b.PG3B.Axis;
 import pg3b.PG3B.Button;
 import pg3b.PG3B.Stick;
-import pg3b.PG3B.Axis;
-import pg3b.XboxController.Listener;
+import pg3b.tools.util.Listeners;
 import pg3b.tools.util.PackedImages;
 import pg3b.tools.util.Sound;
 import pg3b.tools.util.PackedImages.PackedImage;
@@ -46,8 +46,9 @@ public class ControllerPanel extends JPanel {
 	float lastTriggerValue, lastValueX, lastValueY;
 	Map<String, Boolean> nameToStatus;
 	BufferedImage checkImage, xImage;
+	Listeners<Listener> listeners = new Listeners(Listener.class);
 
-	Listener controllerListener = new Listener() {
+	XboxController.Listener controllerListener = new XboxController.Listener() {
 		public void buttonChanged (Button button, boolean pressed) {
 			repaint();
 		}
@@ -235,25 +236,27 @@ public class ControllerPanel extends JPanel {
 
 	}
 
-	protected void triggerDragged (Axis axis, float value) {
+	void triggerDragged (Axis axis, float value) {
 		repaint();
 		try {
 			if (pg3b != null) pg3b.set(axis, value);
 		} catch (IOException ex) {
 			ex.printStackTrace();
 		}
+		notifyListeners(axis, value);
 	}
 
-	protected void stickDragged (Axis axis, float value) {
+	void stickDragged (Axis axis, float value) {
 		repaint();
 		try {
 			if (pg3b != null) pg3b.set(axis, value);
 		} catch (IOException ex) {
 			ex.printStackTrace();
 		}
+		notifyListeners(axis, value);
 	}
 
-	protected void buttonClicked (Button button, boolean pressed) {
+	void buttonClicked (Button button, boolean pressed) {
 		if (pressed && pg3b != null) Sound.play("click");
 		repaint();
 		try {
@@ -261,15 +264,37 @@ public class ControllerPanel extends JPanel {
 		} catch (IOException ex) {
 			ex.printStackTrace();
 		}
+		notifyListeners(button, pressed);
 	}
 
-	protected void dpadDragged (Button button, boolean pressed) {
+	void dpadDragged (Button button, boolean pressed) {
 		repaint();
 		try {
 			if (pg3b != null) pg3b.set(button, pressed);
 		} catch (IOException ex) {
 			ex.printStackTrace();
 		}
+		notifyListeners(button, pressed);
+	}
+
+	private void notifyListeners (Button button, boolean pressed) {
+		Listener[] listeners = this.listeners.toArray();
+		for (int i = 0, n = listeners.length; i < n; i++)
+			listeners[i].buttonChanged(button, pressed);
+	}
+
+	private void notifyListeners (Axis axis, float state) {
+		Listener[] listeners = this.listeners.toArray();
+		for (int i = 0, n = listeners.length; i < n; i++)
+			listeners[i].axisChanged(axis, state);
+	}
+
+	public void addListener (Listener listener) {
+		listeners.addListener(listener);
+	}
+
+	public void removeListener (Listener listener) {
+		listeners.removeListener(listener);
 	}
 
 	Object getDragObject () {
@@ -403,5 +428,13 @@ public class ControllerPanel extends JPanel {
 	public void setStatus (Map<String, Boolean> nameToStatus) {
 		this.nameToStatus = nameToStatus;
 		repaint();
+	}
+
+	static public class Listener {
+		public void buttonChanged (Button button, boolean pressed) {
+		}
+
+		public void axisChanged (Axis axis, float state) {
+		}
 	}
 }

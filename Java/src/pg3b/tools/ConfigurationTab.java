@@ -15,11 +15,15 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
@@ -36,26 +40,38 @@ import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
 
+import net.java.games.input.Component;
+import net.java.games.input.Controller;
+import net.java.games.input.ControllerEnvironment;
+import net.java.games.input.Event;
+import net.java.games.input.EventQueue;
+import net.java.games.input.Component.Identifier;
+
 import pg3b.PG3B.Axis;
 import pg3b.PG3B.Button;
 import pg3b.tools.Config.Input;
+import pg3b.tools.ControllerPanel.Listener;
 import pg3b.tools.util.DirectoryMonitor;
 import pg3b.tools.util.UI;
 
 import com.esotericsoftware.minlog.Log;
 
 public class ConfigurationTab extends JPanel {
-	final PG3BTool owner;
-	CardLayout cardLayout;
-	private ConfigCard configCard;
-	private InputCard inputCard;
-	Settings settings = Settings.get();
+	static final Timer timer = new Timer("MonitorControllers", true);
 
-	public ConfigurationTab (PG3BTool owner) {
+	final PG3BUI owner;
+	CardLayout cardLayout;
+	Settings settings = Settings.get();
+	ConfigCard configCard;
+	InputCard inputCard;
+
+	public ConfigurationTab (PG3BUI owner) {
 		this.owner = owner;
 		setLayout(cardLayout = new CardLayout());
 		add(configCard = new ConfigCard(), "configCard");
@@ -198,7 +214,7 @@ public class ConfigurationTab extends JPanel {
 
 			newInputButton.addActionListener(new ActionListener() {
 				public void actionPerformed (ActionEvent event) {
-					cardLayout.show(ConfigurationTab.this, "inputCard");
+					inputCard.showPanel(null);
 				}
 			});
 		}
@@ -291,10 +307,16 @@ public class ConfigurationTab extends JPanel {
 			UI.enableWhenListHasSelection(configsList, deleteConfigButton, inputsTable, newInputButton, deleteInputButton,
 				configNameText, configDescriptionText, owner.getCaptureButton());
 		}
+
+		public void showPanel () {
+			inputCard.hidePanel();
+			cardLayout.show(ConfigurationTab.this, "configCard");
+		}
 	}
 
 	private class InputCard extends JPanel {
 		Input input;
+		TimerTask monitorInputTask;
 		JPanel inputPanel;
 		JRadioButton pg3bRadio, scriptRadio;
 		JButton saveButton, cancelButton;
@@ -302,12 +324,22 @@ public class ConfigurationTab extends JPanel {
 		JComboBox pg3bCombo, scriptCombo;
 		DefaultComboBoxModel scriptComboModel, pg3bComboModel;
 
+		Listener controllerPanelListener = new Listener() {
+			public void axisChanged (Axis axis, float state) {
+				if (Math.abs(state) > 0.1f) pg3bCombo.setSelectedItem(axis);
+			}
+
+			public void buttonChanged (Button button, boolean pressed) {
+				if (pressed) pg3bCombo.setSelectedItem(button);
+			}
+		};
+
 		public InputCard () {
 			initializeLayout();
 			initializeEvents();
 		}
 
-		public void show (Input input) {
+		public void showPanel (Input input) {
 			if (input == null) {
 				input = new Input();
 				inputPanel.setBorder(BorderFactory.createTitledBorder("New Input"));
@@ -326,8 +358,62 @@ public class ConfigurationTab extends JPanel {
 				scriptCombo.setSelectedItem(input.getScript());
 			} else {
 				pg3bRadio.setSelected(true);
-				pg3bCombo.setSelectedItem(input.getTarget());
+				if (input.getTarget() != null) pg3bCombo.setSelectedItem(input.getTarget());
 			}
+
+			owner.getControllerPanel().addListener(controllerPanelListener);
+			cardLayout.show(ConfigurationTab.this, "inputCard");
+		}
+
+		public void hidePanel () {
+			owner.getControllerPanel().removeListener(controllerPanelListener);
+		}
+
+		void monitorInput (boolean enable) {
+			if (monitorInputTask != null) {
+				monitorInputTask.cancel();
+				monitorInputTask = null;
+			}
+			if (!enable) return;
+			monitorInputTask = new TimerTask() {
+				boolean firstRun = true;
+
+				public void run () {
+					boolean disable = false;
+					for (Controller controller : ControllerEnvironment.getDefaultEnvironment().getControllers()) {
+						if (!controller.poll()) continue;
+						EventQueue eventQueue = controller.getEventQueue();
+						Event event = new Event();
+						while (eventQueue.getNextEvent(event)) {
+							if (firstRun) continue; // Clear out all pending events on the first run.
+							Component component = event.getComponent();
+							float value = event.getValue();
+							if (value != 0) {
+								String id = component.getIdentifier().toString();
+								if (id.equals(" ")) id = "Spacebar";
+								setInputComponent(component);
+								disable = true;
+							}
+						}
+					}
+					firstRun = false;
+					if (disable) {
+						monitorInputTask.cancel();
+						timer.schedule(new TimerTask() {
+							public void run () {
+								monitorInput(false);
+							}
+						}, 300);
+					}
+				}
+			};
+			timer.scheduleAtFixedRate(monitorInputTask, 125, 125);
+		}
+
+		void setInputComponent (Object object) {
+			inputText.setText(object.toString());
+			inputText.setFont(inputText.getFont().deriveFont(Font.PLAIN));
+			
 		}
 
 		private void initializeEvents () {
@@ -335,7 +421,6 @@ public class ConfigurationTab extends JPanel {
 				public void actionPerformed (ActionEvent event) {
 					if (scriptCombo.getSelectedItem() == null) return;
 					scriptRadio.setSelected(true);
-					pg3bCombo.setSelectedItem(null);
 				}
 			});
 
@@ -347,16 +432,34 @@ public class ConfigurationTab extends JPanel {
 				}
 			});
 
-			inputText.addMouseListener(new MouseAdapter() {
-				public void mouseClicked (MouseEvent event) {
-					inputText.setText("Waiting for input...");
-					inputText.setFont(inputText.getFont().deriveFont(Font.ITALIC));
+			scriptRadio.addItemListener(new ItemListener() {
+				public void itemStateChanged (ItemEvent event) {
+					if (!scriptRadio.isSelected()) return;
+					pg3bCombo.setSelectedItem(null);
+					if (scriptCombo.getSelectedIndex() == -1) scriptCombo.setSelectedIndex(0);
 				}
 			});
-			
+
+			pg3bRadio.addItemListener(new ItemListener() {
+				public void itemStateChanged (ItemEvent event) {
+					if (!pg3bRadio.isSelected()) return;
+					scriptCombo.setSelectedItem(null);
+					if (pg3bCombo.getSelectedIndex() == -1) pg3bCombo.setSelectedIndex(0);
+				}
+			});
+
+			inputText.addMouseListener(new MouseAdapter() {
+				public void mouseClicked (MouseEvent event) {
+					if (monitorInputTask != null) return;
+					inputText.setText("Waiting for input...");
+					inputText.setFont(inputText.getFont().deriveFont(Font.ITALIC));
+					monitorInput(true);
+				}
+			});
+
 			cancelButton.addActionListener(new ActionListener() {
 				public void actionPerformed (ActionEvent event) {
-					cardLayout.show(ConfigurationTab.this, "configCard");
+					configCard.showPanel();
 				}
 			});
 		}
@@ -398,7 +501,8 @@ public class ConfigurationTab extends JPanel {
 				{
 					scriptCombo = new JComboBox();
 					panel.add(scriptCombo);
-					scriptCombo.setModel(scriptComboModel = new DefaultComboBoxModel());
+					scriptComboModel = new DefaultComboBoxModel();
+					scriptCombo.setModel(scriptComboModel);
 				}
 			}
 			{
@@ -412,10 +516,10 @@ public class ConfigurationTab extends JPanel {
 				{
 					pg3bCombo = new JComboBox();
 					panel.add(pg3bCombo);
-					pg3bComboModel = new DefaultComboBoxModel(new Object[] {Axis.leftStickX, Axis.leftStickY, Axis.rightStickX,
-						Axis.rightStickY, Axis.leftTrigger, Axis.rightTrigger, Button.a, Button.b, Button.x, Button.y, Button.up,
+					pg3bComboModel = new DefaultComboBoxModel(new Object[] {Button.a, Button.b, Button.x, Button.y, Button.up,
 						Button.down, Button.left, Button.right, Button.leftShoulder, Button.rightShoulder, Button.leftStick,
-						Button.rightStick, Button.start, Button.back, Button.guide});
+						Button.rightStick, Button.start, Button.back, Button.guide, Axis.leftStickX, Axis.leftStickY, Axis.rightStickX,
+						Axis.rightStickY, Axis.leftTrigger, Axis.rightTrigger});
 					pg3bCombo.setModel(pg3bComboModel);
 				}
 			}

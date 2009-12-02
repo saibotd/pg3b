@@ -167,5 +167,7 @@ public class Config implements Cloneable {
 				throw new IllegalArgumentException("target must be a button or axis.");
 			this.target = target;
 		}
+		
+		
 	}
 }

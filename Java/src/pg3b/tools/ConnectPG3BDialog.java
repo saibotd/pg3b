@@ -26,14 +26,14 @@ import pg3b.tools.util.LoaderDialog;
 import pg3b.tools.util.UI;
 
 public class ConnectPG3BDialog extends JDialog {
-	PG3BTool owner;
+	PG3BUI owner;
 	JList portList;
 	private JButton refreshButton;
 	DefaultComboBoxModel portListModel;
 	PG3B pg3b;
 	private JButton connectButton, cancelButton;
 
-	public ConnectPG3BDialog (final PG3BTool owner) {
+	public ConnectPG3BDialog (final PG3BUI owner) {
 		super(owner, "Connect to PG3b", true);
 		this.owner = owner;
 

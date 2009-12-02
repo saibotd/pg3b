@@ -36,7 +36,7 @@ import pg3b.tools.util.MultiplexOutputStream;
 
 import com.esotericsoftware.minlog.Log;
 
-public class PG3BTool extends JFrame {
+public class PG3BUI extends JFrame {
 	PG3B pg3b;
 	XboxController controller;
 	Settings settings = Settings.get();
@@ -59,7 +59,7 @@ public class PG3BTool extends JFrame {
 		}
 	};
 
-	public PG3BTool () {
+	public PG3BUI () {
 		super("PG3B");
 
 		initializeLayout();
@@ -171,7 +171,7 @@ public class PG3BTool extends JFrame {
 		pg3bConnectMenuItem.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
 				setPg3b(null);
-				new ConnectPG3BDialog(PG3BTool.this).setVisible(true);
+				new ConnectPG3BDialog(PG3BUI.this).setVisible(true);
 			}
 		});
 		statusBar.setPg3bClickedListener(new Runnable() {
@@ -182,7 +182,7 @@ public class PG3BTool extends JFrame {
 
 		controllerConnectMenuItem.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
-				new ConnectControllerDialog(PG3BTool.this).setVisible(true);
+				new ConnectControllerDialog(PG3BUI.this).setVisible(true);
 			}
 		});
 		statusBar.setControllerClickedListener(new Runnable() {
@@ -313,6 +313,6 @@ public class PG3BTool extends JFrame {
 		System.setOut(new PrintStream(new MultiplexOutputStream(System.out, logOutput), true));
 		System.setErr(new PrintStream(new MultiplexOutputStream(System.err, logOutput), true));
 
-		new PG3BTool().setVisible(true);
+		new PG3BUI().setVisible(true);
 	}
 }

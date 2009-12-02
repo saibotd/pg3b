@@ -21,12 +21,12 @@ import pg3b.XboxController;
 import pg3b.tools.util.UI;
 
 public class ConnectControllerDialog extends JDialog {
-	PG3BTool owner;
+	PG3BUI owner;
 	JList controllerList;
 	DefaultComboBoxModel controllerListModel;
 	private JButton connectButton, cancelButton;
 
-	public ConnectControllerDialog (PG3BTool owner) {
+	public ConnectControllerDialog (PG3BUI owner) {
 		super(owner, "Connect to Controller", true);
 		this.owner = owner;
 

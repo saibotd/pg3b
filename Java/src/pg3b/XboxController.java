@@ -13,8 +13,8 @@ import net.java.games.input.ControllerEnvironment;
 import net.java.games.input.Event;
 import net.java.games.input.EventQueue;
 import net.java.games.input.Component.Identifier;
-import pg3b.PG3B.Button;
 import pg3b.PG3B.Axis;
+import pg3b.PG3B.Button;
 import pg3b.tools.util.Listeners;
 
 public class XboxController {
@@ -216,10 +216,7 @@ public class XboxController {
 
 	static public List<Controller> getAllControllers () {
 		ArrayList<Controller> list = new ArrayList();
-		ControllerEnvironment ce = ControllerEnvironment.getDefaultEnvironment();
-		// PG3B uses a patched JInput JAR that reloads the controller list each call to getControllers.
-		Controller[] controllers = ce.getControllers();
-		for (Controller controller : controllers)
+		for (Controller controller : ControllerEnvironment.getDefaultEnvironment().getControllers())
 			if (controller.getType() == Controller.Type.GAMEPAD) list.add(controller);
 		return list;
 	}
