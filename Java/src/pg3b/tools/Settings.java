@@ -1,10 +1,7 @@
 
 package pg3b.tools;
 
-import static com.esotericsoftware.minlog.Log.ERROR;
-import static com.esotericsoftware.minlog.Log.WARN;
-import static com.esotericsoftware.minlog.Log.error;
-import static com.esotericsoftware.minlog.Log.warn;
+import static com.esotericsoftware.minlog.Log.*;
 
 import java.io.File;
 import java.io.FileReader;
@@ -17,15 +14,13 @@ import net.sourceforge.yamlbeans.YamlReader;
 import net.sourceforge.yamlbeans.YamlWriter;
 
 public class Settings {
-	public String settingsVersion = actualSettingsVersion;
 	public boolean showController = true;
 	public String pg3bPort;
 	public int controllerPort;
 	public String controllerName;
-	public String lastConfig;
+	public String selectedConfig;
 
 	static private Settings instance;
-	static private final String actualSettingsVersion = "1";
 	static private final String fileName = "pg3b.settings";
 	static private final YamlConfig yamlConfig = new YamlConfig();
 	static {
@@ -40,10 +35,6 @@ public class Settings {
 			try {
 				reader = new YamlReader(new FileReader(fileName), yamlConfig);
 				instance = reader.read(Settings.class);
-				if (!actualSettingsVersion.equals(instance.settingsVersion)) {
-					if (WARN) warn("Settings reset, version changed: " + instance.settingsVersion + " to " + actualSettingsVersion);
-					instance = null;
-				}
 			} catch (Exception ex) {
 				if (WARN) warn("Unable to load settings file: " + fileName, ex);
 				if (WARN) warn("Settings reset to defaults.");

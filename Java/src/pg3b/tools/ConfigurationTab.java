@@ -93,7 +93,7 @@ public class ConfigurationTab extends JPanel {
 			monitor.scan(rootDir, 3000);
 
 			for (Config config : monitor.getItems()) {
-				if (config.getName().equals(settings.lastConfig)) {
+				if (config.getName().equals(settings.selectedConfig)) {
 					configsList.setSelectedValue(config, true);
 					break;
 				}
@@ -116,8 +116,8 @@ public class ConfigurationTab extends JPanel {
 					for (Input input : config.getInputs())
 						inputsTableModel.addRow(new Object[] {input.getDescription()});
 
-					if (!config.getName().equals(settings.lastConfig)) {
-						settings.lastConfig = config.getName();
+					if (!config.getName().equals(settings.selectedConfig)) {
+						settings.selectedConfig = config.getName();
 						Settings.save();
 					}
 				}
