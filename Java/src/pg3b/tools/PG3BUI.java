@@ -1,5 +1,5 @@
 
-package pg3b.tools;
+package pg3b.ui;
 
 import static com.esotericsoftware.minlog.Log.DEBUG;
 import static com.esotericsoftware.minlog.Log.LEVEL_INFO;
@@ -31,8 +31,8 @@ import net.java.games.input.Controller;
 import pg3b.PG3B;
 import pg3b.XboxController;
 import pg3b.XboxController.Listener;
-import pg3b.tools.util.LoaderDialog;
-import pg3b.tools.util.MultiplexOutputStream;
+import pg3b.ui.util.LoaderDialog;
+import pg3b.ui.util.MultiplexOutputStream;
 
 import com.esotericsoftware.minlog.Log;
 

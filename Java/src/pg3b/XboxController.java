@@ -15,7 +15,7 @@ import net.java.games.input.EventQueue;
 import net.java.games.input.Component.Identifier;
 import pg3b.PG3B.Axis;
 import pg3b.PG3B.Button;
-import pg3b.tools.util.Listeners;
+import pg3b.ui.util.Listeners;
 
 public class XboxController {
 	static final int DPAD_UP = 4, DPAD_DOWN = 8, DPAD_LEFT = 16, DPAD_RIGHT = 32;

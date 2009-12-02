@@ -1,5 +1,5 @@
 
-package pg3b.tools;
+package pg3b.ui;
 
 import java.io.File;
 import java.io.FileReader;

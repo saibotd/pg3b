@@ -1,5 +1,5 @@
 
-package pg3b.tools;
+package pg3b.ui;
 
 import static com.esotericsoftware.minlog.Log.*;
 import gnu.io.CommPortIdentifier;
@@ -22,8 +22,8 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
 import pg3b.PG3B;
-import pg3b.tools.util.LoaderDialog;
-import pg3b.tools.util.UI;
+import pg3b.ui.util.LoaderDialog;
+import pg3b.ui.util.UI;
 
 public class ConnectPG3BDialog extends JDialog {
 	PG3BUI owner;

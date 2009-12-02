@@ -1,5 +1,5 @@
 
-package pg3b.tools;
+package pg3b.ui;
 
 import static com.esotericsoftware.minlog.Log.error;
 
@@ -55,10 +55,10 @@ import net.java.games.input.Component.Identifier;
 
 import pg3b.PG3B.Axis;
 import pg3b.PG3B.Button;
-import pg3b.tools.Config.Input;
-import pg3b.tools.ControllerPanel.Listener;
-import pg3b.tools.util.DirectoryMonitor;
-import pg3b.tools.util.UI;
+import pg3b.ui.Config.Input;
+import pg3b.ui.ControllerPanel.Listener;
+import pg3b.ui.util.DirectoryMonitor;
+import pg3b.ui.util.UI;
 
 import com.esotericsoftware.minlog.Log;
 

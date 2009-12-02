@@ -1,5 +1,5 @@
 
-package pg3b.tools;
+package pg3b.ui;
 
 import static com.esotericsoftware.minlog.Log.WARN;
 import static com.esotericsoftware.minlog.Log.error;
@@ -21,7 +21,7 @@ import pg3b.PG3B;
 import pg3b.XboxController;
 import pg3b.PG3B.Button;
 import pg3b.PG3B.Axis;
-import pg3b.tools.util.LoaderDialog;
+import pg3b.ui.util.LoaderDialog;
 
 import com.esotericsoftware.minlog.Log;
 
