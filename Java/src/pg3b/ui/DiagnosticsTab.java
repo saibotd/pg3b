@@ -1,9 +1,7 @@
 
-package pg3b.ui;
+package pg3b.ui.swing;
 
-import static com.esotericsoftware.minlog.Log.WARN;
-import static com.esotericsoftware.minlog.Log.error;
-import static com.esotericsoftware.minlog.Log.warn;
+import static com.esotericsoftware.minlog.Log.*;
 
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -11,17 +9,19 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 
 import javax.swing.JButton;
 import javax.swing.JPanel;
 
+import pg3b.Axis;
+import pg3b.AxisCalibration;
+import pg3b.Button;
 import pg3b.PG3B;
 import pg3b.XboxController;
-import pg3b.PG3B.Button;
-import pg3b.PG3B.Axis;
-import pg3b.ui.util.LoaderDialog;
+import pg3b.util.LoaderDialog;
 
 import com.esotericsoftware.minlog.Log;
 
@@ -88,7 +88,7 @@ public class DiagnosticsTab extends JPanel {
 		calibrateButton.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
 				new LoaderDialog("Calibration") {
-					LinkedHashMap<String, String> nameToURL = new LinkedHashMap();
+					LinkedHashMap<String, URL> nameToURL = new LinkedHashMap();
 
 					public void load () throws Exception {
 						CalibrationResultsFrame.close();
@@ -99,8 +99,8 @@ public class DiagnosticsTab extends JPanel {
 						for (Axis axis : values) {
 							setMessage("Calibrating " + axis + "...");
 							throwCancelled();
-							String url = pg3b.calibrate(axis, controller);
-							nameToURL.put(axis.toString(), url);
+							AxisCalibration calibration = pg3b.calibrate(axis, controller);
+							nameToURL.put(axis.toString(), calibration.getChartURL());
 							setPercentageComplete(++i / (float)values.length);
 						}
 					}

@@ -1,5 +1,5 @@
 
-package pg3b.ui;
+package pg3b.ui.swing;
 
 import static com.esotericsoftware.minlog.Log.error;
 
@@ -53,12 +53,16 @@ import net.java.games.input.Event;
 import net.java.games.input.EventQueue;
 import net.java.games.input.Component.Identifier;
 
-import pg3b.PG3B.Axis;
-import pg3b.PG3B.Button;
-import pg3b.ui.Config.Input;
-import pg3b.ui.ControllerPanel.Listener;
-import pg3b.ui.util.DirectoryMonitor;
-import pg3b.ui.util.UI;
+import pg3b.Axis;
+import pg3b.Button;
+import pg3b.ui.Config;
+import pg3b.ui.Input;
+import pg3b.ui.InputTrigger;
+import pg3b.ui.Script;
+import pg3b.ui.Settings;
+import pg3b.ui.swing.ControllerPanel.Listener;
+import pg3b.util.DirectoryMonitor;
+import pg3b.util.UI;
 
 import com.esotericsoftware.minlog.Log;
 
@@ -369,7 +373,7 @@ public class ConfigurationTab extends JPanel {
 			owner.getControllerPanel().removeListener(controllerPanelListener);
 		}
 
-		void monitorInput (boolean enable) {
+		void listenForTrigger (boolean enable) {
 			if (monitorInputTask != null) {
 				monitorInputTask.cancel();
 				monitorInputTask = null;
@@ -389,9 +393,9 @@ public class ConfigurationTab extends JPanel {
 							Component component = event.getComponent();
 							float value = event.getValue();
 							if (value != 0) {
-								String id = component.getIdentifier().toString();
-								if (id.equals(" ")) id = "Spacebar";
-								setInputComponent(component);
+								input.setTrigger(new InputTrigger(controller, component));
+								inputText.setText(input.getTrigger().toString());
+								inputText.setFont(inputText.getFont().deriveFont(Font.PLAIN));
 								disable = true;
 							}
 						}
@@ -401,19 +405,13 @@ public class ConfigurationTab extends JPanel {
 						monitorInputTask.cancel();
 						timer.schedule(new TimerTask() {
 							public void run () {
-								monitorInput(false);
+								listenForTrigger(false);
 							}
 						}, 300);
 					}
 				}
 			};
 			timer.scheduleAtFixedRate(monitorInputTask, 125, 125);
-		}
-
-		void setInputComponent (Object object) {
-			inputText.setText(object.toString());
-			inputText.setFont(inputText.getFont().deriveFont(Font.PLAIN));
-			
 		}
 
 		private void initializeEvents () {
@@ -453,7 +451,7 @@ public class ConfigurationTab extends JPanel {
 					if (monitorInputTask != null) return;
 					inputText.setText("Waiting for input...");
 					inputText.setFont(inputText.getFont().deriveFont(Font.ITALIC));
-					monitorInput(true);
+					listenForTrigger(true);
 				}
 			});
 

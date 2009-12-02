@@ -1,5 +1,5 @@
 
-package pg3b.ui;
+package pg3b.ui.swing;
 
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
@@ -18,7 +18,7 @@ import javax.swing.JScrollPane;
 
 import net.java.games.input.Controller;
 import pg3b.XboxController;
-import pg3b.ui.util.UI;
+import pg3b.util.UI;
 
 public class ConnectControllerDialog extends JDialog {
 	PG3BUI owner;

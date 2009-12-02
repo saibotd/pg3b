@@ -1,5 +1,5 @@
 
-package pg3b.ui.util;
+package pg3b.util;
 
 import java.awt.Dimension;
 import java.awt.EventQueue;

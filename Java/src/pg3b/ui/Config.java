@@ -8,9 +8,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import pg3b.PG3B.Axis;
-import pg3b.PG3B.Button;
-
 import net.sourceforge.yamlbeans.YamlConfig;
 import net.sourceforge.yamlbeans.YamlException;
 import net.sourceforge.yamlbeans.YamlReader;
@@ -135,39 +132,5 @@ public class Config implements Cloneable {
 			} catch (IOException ignored) {
 			}
 		}
-	}
-
-	static public class Input {
-		private String description;
-		private Script script;
-		private Enum target;
-
-		public String getDescription () {
-			return description;
-		}
-
-		public void setDescription (String description) {
-			this.description = description;
-		}
-
-		public Script getScript () {
-			return script;
-		}
-
-		public void setScript (Script script) {
-			this.script = script;
-		}
-
-		public Enum getTarget () {
-			return target;
-		}
-
-		public void setTarget (Enum target) {
-			if (!(target instanceof Button) && !(target instanceof Axis))
-				throw new IllegalArgumentException("target must be a button or axis.");
-			this.target = target;
-		}
-		
-		
 	}
 }

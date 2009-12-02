@@ -1,5 +1,5 @@
 
-package pg3b.ui;
+package pg3b.ui.swing;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -18,15 +18,15 @@ import java.util.Map.Entry;
 import javax.imageio.ImageIO;
 import javax.swing.JPanel;
 
+import pg3b.Axis;
+import pg3b.Button;
 import pg3b.PG3B;
+import pg3b.Stick;
 import pg3b.XboxController;
-import pg3b.PG3B.Axis;
-import pg3b.PG3B.Button;
-import pg3b.PG3B.Stick;
-import pg3b.ui.util.Listeners;
-import pg3b.ui.util.PackedImages;
-import pg3b.ui.util.Sound;
-import pg3b.ui.util.PackedImages.PackedImage;
+import pg3b.util.Listeners;
+import pg3b.util.PackedImages;
+import pg3b.util.Sound;
+import pg3b.util.PackedImages.PackedImage;
 
 public class ControllerPanel extends JPanel {
 	static public final String[] imageNames = {"y", "a", "b", "back", "guide", "leftShoulder", "leftStick", "leftTrigger",

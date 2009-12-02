@@ -1,5 +1,5 @@
 
-package pg3b.ui.util;
+package pg3b.util;
 
 public class Loader {
 	public volatile boolean cancelled;

@@ -1,5 +1,5 @@
 
-package pg3b.ui.util;
+package pg3b.util;
 
 import static com.esotericsoftware.minlog.Log.ERROR;
 import static com.esotericsoftware.minlog.Log.INFO;

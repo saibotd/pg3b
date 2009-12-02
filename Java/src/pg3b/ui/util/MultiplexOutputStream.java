@@ -1,5 +1,5 @@
 
-package pg3b.ui.util;
+package pg3b.util;
 
 import java.io.IOException;
 import java.io.OutputStream;

@@ -1,5 +1,5 @@
 
-package pg3b.ui;
+package pg3b.ui.swing;
 
 import java.awt.Color;
 import java.awt.GridBagConstraints;
@@ -21,12 +21,12 @@ import javax.swing.JOptionPane;
 public class CalibrationResultsFrame extends JFrame {
 	static private CalibrationResultsFrame openFrame;
 
-	Map<String, String> nameToURL;
+	Map<String, URL> nameToURL;
 	JComboBox chartCombo;
 	DefaultComboBoxModel chartComboModel;
 	JLabel imageLabel;
 
-	public CalibrationResultsFrame (Map<String, String> nameToURL) {
+	public CalibrationResultsFrame (Map<String, URL> nameToURL) {
 		super("PG3B - Calibration Results");
 		this.nameToURL = nameToURL;
 
@@ -43,11 +43,7 @@ public class CalibrationResultsFrame extends JFrame {
 	private void initializeEvents () {
 		chartCombo.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
-				try {
-					imageLabel.setIcon(new ImageIcon(new URL(nameToURL.get(chartCombo.getSelectedItem()))));
-				} catch (MalformedURLException ex) {
-					JOptionPane.showMessageDialog(CalibrationResultsFrame.this, "An error occurred downloading the chart image.");
-				}
+				imageLabel.setIcon(new ImageIcon(nameToURL.get(chartCombo.getSelectedItem())));
 			}
 		});
 	}

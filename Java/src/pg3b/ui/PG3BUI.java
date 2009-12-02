@@ -1,9 +1,7 @@
 
-package pg3b.ui;
+package pg3b.ui.swing;
 
-import static com.esotericsoftware.minlog.Log.DEBUG;
-import static com.esotericsoftware.minlog.Log.LEVEL_INFO;
-import static com.esotericsoftware.minlog.Log.debug;
+import static com.esotericsoftware.minlog.Log.*;
 
 import java.awt.EventQueue;
 import java.awt.GridBagConstraints;
@@ -31,8 +29,9 @@ import net.java.games.input.Controller;
 import pg3b.PG3B;
 import pg3b.XboxController;
 import pg3b.XboxController.Listener;
-import pg3b.ui.util.LoaderDialog;
-import pg3b.ui.util.MultiplexOutputStream;
+import pg3b.ui.Settings;
+import pg3b.util.LoaderDialog;
+import pg3b.util.MultiplexOutputStream;
 
 import com.esotericsoftware.minlog.Log;
 
@@ -95,7 +94,7 @@ public class PG3BUI extends JFrame {
 					}
 				});
 
-				XboxController.getAllControllers(); // Always load all the controllers at startup, not on the EDT.
+				XboxController.getAllControllers(); // Always load all the controllers at startup and not on the EDT.
 
 				boolean reconnectController = settings.controllerName != null && settings.controllerName.length() > 0;
 				if (reconnectController) {
@@ -304,15 +303,5 @@ public class PG3BUI extends JFrame {
 				new GridBagConstraints(0, 3, 1, 1, 1.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0,
 					0), 0, 0));
 		}
-	}
-
-	public static void main (String[] args) throws Exception {
-		Log.set(LEVEL_INFO);
-
-		FileOutputStream logOutput = new FileOutputStream("pg3b.log");
-		System.setOut(new PrintStream(new MultiplexOutputStream(System.out, logOutput), true));
-		System.setErr(new PrintStream(new MultiplexOutputStream(System.err, logOutput), true));
-
-		new PG3BUI().setVisible(true);
 	}
 }

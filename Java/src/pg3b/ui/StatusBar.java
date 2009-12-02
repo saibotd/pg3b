@@ -1,5 +1,5 @@
 
-package pg3b.ui;
+package pg3b.ui.swing;
 
 import java.awt.Color;
 import java.awt.EventQueue;

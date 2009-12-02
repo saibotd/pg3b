@@ -1,5 +1,5 @@
 
-package pg3b.ui;
+package pg3b.ui.swing;
 
 import static java.awt.GridBagConstraints.BOTH;
 import static java.awt.GridBagConstraints.CENTER;
@@ -26,8 +26,9 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 
-import pg3b.ui.util.DirectoryMonitor;
-import pg3b.ui.util.UI;
+import pg3b.ui.Script;
+import pg3b.util.DirectoryMonitor;
+import pg3b.util.UI;
 
 public class ScriptsTab extends JPanel {
 	DirectoryMonitor<Script> monitor;

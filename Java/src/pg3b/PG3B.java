@@ -1,11 +1,7 @@
 
 package pg3b;
 
-import static com.esotericsoftware.minlog.Log.DEBUG;
-import static com.esotericsoftware.minlog.Log.LEVEL_INFO;
-import static com.esotericsoftware.minlog.Log.TRACE;
-import static com.esotericsoftware.minlog.Log.debug;
-import static com.esotericsoftware.minlog.Log.trace;
+import static com.esotericsoftware.minlog.Log.*;
 import gnu.io.CommPort;
 import gnu.io.CommPortIdentifier;
 import gnu.io.SerialPort;
@@ -17,10 +13,23 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
 import java.util.Formatter;
+import java.util.HashMap;
 
 import com.esotericsoftware.minlog.Log;
 
 public class PG3B {
+	static private final HashMap<String, Target> nameToTarget = new HashMap();
+	static {
+		for (Axis axis : Axis.values()) {
+			nameToTarget.put(axis.name(), axis);
+			nameToTarget.put(axis.toString(), axis);
+		}
+		for (Button button : Button.values()) {
+			nameToTarget.put(button.name(), button);
+			nameToTarget.put(button.toString(), button);
+		}
+	}
+
 	private final SerialPort serialPort;
 	private int sequenceNumber;
 	private BufferedReader input;
@@ -138,6 +147,32 @@ public class PG3B {
 		set(axisY, stateY);
 	}
 
+	public void set (Target target, boolean pressed) throws IOException {
+		if (target instanceof Button)
+			set((Button)target, pressed);
+		else if (target instanceof Axis)
+			set((Axis)target, pressed ? 1 : 0);
+		else
+			throw new IllegalArgumentException("target must be a button or axis.");
+	}
+
+	public void set (Target target, float state) throws IOException {
+		if (target instanceof Button)
+			set((Button)target, state != 0);
+		else if (target instanceof Axis)
+			set((Axis)target, state);
+		else
+			throw new IllegalArgumentException("target must be a button or axis.");
+	}
+
+	public void set (String target, boolean pressed) throws IOException {
+		set(nameToTarget.get(target), pressed);
+	}
+
+	public void set (String target, float state) throws IOException {
+		set(nameToTarget.get(target), state);
+	}
+
 	public String getPort () {
 		return port;
 	}
@@ -146,7 +181,7 @@ public class PG3B {
 		if (serialPort != null) serialPort.close();
 	}
 
-	public String calibrate (Axis axis, XboxController controller) throws IOException {
+	public AxisCalibration calibrate (Axis axis, XboxController controller) throws IOException {
 		boolean isTrigger = axis == Axis.leftTrigger || axis == Axis.rightTrigger;
 		boolean isInverted = axis == Axis.leftStickY || axis == Axis.rightStickY;
 
@@ -183,21 +218,7 @@ public class PG3B {
 		calibrationTable[127] = zeroIndex;
 		calibrationTable[255] = plusOneIndex;
 
-		// BOZO - Move out of this class.
-		StringBuilder raw = new StringBuilder(1024);
-		StringBuilder calibrated = new StringBuilder(1024);
-		for (int i = 0; i <= 255; i += 2) {
-			int wiper = isInverted ? 255 - i : i;
-			raw.append((int)(actualValues[wiper] * 100 + 100) / 2);
-			raw.append(",");
-			calibrated.append((int)(actualValues[calibrationTable[wiper]] * 100 + 100) / 2);
-			calibrated.append(",");
-		}
-		raw.setLength(raw.length() - 1);
-		calibrated.setLength(calibrated.length() - 1);
-		return "http://chart.apis.google.com/chart?chs=640x320&chf=bg,s,ffffff|c,s,ffffff&chxt=x,y&"
-			+ "chxl=0:|0|63|127|191|255|1:|-1|0|1&cht=lc&chdl=Calibrated|Raw&chco=0000ff,ff0000&chdlp=b&chd=t:" + calibrated + "|"
-			+ raw;
+		return new AxisCalibration(calibrationTable, actualValues, isInverted);
 	}
 
 	private int findClosestIndex (float[] actualValues, int target) {
@@ -226,20 +247,6 @@ public class PG3B {
 			closestIndex += zeroCount / 2;
 		}
 		return closestIndex;
-	}
-
-	static public enum Button {
-		// Ordinals defined by firmware.
-		a, b, x, y, up, down, left, right, leftShoulder, rightShoulder, leftStick, rightStick, start, guide, back
-	}
-
-	static public enum Axis {
-		// Ordinals defined by firmware.
-		leftStickX, leftStickY, rightStickX, rightStickY, leftTrigger, rightTrigger
-	}
-
-	static public enum Stick {
-		left, right
 	}
 
 	static private enum Device {
