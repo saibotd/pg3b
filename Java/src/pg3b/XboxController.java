@@ -1,10 +1,10 @@
 
 package pg3b;
 
-import static com.esotericsoftware.minlog.Log.*;
+import static com.esotericsoftware.minlog.Log.TRACE;
+import static com.esotericsoftware.minlog.Log.trace;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 import net.java.games.input.Component;
@@ -14,37 +14,11 @@ import net.java.games.input.Event;
 import net.java.games.input.EventQueue;
 import net.java.games.input.Component.Identifier;
 import pg3b.PG3B.Button;
-import pg3b.PG3B.Target;
+import pg3b.PG3B.Axis;
 import pg3b.tools.util.Listeners;
 
 public class XboxController {
 	static final int DPAD_UP = 4, DPAD_DOWN = 8, DPAD_LEFT = 16, DPAD_RIGHT = 32;
-
-	static final HashMap<Identifier.Button, Button> idToButton = new HashMap();
-	{
-		idToButton.put(Identifier.Button._0, Button.a);
-		idToButton.put(Identifier.Button._1, Button.b);
-		idToButton.put(Identifier.Button._2, Button.x);
-		idToButton.put(Identifier.Button._3, Button.y);
-		idToButton.put(Identifier.Button._4, Button.leftShoulder);
-		idToButton.put(Identifier.Button._5, Button.rightShoulder);
-		idToButton.put(Identifier.Button._6, Button.back);
-		idToButton.put(Identifier.Button._8, Button.leftStick);
-		idToButton.put(Identifier.Button._9, Button.rightStick);
-	}
-
-	static final HashMap<Button, Identifier.Button> buttonToID = new HashMap();
-	{
-		buttonToID.put(Button.a, Identifier.Button._0);
-		buttonToID.put(Button.b, Identifier.Button._1);
-		buttonToID.put(Button.x, Identifier.Button._2);
-		buttonToID.put(Button.y, Identifier.Button._3);
-		buttonToID.put(Button.leftShoulder, Identifier.Button._4);
-		buttonToID.put(Button.rightShoulder, Identifier.Button._5);
-		buttonToID.put(Button.back, Identifier.Button._6);
-		buttonToID.put(Button.leftStick, Identifier.Button._8);
-		buttonToID.put(Button.rightStick, Identifier.Button._9);
-	}
 
 	private final Controller controller;
 	int dpadDirection;
@@ -53,12 +27,12 @@ public class XboxController {
 	public static void main (String[] args) throws Exception {
 		XboxController controller = new XboxController(getAllControllers().get(0));
 		controller.addListener(new Listener() {
-			public void button (Button button, boolean pressed) {
+			public void buttonChanged (Button button, boolean pressed) {
 				System.out.println(button + " " + pressed);
 			}
 
-			public void target (Target target, float state) {
-				System.out.println(target + " " + state);
+			public void axisChanged (Axis axis, float state) {
+				System.out.println(axis + " " + state);
 			}
 		});
 		while (true) {
@@ -118,10 +92,10 @@ public class XboxController {
 		return controller.getComponent(id).getPollData() != 0;
 	}
 
-	public float get (Target target) {
+	public float get (Axis axis) {
 		if (!poll()) return 0;
 		Identifier.Axis id = null;
-		switch (target) {
+		switch (axis) {
 		case leftStickX:
 			id = Identifier.Axis.X;
 			break;
@@ -137,8 +111,8 @@ public class XboxController {
 		case leftTrigger:
 		case rightTrigger:
 			float value = controller.getComponent(Identifier.Axis.Z).getPollData();
-			if (value > 0) return target == Target.leftTrigger ? value : 0;
-			return target == Target.rightTrigger ? -value : 0;
+			if (value > 0) return axis == Axis.leftTrigger ? value : 0;
+			return axis == Axis.rightTrigger ? -value : 0;
 		}
 		return controller.getComponent(id).getPollData();
 	}
@@ -157,7 +131,7 @@ public class XboxController {
 			float value = event.getValue();
 
 			if (id instanceof Identifier.Button) {
-				notifyListeners(idToButton.get(id), value != 0);
+				notifyListeners(getButton((Identifier.Button)id), value != 0);
 				continue;
 			}
 
@@ -182,14 +156,14 @@ public class XboxController {
 			}
 
 			if (id instanceof Identifier.Axis) {
-				Target target = null;
-				if (id == Identifier.Axis.X) target = Target.leftStickX;
-				if (id == Identifier.Axis.Y) target = Target.leftStickY;
-				if (id == Identifier.Axis.RX) target = Target.rightStickX;
-				if (id == Identifier.Axis.RY) target = Target.rightStickY;
-				if (id == Identifier.Axis.Z) target = value < 0 ? Target.leftTrigger : Target.rightTrigger;
-				if (target != null) {
-					notifyListeners(target, value);
+				Axis axis = null;
+				if (id == Identifier.Axis.X) axis = Axis.leftStickX;
+				if (id == Identifier.Axis.Y) axis = Axis.leftStickY;
+				if (id == Identifier.Axis.RX) axis = Axis.rightStickX;
+				if (id == Identifier.Axis.RY) axis = Axis.rightStickY;
+				if (id == Identifier.Axis.Z) axis = value < 0 ? Axis.leftTrigger : Axis.rightTrigger;
+				if (axis != null) {
+					notifyListeners(axis, value);
 					continue;
 				}
 			}
@@ -200,13 +174,13 @@ public class XboxController {
 	private void notifyListeners (Button button, boolean pressed) {
 		Listener[] listeners = this.listeners.toArray();
 		for (int i = 0, n = listeners.length; i < n; i++)
-			listeners[i].button(button, pressed);
+			listeners[i].buttonChanged(button, pressed);
 	}
 
-	private void notifyListeners (Target target, float state) {
+	private void notifyListeners (Axis axis, float state) {
 		Listener[] listeners = this.listeners.toArray();
 		for (int i = 0, n = listeners.length; i < n; i++)
-			listeners[i].target(target, state);
+			listeners[i].axisChanged(axis, state);
 	}
 
 	public void addListener (Listener listener) {
@@ -217,6 +191,19 @@ public class XboxController {
 	public void removeListener (Listener listener) {
 		listeners.removeListener(listener);
 		if (TRACE) trace("pg3b", "XboxController listener removed: " + listener.getClass().getName());
+	}
+
+	private Button getButton (Identifier.Button id) {
+		if (id == Identifier.Button._0) return Button.a;
+		if (id == Identifier.Button._1) return Button.b;
+		if (id == Identifier.Button._2) return Button.x;
+		if (id == Identifier.Button._3) return Button.y;
+		if (id == Identifier.Button._4) return Button.leftShoulder;
+		if (id == Identifier.Button._5) return Button.rightShoulder;
+		if (id == Identifier.Button._6) return Button.back;
+		if (id == Identifier.Button._8) return Button.leftStick;
+		if (id == Identifier.Button._9) return Button.rightStick;
+		throw new IllegalArgumentException("Unknown button ID: " + id);
 	}
 
 	public int getPort () {
@@ -238,13 +225,13 @@ public class XboxController {
 	}
 
 	static public class Listener {
-		public void button (Button button, boolean pressed) {
+		public void buttonChanged (Button button, boolean pressed) {
 		}
 
 		public void disconnected () {
 		}
 
-		public void target (Target target, float state) {
+		public void axisChanged (Axis axis, float state) {
 		}
 	}
 }

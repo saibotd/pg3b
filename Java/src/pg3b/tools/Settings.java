@@ -1,7 +1,10 @@
 
 package pg3b.tools;
 
-import static com.esotericsoftware.minlog.Log.*;
+import static com.esotericsoftware.minlog.Log.ERROR;
+import static com.esotericsoftware.minlog.Log.WARN;
+import static com.esotericsoftware.minlog.Log.error;
+import static com.esotericsoftware.minlog.Log.warn;
 
 import java.io.File;
 import java.io.FileReader;

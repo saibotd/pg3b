@@ -1,7 +1,9 @@
 
 package pg3b.tools;
 
-import static com.esotericsoftware.minlog.Log.*;
+import static com.esotericsoftware.minlog.Log.WARN;
+import static com.esotericsoftware.minlog.Log.error;
+import static com.esotericsoftware.minlog.Log.warn;
 
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -18,7 +20,7 @@ import javax.swing.JPanel;
 import pg3b.PG3B;
 import pg3b.XboxController;
 import pg3b.PG3B.Button;
-import pg3b.PG3B.Target;
+import pg3b.PG3B.Axis;
 import pg3b.tools.util.LoaderDialog;
 
 import com.esotericsoftware.minlog.Log;
@@ -60,15 +62,15 @@ public class DiagnosticsTab extends JPanel {
 							status.put(button.toString(), success);
 						}
 
-						for (Target target : Target.values()) {
-							setMessage("Testing " + target + "...");
+						for (Axis axis : Axis.values()) {
+							setMessage("Testing " + axis + "...");
 							throwCancelled();
-							boolean success = waitForTarget(pg3b, controller, target, 0);
+							boolean success = waitForAxis(pg3b, controller, axis, 0);
 							throwCancelled();
-							if (success) success = waitForTarget(pg3b, controller, target, 1);
+							if (success) success = waitForAxis(pg3b, controller, axis, 1);
 							throwCancelled();
-							if (success) success = waitForTarget(pg3b, controller, target, 0);
-							status.put(target.toString(), success);
+							if (success) success = waitForAxis(pg3b, controller, axis, 0);
+							status.put(axis.toString(), success);
 						}
 
 						owner.getControllerPanel().setStatus(status);
@@ -93,12 +95,12 @@ public class DiagnosticsTab extends JPanel {
 						PG3B pg3b = owner.getPg3b();
 						XboxController controller = owner.getController();
 						int i = 0;
-						Target[] values = Target.values();
-						for (Target target : values) {
-							setMessage("Calibrating " + target + "...");
+						Axis[] values = Axis.values();
+						for (Axis axis : values) {
+							setMessage("Calibrating " + axis + "...");
 							throwCancelled();
-							String url = pg3b.calibrate(target, controller);
-							nameToURL.put(target.toString(), url);
+							String url = pg3b.calibrate(axis, controller);
+							nameToURL.put(axis.toString(), url);
 							setPercentageComplete(++i / (float)values.length);
 						}
 					}
@@ -132,20 +134,20 @@ public class DiagnosticsTab extends JPanel {
 		}
 	}
 
-	boolean waitForTarget (PG3B pg3b, XboxController controller, Target target, float value) {
+	boolean waitForAxis (PG3B pg3b, XboxController controller, Axis axis, float value) {
 		try {
-			pg3b.set(target, value);
+			pg3b.set(axis, value);
 			long startTime = System.currentTimeMillis();
-			while (Math.abs(controller.get(target) - value) > 0.05f) {
+			while (Math.abs(controller.get(axis) - value) > 0.05f) {
 				if (System.currentTimeMillis() - startTime > TIMEOUT) {
-					if (WARN) warn("Timed out setting target: " + target);
+					if (WARN) warn("Timed out setting axis: " + axis);
 					return false;
 				}
 				Thread.yield();
 			}
 			return true;
 		} catch (IOException ex) {
-			if (Log.ERROR) error("Error setting target: " + target, ex);
+			if (Log.ERROR) error("Error setting axis: " + axis, ex);
 			return false;
 		}
 	}

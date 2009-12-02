@@ -1,7 +1,12 @@
 
 package pg3b.tools;
 
-import static java.awt.GridBagConstraints.*;
+import static java.awt.GridBagConstraints.BOTH;
+import static java.awt.GridBagConstraints.CENTER;
+import static java.awt.GridBagConstraints.EAST;
+import static java.awt.GridBagConstraints.HORIZONTAL;
+import static java.awt.GridBagConstraints.NONE;
+import static java.awt.GridBagConstraints.NORTHEAST;
 
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -9,6 +14,7 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.io.File;
+import java.util.List;
 
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
@@ -18,11 +24,13 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
 
 import pg3b.tools.util.DirectoryMonitor;
 import pg3b.tools.util.UI;
 
 public class ScriptsTab extends JPanel {
+	DirectoryMonitor<Script> monitor;
 	private JList scriptsList;
 	DefaultComboBoxModel scriptsListModel;
 	private JTextArea scriptDescriptionText, scriptText;
@@ -32,7 +40,7 @@ public class ScriptsTab extends JPanel {
 	public ScriptsTab () {
 		initializeLayout();
 
-		new DirectoryMonitor<Script>(".script") {
+		monitor = new DirectoryMonitor<Script>(".script") {
 			protected Script load (File file) {
 				return new Script(file);
 			}
@@ -42,7 +50,12 @@ public class ScriptsTab extends JPanel {
 				for (Script script : getItems())
 					scriptsListModel.addElement(script);
 			}
-		}.scan(new File("scripts"), 3000);
+		};
+		monitor.scan(new File("scripts"), 3000);
+	}
+
+	public List<Script> getScripts () {
+		return monitor.getItems();
 	}
 
 	private void initializeLayout () {
@@ -54,8 +67,10 @@ public class ScriptsTab extends JPanel {
 			scroll.setPreferredSize(new Dimension(150, 3));
 			scroll.setMaximumSize(new Dimension(150, 3));
 			{
-				scroll.setViewportView(scriptsList = new JList());
+				scriptsList = new JList();
+				scroll.setViewportView(scriptsList);
 				scriptsList.setModel(scriptsListModel = new DefaultComboBoxModel());
+				scriptsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 			}
 		}
 		{

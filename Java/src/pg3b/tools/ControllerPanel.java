@@ -22,7 +22,7 @@ import pg3b.PG3B;
 import pg3b.XboxController;
 import pg3b.PG3B.Button;
 import pg3b.PG3B.Stick;
-import pg3b.PG3B.Target;
+import pg3b.PG3B.Axis;
 import pg3b.XboxController.Listener;
 import pg3b.tools.util.PackedImages;
 import pg3b.tools.util.Sound;
@@ -48,11 +48,11 @@ public class ControllerPanel extends JPanel {
 	BufferedImage checkImage, xImage;
 
 	Listener controllerListener = new Listener() {
-		public void button (Button button, boolean pressed) {
+		public void buttonChanged (Button button, boolean pressed) {
 			repaint();
 		}
 
-		public void target (Target target, float state) {
+		public void axisChanged (Axis axis, float state) {
 			repaint();
 		}
 	};
@@ -120,13 +120,13 @@ public class ControllerPanel extends JPanel {
 
 				int x = event.getX(), y = event.getY();
 				if (dragStartX == -1) {
-					if (dragObject == Target.leftTrigger || dragObject == Target.rightTrigger) {
+					if (dragObject == Axis.leftTrigger || dragObject == Axis.rightTrigger) {
 						dragStartX = x;
 						dragStartY = y;
-					} else if (dragObject == Target.leftStickX) {
+					} else if (dragObject == Axis.leftStickX) {
 						dragStartX = 63;
 						dragStartY = 191;
-					} else if (dragObject == Target.rightStickX) {
+					} else if (dragObject == Axis.rightStickX) {
 						dragStartX = 331;
 						dragStartY = 275;
 					} else if (dragObject instanceof Button) {
@@ -136,14 +136,14 @@ public class ControllerPanel extends JPanel {
 					repaint();
 				}
 
-				if (dragObject == Target.leftTrigger || dragObject == Target.rightTrigger) {
+				if (dragObject == Axis.leftTrigger || dragObject == Axis.rightTrigger) {
 					float value = Math.max(0, Math.min(stickDistance, y - dragStartY)) / (float)stickDistance;
 					if (value != lastTriggerValue) {
-						triggerDragged((Target)dragObject, value);
+						triggerDragged((Axis)dragObject, value);
 						lastTriggerValue = value;
 					}
 
-				} else if (dragObject == Target.leftStickX || dragObject == Target.rightStickX) {
+				} else if (dragObject == Axis.leftStickX || dragObject == Axis.rightStickX) {
 					float valueX = 0;
 					if (Math.abs(x - dragStartX) > deadzone) {
 						valueX = x - dragStartX;
@@ -151,7 +151,7 @@ public class ControllerPanel extends JPanel {
 						valueX = Math.max(-stickDistance, Math.min(stickDistance, valueX)) / (float)stickDistance;
 					}
 					if (valueX != lastValueX) {
-						stickDragged((Target)dragObject, valueX);
+						stickDragged((Axis)dragObject, valueX);
 						lastValueX = valueX;
 					}
 
@@ -162,8 +162,8 @@ public class ControllerPanel extends JPanel {
 						valueY = Math.max(-stickDistance, Math.min(stickDistance, valueY)) / (float)stickDistance;
 					}
 					if (valueY != lastValueY) {
-						Target targetY = dragObject == Target.leftStickX ? Target.leftStickY : Target.rightStickY;
-						stickDragged(targetY, valueY);
+						Axis axisY = dragObject == Axis.leftStickX ? Axis.leftStickY : Axis.rightStickY;
+						stickDragged(axisY, valueY);
 						lastValueY = valueY;
 					}
 
@@ -194,12 +194,12 @@ public class ControllerPanel extends JPanel {
 				if (dragStartX != -1) {
 					dragStartX = dragStartY = -1;
 					Object dragObject = getDragObject();
-					if (dragObject == Target.leftTrigger || dragObject == Target.rightTrigger) {
-						triggerDragged((Target)dragObject, 0);
-					} else if (dragObject == Target.leftStickX || dragObject == Target.rightStickX) {
-						stickDragged((Target)dragObject, 0);
-						Target targetY = dragObject == Target.leftStickX ? Target.leftStickY : Target.rightStickY;
-						stickDragged(targetY, 0);
+					if (dragObject == Axis.leftTrigger || dragObject == Axis.rightTrigger) {
+						triggerDragged((Axis)dragObject, 0);
+					} else if (dragObject == Axis.leftStickX || dragObject == Axis.rightStickX) {
+						stickDragged((Axis)dragObject, 0);
+						Axis axisY = dragObject == Axis.leftStickX ? Axis.leftStickY : Axis.rightStickY;
+						stickDragged(axisY, 0);
 					} else if (dragObject instanceof Button) {
 						if ((dpadDirection & DPAD_RIGHT) == DPAD_RIGHT) buttonClicked(Button.right, false);
 						if ((dpadDirection & DPAD_LEFT) == DPAD_LEFT) buttonClicked(Button.left, false);
@@ -219,8 +219,8 @@ public class ControllerPanel extends JPanel {
 			public void mouseClicked (MouseEvent event) {
 				if (overImageName != null && clickOnlyButtons.contains(overImageName)) {
 					if (overImageName.endsWith("Trigger")) {
-						triggerDragged(Target.valueOf(overImageName), 1);
-						triggerDragged(Target.valueOf(overImageName), 0);
+						triggerDragged(Axis.valueOf(overImageName), 1);
+						triggerDragged(Axis.valueOf(overImageName), 0);
 						if (pg3b != null) Sound.play("click");
 					} else {
 						Button stickButton = Button.valueOf(overImageName);
@@ -235,19 +235,19 @@ public class ControllerPanel extends JPanel {
 
 	}
 
-	protected void triggerDragged (Target target, float value) {
+	protected void triggerDragged (Axis axis, float value) {
 		repaint();
 		try {
-			if (pg3b != null) pg3b.set(target, value);
+			if (pg3b != null) pg3b.set(axis, value);
 		} catch (IOException ex) {
 			ex.printStackTrace();
 		}
 	}
 
-	protected void stickDragged (Target target, float value) {
+	protected void stickDragged (Axis axis, float value) {
 		repaint();
 		try {
-			if (pg3b != null) pg3b.set(target, value);
+			if (pg3b != null) pg3b.set(axis, value);
 		} catch (IOException ex) {
 			ex.printStackTrace();
 		}
@@ -274,10 +274,10 @@ public class ControllerPanel extends JPanel {
 
 	Object getDragObject () {
 		if (overImageName == null) return null;
-		if (overImageName.equals("leftStick")) return Target.leftStickX;
-		if (overImageName.equals("rightStick")) return Target.rightStickX;
-		if (overImageName.equals("leftTrigger")) return Target.leftTrigger;
-		if (overImageName.equals("rightTrigger")) return Target.rightTrigger;
+		if (overImageName.equals("leftStick")) return Axis.leftStickX;
+		if (overImageName.equals("rightStick")) return Axis.rightStickX;
+		if (overImageName.equals("leftTrigger")) return Axis.leftTrigger;
+		if (overImageName.equals("rightTrigger")) return Axis.rightTrigger;
 		if (overImageName.equals("up")) return Button.up;
 		if (overImageName.equals("down")) return Button.down;
 		if (overImageName.equals("left")) return Button.left;
@@ -299,29 +299,29 @@ public class ControllerPanel extends JPanel {
 			if (overImageName != null) packedImages.get(overImageName).draw(g, 0, 0);
 		}
 
-		float leftTrigger = controller == null ? 0 : controller.get(Target.leftTrigger);
-		float rightTrigger = controller == null ? 0 : controller.get(Target.rightTrigger);
-		float leftStickX = controller == null ? 0 : controller.get(Target.leftStickX);
-		float leftStickY = controller == null ? 0 : controller.get(Target.leftStickY);
-		float rightStickX = controller == null ? 0 : controller.get(Target.rightStickX);
-		float rightStickY = controller == null ? 0 : controller.get(Target.rightStickY);
+		float leftTrigger = controller == null ? 0 : controller.get(Axis.leftTrigger);
+		float rightTrigger = controller == null ? 0 : controller.get(Axis.rightTrigger);
+		float leftStickX = controller == null ? 0 : controller.get(Axis.leftStickX);
+		float leftStickY = controller == null ? 0 : controller.get(Axis.leftStickY);
+		float rightStickX = controller == null ? 0 : controller.get(Axis.rightStickX);
+		float rightStickY = controller == null ? 0 : controller.get(Axis.rightStickY);
 		if (dragStartX != -1) {
 			Object dragObject = getDragObject();
-			if (dragObject == Target.leftTrigger)
+			if (dragObject == Axis.leftTrigger)
 				leftTrigger = lastTriggerValue;
-			else if (dragObject == Target.rightTrigger)
+			else if (dragObject == Axis.rightTrigger)
 				rightTrigger = lastTriggerValue;
-			else if (dragObject == Target.leftStickX) {
+			else if (dragObject == Axis.leftStickX) {
 				leftStickX = lastValueX;
 				leftStickY = lastValueY;
-			} else if (dragObject == Target.rightStickX) {
+			} else if (dragObject == Axis.rightStickX) {
 				rightStickX = lastValueX;
 				rightStickY = lastValueY;
 			}
 		}
 		g.setColor(Color.black);
-		drawTrigger(g, Target.leftTrigger, leftTrigger);
-		drawTrigger(g, Target.rightTrigger, rightTrigger);
+		drawTrigger(g, Axis.leftTrigger, leftTrigger);
+		drawTrigger(g, Axis.rightTrigger, rightTrigger);
 		drawStickArrows(g, Stick.left, leftStickX, leftStickY);
 		drawStickArrows(g, Stick.right, rightStickX, rightStickY);
 
@@ -352,10 +352,10 @@ public class ControllerPanel extends JPanel {
 			packedImages.get("crosshair").draw(g, dragStartX - 11, dragStartY - 11);
 	}
 
-	private void drawTrigger (Graphics g, Target target, float value) {
+	private void drawTrigger (Graphics g, Axis axis, float value) {
 		if ((int)(value * 100) == 0) return;
-		packedImages.get(target.toString()).draw(g, 0, 0);
-		drawString(g, toPercent(value), target == Target.leftTrigger ? 104 : 392, 32);
+		packedImages.get(axis.toString()).draw(g, 0, 0);
+		drawString(g, toPercent(value), axis == Axis.leftTrigger ? 104 : 392, 32);
 	}
 
 	private void drawStickArrows (Graphics g, Stick stick, float valueX, float valueY) {

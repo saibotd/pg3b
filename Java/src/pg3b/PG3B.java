@@ -1,7 +1,11 @@
 
 package pg3b;
 
-import static com.esotericsoftware.minlog.Log.*;
+import static com.esotericsoftware.minlog.Log.DEBUG;
+import static com.esotericsoftware.minlog.Log.LEVEL_INFO;
+import static com.esotericsoftware.minlog.Log.TRACE;
+import static com.esotericsoftware.minlog.Log.debug;
+import static com.esotericsoftware.minlog.Log.trace;
 import gnu.io.CommPort;
 import gnu.io.CommPortIdentifier;
 import gnu.io.SerialPort;
@@ -13,8 +17,6 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
 import java.util.Formatter;
-
-import net.java.games.input.Version;
 
 import com.esotericsoftware.minlog.Log;
 
@@ -110,30 +112,30 @@ public class PG3B {
 		action(actionCode);
 	}
 
-	public void set (Target target, float state) throws IOException {
-		if (target == null) throw new IllegalArgumentException("target cannot be null.");
+	public void set (Axis axis, float state) throws IOException {
+		if (axis == null) throw new IllegalArgumentException("axis cannot be null.");
 		if (state < -1 || state > 1) throw new IllegalArgumentException("state must be between -1 and 1 (inclusive): " + state);
 
-		if (DEBUG) debug("pg3b", "Target " + target + ": " + state);
+		if (DEBUG) debug("pg3b", "Axis " + axis + ": " + state);
 
 		float wiperValue;
-		if (target == Target.leftTrigger || target == Target.rightTrigger)
+		if (axis == Axis.leftTrigger || axis == Axis.rightTrigger)
 			wiperValue = 255 - state * 255;
 		else {
 			wiperValue = (state + 1) * 127;
-			if (target != Target.leftStickY && target != Target.rightStickY) wiperValue = 255 - wiperValue;
+			if (axis != Axis.leftStickY && axis != Axis.rightStickY) wiperValue = 255 - wiperValue;
 		}
 
-		short actionKey = getActionKey(Device.xbox, (short)target.ordinal());
+		short actionKey = getActionKey(Device.xbox, (short)axis.ordinal());
 		short actionCode = getActionCode(actionKey, (short)wiperValue);
 		action(actionCode);
 	}
 
 	public void set (Stick stick, float stateX, float stateY) throws IOException {
-		Target targetX = stick == Stick.left ? Target.leftStickX : Target.rightStickX;
-		Target targetY = stick == Stick.left ? Target.leftStickY : Target.rightStickY;
-		set(targetX, stateX);
-		set(targetY, stateY);
+		Axis axisX = stick == Stick.left ? Axis.leftStickX : Axis.rightStickX;
+		Axis axisY = stick == Stick.left ? Axis.leftStickY : Axis.rightStickY;
+		set(axisX, stateX);
+		set(axisY, stateY);
 	}
 
 	public String getPort () {
@@ -144,27 +146,27 @@ public class PG3B {
 		if (serialPort != null) serialPort.close();
 	}
 
-	public String calibrate (Target target, XboxController controller) throws IOException {
-		boolean isTrigger = target == Target.leftTrigger || target == Target.rightTrigger;
-		boolean isInverted = target == Target.leftStickY || target == Target.rightStickY;
+	public String calibrate (Axis axis, XboxController controller) throws IOException {
+		boolean isTrigger = axis == Axis.leftTrigger || axis == Axis.rightTrigger;
+		boolean isInverted = axis == Axis.leftStickY || axis == Axis.rightStickY;
 
 		if (isTrigger) {
 			// The triggers are mapped to the same Z axis by the MS driver and interfere with each other if not zero.
-			set(Target.leftTrigger, 0);
-			set(Target.rightTrigger, 0);
+			set(Axis.leftTrigger, 0);
+			set(Axis.rightTrigger, 0);
 		}
 
 		float[] actualValues = new float[256];
 		for (int wiper = 0; wiper <= 255; wiper++) {
 			float deflection = isTrigger ? wiper / 255f : wiper / 255f * 2 - 1;
-			set(target, deflection);
+			set(axis, deflection);
 			try {
 				Thread.sleep(16);
 			} catch (InterruptedException ignored) {
 			}
-			actualValues[isInverted ? 255 - wiper : wiper] = controller.get(target);
+			actualValues[isInverted ? 255 - wiper : wiper] = controller.get(axis);
 		}
-		set(target, 0);
+		set(axis, 0);
 
 		int[] calibrationTable = new int[256];
 		int minusOneIndex = findClosestIndex(actualValues, -1);
@@ -231,7 +233,7 @@ public class PG3B {
 		a, b, x, y, up, down, left, right, leftShoulder, rightShoulder, leftStick, rightStick, start, guide, back
 	}
 
-	static public enum Target {
+	static public enum Axis {
 		// Ordinals defined by firmware.
 		leftStickX, leftStickY, rightStickX, rightStickY, leftTrigger, rightTrigger
 	}
@@ -272,9 +274,9 @@ public class PG3B {
 		PG3B pg3b = new PG3B("COM3");
 
 		for (float i = -1; i <= 1; i += 0.05) {
-			pg3b.set(Target.leftStickX, i);
+			pg3b.set(Axis.leftStickX, i);
 			Thread.sleep(50);
-			float value = controller.get(Target.leftStickX);
+			float value = controller.get(Axis.leftStickX);
 			System.out.println(i + ", " + value);
 		}
 

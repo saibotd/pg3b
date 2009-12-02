@@ -8,8 +8,6 @@ import javax.swing.JOptionPane;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import pg3b.tools.ConnectPG3BDialog;
-
 public class UI {
 	static public void enableWhenListHasSelection (final JList list, final Component... components) {
 		list.addListSelectionListener(new ListSelectionListener() {

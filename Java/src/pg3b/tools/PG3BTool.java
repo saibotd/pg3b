@@ -1,7 +1,9 @@
 
 package pg3b.tools;
 
-import static com.esotericsoftware.minlog.Log.*;
+import static com.esotericsoftware.minlog.Log.DEBUG;
+import static com.esotericsoftware.minlog.Log.LEVEL_INFO;
+import static com.esotericsoftware.minlog.Log.debug;
 
 import java.awt.EventQueue;
 import java.awt.GridBagConstraints;
@@ -159,6 +161,10 @@ public class PG3BTool extends JFrame {
 
 	public JToggleButton getCaptureButton () {
 		return captureButton;
+	}
+
+	public ScriptsTab getScriptsTab () {
+		return scriptsTab;
 	}
 
 	private void initializeEvents () {

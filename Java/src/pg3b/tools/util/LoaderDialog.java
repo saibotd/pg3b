@@ -1,7 +1,8 @@
 
 package pg3b.tools.util;
 
-import static com.esotericsoftware.minlog.Log.*;
+import static com.esotericsoftware.minlog.Log.ERROR;
+import static com.esotericsoftware.minlog.Log.error;
 
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
