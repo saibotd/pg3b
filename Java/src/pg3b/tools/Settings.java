@@ -22,10 +22,11 @@ public class Settings {
 	public String pg3bPort;
 	public int controllerPort;
 	public String controllerName;
+	public String lastConfig;
 
 	static private Settings instance;
 	static private final String actualSettingsVersion = "1";
-	static private final String fileName = "pg3b.config";
+	static private final String fileName = "pg3b.settings";
 	static private final YamlConfig yamlConfig = new YamlConfig();
 	static {
 		yamlConfig.writeConfig.setWriteRootTags(false);

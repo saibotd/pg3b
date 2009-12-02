@@ -7,6 +7,7 @@ import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -14,6 +15,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -50,6 +53,7 @@ public class ConfigurationTab extends JPanel {
 	CardLayout cardLayout;
 	private ConfigCard configCard;
 	private InputCard inputCard;
+	Settings settings = Settings.get();
 
 	public ConfigurationTab (PG3BTool owner) {
 		this.owner = owner;
@@ -87,6 +91,14 @@ public class ConfigurationTab extends JPanel {
 				}
 			};
 			monitor.scan(rootDir, 3000);
+
+			for (Config config : monitor.getItems()) {
+				if (config.getName().equals(settings.lastConfig)) {
+					configsList.setSelectedValue(config, true);
+					break;
+				}
+			}
+			if (configsList.getSelectedIndex() == -1 && configsListModel.getSize() > 0) configsList.setSelectedIndex(0);
 		}
 
 		private void initializeEvents () {
@@ -103,6 +115,11 @@ public class ConfigurationTab extends JPanel {
 					inputsTableModel.setRowCount(0);
 					for (Input input : config.getInputs())
 						inputsTableModel.addRow(new Object[] {input.getDescription()});
+
+					if (!config.getName().equals(settings.lastConfig)) {
+						settings.lastConfig = config.getName();
+						Settings.save();
+					}
 				}
 			});
 
@@ -141,6 +158,7 @@ public class ConfigurationTab extends JPanel {
 						JOptionPane.WARNING_MESSAGE) != JOptionPane.YES_OPTION) return;
 					config.getFile().delete();
 					monitor.scan(rootDir);
+					if (configsList.getSelectedIndex() == -1 && configsListModel.getSize() > 0) configsList.setSelectedIndex(0);
 				}
 			});
 
@@ -328,6 +346,19 @@ public class ConfigurationTab extends JPanel {
 					scriptCombo.setSelectedItem(null);
 				}
 			});
+
+			inputText.addMouseListener(new MouseAdapter() {
+				public void mouseClicked (MouseEvent event) {
+					inputText.setText("Waiting for input...");
+					inputText.setFont(inputText.getFont().deriveFont(Font.ITALIC));
+				}
+			});
+			
+			cancelButton.addActionListener(new ActionListener() {
+				public void actionPerformed (ActionEvent event) {
+					cardLayout.show(ConfigurationTab.this, "configCard");
+				}
+			});
 		}
 
 		private void initializeLayout () {
@@ -354,10 +385,10 @@ public class ConfigurationTab extends JPanel {
 			{
 				JLabel label = new JLabel("Action:");
 				inputPanel.add(label, new GridBagConstraints(1, 2, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHEAST,
-					GridBagConstraints.NONE, new Insets(0, 6, 6, 0), 0, 0));
+					GridBagConstraints.NONE, new Insets(4, 6, 6, 0), 0, 0));
 			}
 			{
-				JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 6, 6));
+				JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 6, 0));
 				inputPanel.add(panel, new GridBagConstraints(2, 3, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
 					new Insets(0, 0, 6, 6), 0, 0));
 				{
@@ -371,7 +402,7 @@ public class ConfigurationTab extends JPanel {
 				}
 			}
 			{
-				JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 6, 6));
+				JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 6, 0));
 				inputPanel.add(panel, new GridBagConstraints(2, 2, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
 					new Insets(0, 0, 6, 6), 0, 0));
 				{

@@ -1,10 +1,7 @@
 
 package pg3b.tools;
 
-import static com.esotericsoftware.minlog.Log.DEBUG;
-import static com.esotericsoftware.minlog.Log.WARN;
-import static com.esotericsoftware.minlog.Log.debug;
-import static com.esotericsoftware.minlog.Log.warn;
+import static com.esotericsoftware.minlog.Log.*;
 import gnu.io.CommPortIdentifier;
 import gnu.io.PortInUseException;
 
@@ -31,6 +28,7 @@ import pg3b.tools.util.UI;
 public class ConnectPG3BDialog extends JDialog {
 	PG3BTool owner;
 	JList portList;
+	private JButton refreshButton;
 	DefaultComboBoxModel portListModel;
 	PG3B pg3b;
 	private JButton connectButton, cancelButton;
@@ -42,6 +40,11 @@ public class ConnectPG3BDialog extends JDialog {
 		initializeLayout();
 		initializeEvents();
 
+		refresh();
+	}
+
+	void refresh () {
+		portListModel.removeAllElements();
 		Enumeration ports = CommPortIdentifier.getPortIdentifiers();
 		while (ports.hasMoreElements()) {
 			CommPortIdentifier identifier = (CommPortIdentifier)ports.nextElement();
@@ -87,6 +90,12 @@ public class ConnectPG3BDialog extends JDialog {
 			}
 		});
 
+		refreshButton.addActionListener(new ActionListener() {
+			public void actionPerformed (ActionEvent event) {
+				refresh();
+			}
+		});
+
 		UI.enableWhenListHasSelection(portList, connectButton);
 	}
 
@@ -99,7 +108,7 @@ public class ConnectPG3BDialog extends JDialog {
 			JScrollPane scroll = new JScrollPane();
 			getContentPane().add(
 				scroll,
-				new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(6, 6, 0,
+				new GridBagConstraints(0, 1, 2, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(6, 6, 0,
 					6), 0, 0));
 			{
 				portList = new JList();
@@ -112,7 +121,7 @@ public class ConnectPG3BDialog extends JDialog {
 			JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 6, 6));
 			getContentPane().add(
 				panel,
-				new GridBagConstraints(0, 2, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE,
+				new GridBagConstraints(1, 2, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE,
 					new Insets(0, 0, 0, 0), 0, 0));
 			{
 				cancelButton = new JButton("Cancel");
@@ -127,7 +136,14 @@ public class ConnectPG3BDialog extends JDialog {
 			JLabel label = new JLabel("<html>Please choose a port to connect to the PG3B.");
 			getContentPane().add(
 				label,
-				new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(6, 6, 0,
+				new GridBagConstraints(0, 0, 2, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(6, 6, 0,
+					6), 0, 0));
+		}
+		{
+			refreshButton = new JButton("Refresh");
+			getContentPane().add(
+				refreshButton,
+				new GridBagConstraints(0, 2, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(6, 6, 6,
 					6), 0, 0));
 		}
 	}

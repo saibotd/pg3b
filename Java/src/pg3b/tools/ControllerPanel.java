@@ -290,7 +290,12 @@ public class ControllerPanel extends JPanel {
 
 		packedImages.get("controller").draw(g, 0, 0);
 
-		if (dpadDirection != DPAD_NONE) {
+		if (controller != null) {
+			for (Button button : Button.values())
+				if (controller.get(button)) packedImages.get(button.toString()).draw(g, 0, 0);
+		}
+
+		if (pg3b != null && dpadDirection != DPAD_NONE) {
 			if ((dpadDirection & DPAD_RIGHT) == DPAD_RIGHT) packedImages.get("right").draw(g, 0, 0);
 			if ((dpadDirection & DPAD_LEFT) == DPAD_LEFT) packedImages.get("left").draw(g, 0, 0);
 			if ((dpadDirection & DPAD_UP) == DPAD_UP) packedImages.get("up").draw(g, 0, 0);
@@ -305,7 +310,7 @@ public class ControllerPanel extends JPanel {
 		float leftStickY = controller == null ? 0 : controller.get(Axis.leftStickY);
 		float rightStickX = controller == null ? 0 : controller.get(Axis.rightStickX);
 		float rightStickY = controller == null ? 0 : controller.get(Axis.rightStickY);
-		if (dragStartX != -1) {
+		if (pg3b != null && dragStartX != -1) {
 			Object dragObject = getDragObject();
 			if (dragObject == Axis.leftTrigger)
 				leftTrigger = lastTriggerValue;
@@ -325,11 +330,6 @@ public class ControllerPanel extends JPanel {
 		drawStickArrows(g, Stick.left, leftStickX, leftStickY);
 		drawStickArrows(g, Stick.right, rightStickX, rightStickY);
 
-		if (controller != null) {
-			for (Button button : Button.values())
-				if (controller.get(button)) packedImages.get(button.toString()).draw(g, 0, 0);
-		}
-
 		if (nameToStatus != null) {
 			// Show button status.
 			for (Entry<String, Boolean> entry : nameToStatus.entrySet()) {
@@ -348,7 +348,7 @@ public class ControllerPanel extends JPanel {
 			}
 		}
 
-		if (dragStartX != -1 && !overImageName.endsWith("Trigger"))
+		if (pg3b != null && dragStartX != -1 && !overImageName.endsWith("Trigger"))
 			packedImages.get("crosshair").draw(g, dragStartX - 11, dragStartY - 11);
 	}
 
@@ -361,19 +361,23 @@ public class ControllerPanel extends JPanel {
 	private void drawStickArrows (Graphics g, Stick stick, float valueX, float valueY) {
 		int x = stick == Stick.left ? 0 : 268;
 		int y = stick == Stick.left ? 129 : 213;
-		if (valueY < 0) {
-			packedImages.get("upArrow").draw(g, x, y);
-			drawString(g, toPercent(valueY), x + 62, y + 27);
-		} else if (valueY > 0) {
-			packedImages.get("downArrow").draw(g, x, y);
-			drawString(g, toPercent(valueY), x + 62, y + 27 + 77);
+		if ((int)(valueY * 100) != 0) {
+			if (valueY < 0) {
+				packedImages.get("upArrow").draw(g, x, y);
+				drawString(g, toPercent(valueY), x + 62, y + 27);
+			} else if (valueY > 0) {
+				packedImages.get("downArrow").draw(g, x, y);
+				drawString(g, toPercent(valueY), x + 62, y + 27 + 77);
+			}
 		}
-		if (valueX < 0) {
-			packedImages.get("leftArrow").draw(g, x, y);
-			drawString(g, toPercent(valueX), x + 62 - 44, y + 27 + 39);
-		} else if (valueX > 0) {
-			packedImages.get("rightArrow").draw(g, x, y);
-			drawString(g, toPercent(valueX), x + 62 + 43, y + 27 + 39);
+		if ((int)(valueX * 100) != 0) {
+			if (valueX < 0) {
+				packedImages.get("leftArrow").draw(g, x, y);
+				drawString(g, toPercent(valueX), x + 62 - 44, y + 27 + 39);
+			} else if (valueX > 0) {
+				packedImages.get("rightArrow").draw(g, x, y);
+				drawString(g, toPercent(valueX), x + 62 + 43, y + 27 + 39);
+			}
 		}
 	}
 

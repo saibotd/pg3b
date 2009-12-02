@@ -39,12 +39,13 @@ public abstract class DirectoryMonitor<T> {
 	}
 
 	public TimerTask scan (final File dir, int interval) {
+		scan(dir);
 		TimerTask task = new TimerTask() {
 			public void run () {
 				scan(dir);
 			}
 		};
-		timer.scheduleAtFixedRate(task, 0, interval);
+		timer.scheduleAtFixedRate(task, interval, interval);
 		return task;
 	}
 
