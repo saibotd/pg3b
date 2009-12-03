@@ -51,7 +51,7 @@ public class ConnectControllerDialog extends JDialog {
 			}
 		});
 
-		UI.enableWhenListHasSelection(controllerList, connectButton);
+		UI.enableWhenModelHasSelection(controllerList.getSelectionModel(), connectButton);
 	}
 
 	private void initializeLayout () {

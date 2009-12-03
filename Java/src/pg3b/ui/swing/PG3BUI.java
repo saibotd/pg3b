@@ -48,7 +48,7 @@ public class PG3BUI extends JFrame {
 	StatusBar statusBar;
 
 	JTabbedPane tabs;
-	ConfigurationTab configTab;
+	ConfigTab configTab;
 	ScriptsTab scriptsTab;
 	DiagnosticsTab diagnosticsTab;
 
@@ -156,6 +156,10 @@ public class PG3BUI extends JFrame {
 
 	public ControllerPanel getControllerPanel () {
 		return controllerPanel;
+	}
+
+	public ConfigTab getConfigTab () {
+		return configTab;
 	}
 
 	public JToggleButton getCaptureButton () {
@@ -274,23 +278,7 @@ public class PG3BUI extends JFrame {
 					new Insets(6, 0, 0, 0), 0, 0));
 		}
 		{
-			tabs = new JTabbedPane();
-			getContentPane().add(
-				tabs,
-				new GridBagConstraints(0, 2, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0,
-					0), 0, 0));
-			{
-				configTab = new ConfigurationTab(this);
-				tabs.addTab("Configuration", null, configTab, null);
-				scriptsTab = new ScriptsTab();
-				tabs.addTab("Scripts", null, scriptsTab, null);
-				diagnosticsTab = new DiagnosticsTab(this);
-				tabs.addTab("Diagnostics", null, diagnosticsTab, null);
-			}
-		}
-		{
 			controllerPanel = new ControllerPanel();
-			// controllerPanel = new JPanel();
 			getContentPane().add(
 				controllerPanel,
 				new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.CENTER, new Insets(0, 0,
@@ -302,6 +290,21 @@ public class PG3BUI extends JFrame {
 				statusBar,
 				new GridBagConstraints(0, 3, 1, 1, 1.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0,
 					0), 0, 0));
+		}
+		{
+			tabs = new JTabbedPane();
+			getContentPane().add(
+				tabs,
+				new GridBagConstraints(0, 2, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0,
+					0), 0, 0));
+			{
+				configTab = new ConfigTab(this);
+				tabs.addTab("Configuration", null, configTab, null);
+				scriptsTab = new ScriptsTab();
+				tabs.addTab("Scripts", null, scriptsTab, null);
+				diagnosticsTab = new DiagnosticsTab(this);
+				tabs.addTab("Diagnostics", null, diagnosticsTab, null);
+			}
 		}
 	}
 }

@@ -166,11 +166,11 @@ public class PG3B {
 	}
 
 	public void set (String target, boolean pressed) throws IOException {
-		set(nameToTarget.get(target), pressed);
+		set(getTarget(target), pressed);
 	}
 
 	public void set (String target, float state) throws IOException {
-		set(nameToTarget.get(target), state);
+		set(getTarget(target), state);
 	}
 
 	public String getPort () {
@@ -247,6 +247,10 @@ public class PG3B {
 			closestIndex += zeroCount / 2;
 		}
 		return closestIndex;
+	}
+
+	static public Target getTarget (String name) {
+		return nameToTarget.get(name);
 	}
 
 	static private enum Device {

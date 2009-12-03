@@ -85,10 +85,10 @@ public class ScriptsTab extends JPanel {
 			JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 6, 6));
 			add(panel, new GridBagConstraints(1, 3, 1, 1, 0.0, 0.0, EAST, NONE, new Insets(0, 0, 0, 0), 0, 0));
 			{
-				panel.add(newScriptButton = new JButton("New"));
+				panel.add(deleteScriptButton = new JButton("Delete"));
 			}
 			{
-				panel.add(deleteScriptButton = new JButton("Delete"));
+				panel.add(newScriptButton = new JButton("New"));
 			}
 		}
 		{
@@ -126,7 +126,7 @@ public class ScriptsTab extends JPanel {
 			}
 		}
 
-		UI.enableWhenListHasSelection(scriptsList, deleteScriptButton, scriptText, recordScriptButton, scriptNameText,
+		UI.enableWhenModelHasSelection(scriptsList.getSelectionModel(), deleteScriptButton, scriptText, recordScriptButton, scriptNameText,
 			scriptDescriptionText);
 	}
 }

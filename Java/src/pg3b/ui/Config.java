@@ -12,18 +12,32 @@ import net.sourceforge.yamlbeans.YamlConfig;
 import net.sourceforge.yamlbeans.YamlException;
 import net.sourceforge.yamlbeans.YamlReader;
 import net.sourceforge.yamlbeans.YamlWriter;
+import net.sourceforge.yamlbeans.scalar.ScalarSerializer;
+import pg3b.PG3B;
+import pg3b.Target;
 
 public class Config implements Cloneable {
-	static private final YamlConfig yamlConfig = new YamlConfig();
+	static public final YamlConfig yamlConfig = new YamlConfig();
 	static {
 		yamlConfig.writeConfig.setWriteRootTags(false);
 		yamlConfig.writeConfig.setWriteDefaultValues(true);
-		yamlConfig.setPropertyElementType(Config.class, "inputs", Input.class);
+		yamlConfig.setScalarSerializer(Target.class, new ScalarSerializer<Target>() {
+			public Target read (String value) throws YamlException {
+				return PG3B.getTarget(value);
+			}
+
+			public String write (Target target) throws YamlException {
+				return target.toString();
+			}
+		});
+		yamlConfig.setClassTag("controller", ControllerTrigger.class);
+		yamlConfig.setClassTag("PG3B", PG3BAction.class);
+		yamlConfig.setClassTag("script", ScriptAction.class);
 	}
 
 	private transient File file;
 	private String description;
-	private List<Input> inputs = new ArrayList();
+	private List<Trigger> triggers = new ArrayList();
 
 	public Config () {
 	}
@@ -52,12 +66,12 @@ public class Config implements Cloneable {
 		this.description = description;
 	}
 
-	public List<Input> getInputs () {
-		return inputs;
+	public List<Trigger> getTriggers () {
+		return triggers;
 	}
 
-	public void setInputs (List<Input> inputs) {
-		this.inputs = inputs;
+	public void setTriggers (List<Trigger> triggers) {
+		this.triggers = triggers;
 	}
 
 	public Config clone () {
@@ -73,7 +87,7 @@ public class Config implements Cloneable {
 		int result = 1;
 		result = prime * result + ((description == null) ? 0 : description.hashCode());
 		result = prime * result + ((file == null) ? 0 : file.hashCode());
-		result = prime * result + ((inputs == null) ? 0 : inputs.hashCode());
+		result = prime * result + ((triggers == null) ? 0 : triggers.hashCode());
 		return result;
 	}
 
@@ -88,9 +102,9 @@ public class Config implements Cloneable {
 		if (file == null) {
 			if (other.file != null) return false;
 		} else if (!file.equals(other.file)) return false;
-		if (inputs == null) {
-			if (other.inputs != null) return false;
-		} else if (!inputs.equals(other.inputs)) return false;
+		if (triggers == null) {
+			if (other.triggers != null) return false;
+		} else if (!triggers.equals(other.triggers)) return false;
 		return true;
 	}
 
@@ -99,6 +113,7 @@ public class Config implements Cloneable {
 	}
 
 	public void save () throws IOException {
+		if (file == null) throw new IllegalStateException("A file has not been set.");
 		YamlWriter writer = null;
 		try {
 			try {

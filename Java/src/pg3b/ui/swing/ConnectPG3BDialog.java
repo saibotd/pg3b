@@ -96,7 +96,7 @@ public class ConnectPG3BDialog extends JDialog {
 			}
 		});
 
-		UI.enableWhenListHasSelection(portList, connectButton);
+		UI.enableWhenModelHasSelection(portList.getSelectionModel(), connectButton);
 	}
 
 	private void initializeLayout () {
