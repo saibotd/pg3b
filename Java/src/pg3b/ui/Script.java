@@ -3,14 +3,21 @@ package pg3b.ui;
 
 import java.io.File;
 
-public class Script {
-	private final File file;
+public class Script extends Editable {
+	private String code;
 
-	public Script (File file) {
-		this.file = file;
+	public Script () {
 	}
 
-	public String toString () {
-		return file.getName();
+	public Script (File file) {
+		super(file);
+	}
+
+	public String getCode () {
+		return code;
+	}
+
+	public void setCode (String code) {
+		this.code = code;
 	}
 }

@@ -88,7 +88,7 @@ public class ConnectControllerDialog extends JDialog {
 			}
 		}
 		{
-			JLabel label = new JLabel("<html>Please choose the controller for the PG3B.");
+			JLabel label = new JLabel("<html>Please choose the Xbox controller for the PG3B.");
 			getContentPane().add(
 				label,
 				new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(6, 6, 0,

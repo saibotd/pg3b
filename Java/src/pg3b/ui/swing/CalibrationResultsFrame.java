@@ -7,7 +7,6 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Map;
 
@@ -16,7 +15,6 @@ import javax.swing.ImageIcon;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 
 public class CalibrationResultsFrame extends JFrame {
 	static private CalibrationResultsFrame openFrame;

@@ -13,7 +13,7 @@ public enum Axis implements Target {
 	private final String friendlyName;
 
 	private Axis (String friendlyName) {
-		this.friendlyName = friendlyName;
+		this.friendlyName = friendlyName + " axis";
 	}
 
 	public String toString () {

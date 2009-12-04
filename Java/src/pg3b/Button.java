@@ -5,7 +5,7 @@ public enum Button implements Target {
 	// Ordinals defined by firmware.
 	a("A"), //
 	b("B"), //
-	x("A"), //
+	x("X"), //
 	y("Y"), //
 	up("Up"), //
 	down("Down"), //
@@ -22,7 +22,7 @@ public enum Button implements Target {
 	private final String friendlyName;
 
 	private Button (String friendlyName) {
-		this.friendlyName = friendlyName;
+		this.friendlyName = friendlyName + " button";
 	}
 
 	public String toString () {

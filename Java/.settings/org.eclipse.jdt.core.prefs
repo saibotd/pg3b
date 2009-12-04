@@ -1,4 +1,4 @@
-#Wed Dec 02 14:12:42 PST 2009
+#Thu Dec 03 17:57:21 PST 2009
 eclipse.preferences.version=1
 org.eclipse.jdt.core.compiler.problem.annotationSuperInterface=warning
 org.eclipse.jdt.core.compiler.problem.autoboxing=ignore
@@ -40,7 +40,7 @@ org.eclipse.jdt.core.compiler.problem.redundantSuperinterface=ignore
 org.eclipse.jdt.core.compiler.problem.specialParameterHidingField=disabled
 org.eclipse.jdt.core.compiler.problem.staticAccessReceiver=warning
 org.eclipse.jdt.core.compiler.problem.suppressWarnings=enabled
-org.eclipse.jdt.core.compiler.problem.syntheticAccessEmulation=warning
+org.eclipse.jdt.core.compiler.problem.syntheticAccessEmulation=ignore
 org.eclipse.jdt.core.compiler.problem.typeParameterHiding=warning
 org.eclipse.jdt.core.compiler.problem.uncheckedTypeOperation=ignore
 org.eclipse.jdt.core.compiler.problem.undocumentedEmptyBlock=ignore

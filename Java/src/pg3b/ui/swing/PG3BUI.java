@@ -10,9 +10,7 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.PrintStream;
 
 import javax.swing.ImageIcon;
 import javax.swing.JCheckBoxMenuItem;
@@ -31,19 +29,17 @@ import pg3b.XboxController;
 import pg3b.XboxController.Listener;
 import pg3b.ui.Settings;
 import pg3b.util.LoaderDialog;
-import pg3b.util.MultiplexOutputStream;
-
-import com.esotericsoftware.minlog.Log;
 
 public class PG3BUI extends JFrame {
+	static Settings settings = Settings.get();
+
 	PG3B pg3b;
 	XboxController controller;
-	Settings settings = Settings.get();
 
 	JMenuItem pg3bConnectMenuItem, controllerConnectMenuItem, exitMenuItem;
 	JCheckBoxMenuItem showControllerMenuItem;
 
-	ControllerPanel controllerPanel;
+	XboxControllerPanel controllerPanel;
 	JToggleButton captureButton;
 	StatusBar statusBar;
 
@@ -154,7 +150,7 @@ public class PG3BUI extends JFrame {
 		return controller;
 	}
 
-	public ControllerPanel getControllerPanel () {
+	public XboxControllerPanel getControllerPanel () {
 		return controllerPanel;
 	}
 
@@ -243,7 +239,7 @@ public class PG3BUI extends JFrame {
 
 		setIconImage(new ImageIcon(getClass().getResource("/pg3b.png")).getImage());
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-		setSize(640, 800);
+		setSize(720, 800);
 		setLocationRelativeTo(null);
 
 		{
@@ -278,7 +274,7 @@ public class PG3BUI extends JFrame {
 					new Insets(6, 0, 0, 0), 0, 0));
 		}
 		{
-			controllerPanel = new ControllerPanel();
+			controllerPanel = new XboxControllerPanel();
 			getContentPane().add(
 				controllerPanel,
 				new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.CENTER, new Insets(0, 0,
@@ -300,7 +296,7 @@ public class PG3BUI extends JFrame {
 			{
 				configTab = new ConfigTab(this);
 				tabs.addTab("Configuration", null, configTab, null);
-				scriptsTab = new ScriptsTab();
+				scriptsTab = new ScriptsTab(this);
 				tabs.addTab("Scripts", null, scriptsTab, null);
 				diagnosticsTab = new DiagnosticsTab(this);
 				tabs.addTab("Diagnostics", null, diagnosticsTab, null);

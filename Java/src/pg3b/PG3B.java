@@ -21,12 +21,16 @@ public class PG3B {
 	static private final HashMap<String, Target> nameToTarget = new HashMap();
 	static {
 		for (Axis axis : Axis.values()) {
-			nameToTarget.put(axis.name(), axis);
-			nameToTarget.put(axis.toString(), axis);
+			nameToTarget.put(axis.name().toLowerCase(), axis);
+			String friendlyName = axis.toString().toLowerCase();
+			nameToTarget.put(friendlyName, axis);
+			nameToTarget.put(friendlyName.substring(0, friendlyName.length() - 5), axis);
 		}
 		for (Button button : Button.values()) {
-			nameToTarget.put(button.name(), button);
-			nameToTarget.put(button.toString(), button);
+			nameToTarget.put(button.name().toLowerCase(), button);
+			String friendlyName = button.toString().toLowerCase();
+			nameToTarget.put(friendlyName, button);
+			nameToTarget.put(friendlyName.substring(0, friendlyName.length() - 7), button);
 		}
 	}
 
@@ -250,7 +254,8 @@ public class PG3B {
 	}
 
 	static public Target getTarget (String name) {
-		return nameToTarget.get(name);
+		if (name == null) throw new IllegalArgumentException("name cannot be null.");
+		return nameToTarget.get(name.trim().toLowerCase());
 	}
 
 	static private enum Device {

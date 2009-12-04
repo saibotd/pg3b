@@ -1,8 +1,6 @@
 
 package pg3b.ui.swing;
 
-import static com.esotericsoftware.minlog.Log.*;
-
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -15,8 +13,6 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.File;
-import java.io.IOException;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -24,6 +20,7 @@ import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -45,11 +42,8 @@ import pg3b.ui.ControllerTrigger;
 import pg3b.ui.PG3BAction;
 import pg3b.ui.Script;
 import pg3b.ui.ScriptAction;
-import pg3b.ui.Trigger;
-import pg3b.ui.swing.ControllerPanel.Listener;
+import pg3b.ui.swing.XboxControllerPanel.Listener;
 import pg3b.util.UI;
-
-import com.esotericsoftware.minlog.Log;
 
 public class ControllerTriggerPanel extends JPanel {
 	static final Timer timer = new Timer("MonitorControllers", true);
@@ -65,7 +59,8 @@ public class ControllerTriggerPanel extends JPanel {
 	JButton saveButton, cancelButton;
 	JTextField triggerText, descriptionText;
 	JComboBox targetCombo, scriptCombo;
-	DefaultComboBoxModel scriptComboModel, pg3bComboModel;
+	JCheckBox altCheckBox, ctrlCheckBox, shiftCheckBox;
+	DefaultComboBoxModel scriptComboModel, targetComboModel;
 
 	Listener controllerPanelListener = new Listener() {
 		public void axisChanged (Axis axis, float state) {
@@ -95,10 +90,11 @@ public class ControllerTriggerPanel extends JPanel {
 
 		scriptComboModel.removeAllElements();
 		scriptComboModel.addElement("<New Script>");
-		for (Script script : owner.getScriptsTab().getScripts())
+		for (Script script : owner.getScriptsTab().getItems())
 			scriptComboModel.addElement(script);
 
 		if (trigger == null) {
+			// New trigger.
 			this.trigger = new ControllerTrigger();
 			isNewTrigger = true;
 			titlePanel.setBorder(BorderFactory.createTitledBorder("New Trigger"));
@@ -107,16 +103,23 @@ public class ControllerTriggerPanel extends JPanel {
 			triggerText.setFont(triggerText.getFont().deriveFont(Font.ITALIC));
 			descriptionText.setText("");
 			targetRadio.setSelected(true);
+			shiftCheckBox.setSelected(false);
+			ctrlCheckBox.setSelected(false);
+			altCheckBox.setSelected(false);
 
 			saveButton.setEnabled(false);
 		} else {
+			// Edit trigger.
 			this.trigger = trigger;
 			isNewTrigger = false;
 			titlePanel.setBorder(BorderFactory.createTitledBorder("Edit Trigger"));
 
-			triggerText.setText(trigger.toString());
+			setTriggerText(trigger);
 			triggerText.setFont(triggerText.getFont().deriveFont(Font.PLAIN));
 			descriptionText.setText(trigger.getDescription());
+			shiftCheckBox.setSelected(trigger.getShift());
+			ctrlCheckBox.setSelected(trigger.getCtrl());
+			altCheckBox.setSelected(trigger.getAlt());
 
 			Action action = trigger.getAction();
 			if (action instanceof ScriptAction) {
@@ -158,7 +161,7 @@ public class ControllerTriggerPanel extends JPanel {
 							trigger.setComponent(controller, component);
 							SwingUtilities.invokeLater(new Runnable() {
 								public void run () {
-									triggerText.setText(trigger.toString());
+									setTriggerText(trigger);
 									triggerText.setFont(triggerText.getFont().deriveFont(Font.PLAIN));
 									cancelButton.setEnabled(true);
 									saveButton.setEnabled(true);
@@ -173,6 +176,19 @@ public class ControllerTriggerPanel extends JPanel {
 			}
 		};
 		timer.scheduleAtFixedRate(monitorConrollersTask, 125, 125);
+	}
+
+	public void setTriggerText (ControllerTrigger trigger) {
+		boolean ctrl = trigger.getCtrl();
+		boolean alt = trigger.getAlt();
+		boolean shift = trigger.getShift();
+		trigger.setCtrl(false);
+		trigger.setAlt(false);
+		trigger.setShift(false);
+		triggerText.setText(trigger.toString());
+		trigger.setCtrl(ctrl);
+		trigger.setAlt(alt);
+		trigger.setShift(shift);
 	}
 
 	private void initializeEvents () {
@@ -230,6 +246,9 @@ public class ControllerTriggerPanel extends JPanel {
 				owner.getConfigTab().showConfigPanel();
 
 				trigger.setDescription(descriptionText.getText());
+				trigger.setCtrl(ctrlCheckBox.isSelected());
+				trigger.setAlt(altCheckBox.isSelected());
+				trigger.setShift(shiftCheckBox.isSelected());
 				if (targetRadio.isSelected()) {
 					trigger.setAction(new PG3BAction((Target)targetCombo.getSelectedItem()));
 				} else if (scriptRadio.isSelected()) {
@@ -238,7 +257,8 @@ public class ControllerTriggerPanel extends JPanel {
 				}
 
 				if (isNewTrigger) config.getTriggers().add(trigger);
-				owner.getConfigTab().getConfigPanel().saveConfig(config);
+				owner.getConfigTab().getConfigPanel().saveItem(config);
+				owner.getConfigTab().getConfigPanel().setTriggerSelected(config.getTriggers().indexOf(trigger));
 			}
 		});
 	}
@@ -252,7 +272,7 @@ public class ControllerTriggerPanel extends JPanel {
 		{
 			JLabel label = new JLabel("Description:");
 			titlePanel.add(label, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE,
-				new Insets(3, 6, 6, 0), 0, 0));
+				new Insets(0, 6, 6, 0), 0, 0));
 		}
 		{
 			descriptionText = new JTextField();
@@ -262,16 +282,16 @@ public class ControllerTriggerPanel extends JPanel {
 		{
 			JLabel label = new JLabel("Trigger:");
 			titlePanel.add(label, new GridBagConstraints(1, 1, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE,
-				new Insets(3, 6, 6, 0), 0, 0));
+				new Insets(0, 6, 6, 0), 0, 0));
 		}
 		{
 			JLabel label = new JLabel("Action:");
-			titlePanel.add(label, new GridBagConstraints(1, 2, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHEAST,
+			titlePanel.add(label, new GridBagConstraints(1, 3, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHEAST,
 				GridBagConstraints.NONE, new Insets(4, 6, 6, 0), 0, 0));
 		}
 		{
 			JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 6, 0));
-			titlePanel.add(panel, new GridBagConstraints(2, 3, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
+			titlePanel.add(panel, new GridBagConstraints(2, 4, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
 				new Insets(0, 0, 6, 6), 0, 0));
 			{
 				scriptRadio = new JRadioButton("Script");
@@ -286,7 +306,7 @@ public class ControllerTriggerPanel extends JPanel {
 		}
 		{
 			JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 6, 0));
-			titlePanel.add(panel, new GridBagConstraints(2, 2, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
+			titlePanel.add(panel, new GridBagConstraints(2, 3, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
 				new Insets(0, 0, 6, 6), 0, 0));
 			{
 				targetRadio = new JRadioButton("PG3B");
@@ -295,16 +315,16 @@ public class ControllerTriggerPanel extends JPanel {
 			{
 				targetCombo = new JComboBox();
 				panel.add(targetCombo);
-				pg3bComboModel = new DefaultComboBoxModel(new Object[] {Button.a, Button.b, Button.x, Button.y, Button.up,
+				targetComboModel = new DefaultComboBoxModel(new Object[] {Button.a, Button.b, Button.x, Button.y, Button.up,
 					Button.down, Button.left, Button.right, Button.leftShoulder, Button.rightShoulder, Button.leftStick,
 					Button.rightStick, Button.start, Button.back, Button.guide, Axis.leftStickX, Axis.leftStickY, Axis.rightStickX,
 					Axis.rightStickY, Axis.leftTrigger, Axis.rightTrigger});
-				targetCombo.setModel(pg3bComboModel);
+				targetCombo.setModel(targetComboModel);
 			}
 		}
 		{
 			JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 6, 6));
-			titlePanel.add(panel, new GridBagConstraints(1, 4, 2, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE,
+			titlePanel.add(panel, new GridBagConstraints(1, 5, 2, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE,
 				new Insets(0, 0, 0, 0), 0, 0));
 			{
 				cancelButton = new JButton("Cancel");
@@ -325,10 +345,33 @@ public class ControllerTriggerPanel extends JPanel {
 			JPanel spacer = new JPanel();
 			titlePanel.add(spacer, new GridBagConstraints(1, 5, 2, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
 				new Insets(0, 0, 0, 0), 0, 0));
-			spacer.setMinimumSize(new Dimension(350, 0));
-			spacer.setMaximumSize(new Dimension(350, 0));
-			spacer.setPreferredSize(new Dimension(350, 0));
+			spacer.setMinimumSize(new Dimension(375, 0));
+			spacer.setMaximumSize(new Dimension(375, 0));
+			spacer.setPreferredSize(new Dimension(375, 0));
 		}
+		{
+			JLabel label = new JLabel("Key modifier:");
+			titlePanel.add(label, new GridBagConstraints(1, 2, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
+				new Insets(0, 6, 6, 0), 0, 0));
+		}
+		{
+			JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 6, 0));
+			titlePanel.add(panel, new GridBagConstraints(2, 2, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
+				new Insets(0, 0, 6, 6), 0, 0));
+			{
+				ctrlCheckBox = new JCheckBox("Control");
+				panel.add(ctrlCheckBox);
+			}
+			{
+				altCheckBox = new JCheckBox("Alt");
+				panel.add(altCheckBox);
+			}
+			{
+				shiftCheckBox = new JCheckBox("Shift");
+				panel.add(shiftCheckBox);
+			}
+		}
+
 		ButtonGroup group = new ButtonGroup();
 		group.add(targetRadio);
 		group.add(scriptRadio);

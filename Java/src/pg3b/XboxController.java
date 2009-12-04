@@ -1,8 +1,7 @@
 
 package pg3b;
 
-import static com.esotericsoftware.minlog.Log.TRACE;
-import static com.esotericsoftware.minlog.Log.trace;
+import static com.esotericsoftware.minlog.Log.*;
 
 import java.util.ArrayList;
 import java.util.List;
