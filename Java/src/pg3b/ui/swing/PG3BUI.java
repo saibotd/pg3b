@@ -45,7 +45,7 @@ public class PG3BUI extends JFrame {
 
 	JTabbedPane tabs;
 	ConfigTab configTab;
-	ScriptsTab scriptsTab;
+	ScriptEditor scriptEditor;
 	DiagnosticsTab diagnosticsTab;
 
 	Listener controllerListener = new Listener() {
@@ -162,8 +162,8 @@ public class PG3BUI extends JFrame {
 		return captureButton;
 	}
 
-	public ScriptsTab getScriptsTab () {
-		return scriptsTab;
+	public ScriptEditor getScriptEditor () {
+		return scriptEditor;
 	}
 
 	private void initializeEvents () {
@@ -296,8 +296,8 @@ public class PG3BUI extends JFrame {
 			{
 				configTab = new ConfigTab(this);
 				tabs.addTab("Configuration", null, configTab, null);
-				scriptsTab = new ScriptsTab(this);
-				tabs.addTab("Scripts", null, scriptsTab, null);
+				scriptEditor = new ScriptEditor(this);
+				tabs.addTab("Scripts", null, scriptEditor, null);
 				diagnosticsTab = new DiagnosticsTab(this);
 				tabs.addTab("Diagnostics", null, diagnosticsTab, null);
 			}

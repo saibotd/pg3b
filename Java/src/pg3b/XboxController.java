@@ -92,26 +92,34 @@ public class XboxController {
 	public float get (Axis axis) {
 		if (!poll()) return 0;
 		Identifier.Axis id = null;
+		boolean invert = false;
 		switch (axis) {
+		case leftTrigger:
+		case rightTrigger:
+			float value = controller.getComponent(Identifier.Axis.Z).getPollData();
+			if (value > 0)
+				value = axis == Axis.leftTrigger ? value : 0;
+			else
+				value = axis == Axis.rightTrigger ? -value : 0;
+			return value;
 		case leftStickX:
 			id = Identifier.Axis.X;
 			break;
 		case leftStickY:
 			id = Identifier.Axis.Y;
+			invert = true;
 			break;
 		case rightStickX:
 			id = Identifier.Axis.RX;
 			break;
 		case rightStickY:
 			id = Identifier.Axis.RY;
+			invert = true;
 			break;
-		case leftTrigger:
-		case rightTrigger:
-			float value = controller.getComponent(Identifier.Axis.Z).getPollData();
-			if (value > 0) return axis == Axis.leftTrigger ? value : 0;
-			return axis == Axis.rightTrigger ? -value : 0;
 		}
-		return controller.getComponent(id).getPollData();
+		float value = controller.getComponent(id).getPollData();
+		if (invert) value = -value;
+		return value;
 	}
 
 	public boolean poll () {

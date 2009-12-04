@@ -10,16 +10,16 @@ import pg3b.ui.ControllerTrigger;
 
 public class ConfigTab extends JPanel {
 	CardLayout cardLayout;
-	ConfigPanel configPanel;
+	ConfigEditor configEditor;
 	ControllerTriggerPanel controllerTriggerPanel;
 
 	public ConfigTab (PG3BUI owner) {
 		setLayout(cardLayout = new CardLayout());
-		add(configPanel = new ConfigPanel(owner), "config");
+		add(configEditor = new ConfigEditor(owner), "config");
 		add(controllerTriggerPanel = new ControllerTriggerPanel(owner), "controllerTrigger");
 	}
 
-	public void showConfigPanel () {
+	public void showConfigEditor () {
 		cardLayout.show(this, "config");
 	}
 
@@ -28,7 +28,7 @@ public class ConfigTab extends JPanel {
 		cardLayout.show(this, "controllerTrigger");
 	}
 
-	public ConfigPanel getConfigPanel () {
-		return configPanel;
+	public ConfigEditor getConfigEditor () {
+		return configEditor;
 	}
 }

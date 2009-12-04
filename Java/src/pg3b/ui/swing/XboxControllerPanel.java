@@ -318,7 +318,7 @@ public class XboxControllerPanel extends JPanel {
 
 		if (controller != null) {
 			for (Button button : Button.values())
-				if (controller.get(button)) packedImages.get(button.toString()).draw(g, 0, 0);
+				if (controller.get(button)) packedImages.get(button.name()).draw(g, 0, 0);
 		}
 
 		if (pg3b != null && dpadDirection != DPAD_NONE) {
@@ -368,10 +368,10 @@ public class XboxControllerPanel extends JPanel {
 			}
 			// Show axes status.
 			g.setFont(g.getFont().deriveFont(Font.BOLD, 12f));
-			drawStatusText(g, 25, 243, "X Axis", nameToStatus.get("leftStickX"));
-			drawStatusText(g, 25, 243 + 31, "Y Axis", nameToStatus.get("leftStickY"));
-			drawStatusText(g, 388, 243, "X Axis", nameToStatus.get("rightStickX"));
-			drawStatusText(g, 388, 243 + 31, "Y Axis", nameToStatus.get("rightStickY"));
+			drawStatusText(g, 25, 245, "X Axis", nameToStatus.get("leftStickX"));
+			drawStatusText(g, 25, 245 + 31, "Y Axis", nameToStatus.get("leftStickY"));
+			drawStatusText(g, 388, 245, "X Axis", nameToStatus.get("rightStickX"));
+			drawStatusText(g, 388, 245 + 31, "Y Axis", nameToStatus.get("rightStickY"));
 		}
 
 		if (pg3b != null && dragStartX != -1 && !overImageName.endsWith("Trigger"))

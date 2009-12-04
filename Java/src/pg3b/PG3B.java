@@ -187,8 +187,6 @@ public class PG3B {
 
 	public AxisCalibration calibrate (Axis axis, XboxController controller) throws IOException {
 		boolean isTrigger = axis == Axis.leftTrigger || axis == Axis.rightTrigger;
-		boolean isInverted = axis == Axis.leftStickY || axis == Axis.rightStickY;
-
 		if (isTrigger) {
 			// The triggers are mapped to the same Z axis by the MS driver and interfere with each other if not zero.
 			set(Axis.leftTrigger, 0);
@@ -196,16 +194,21 @@ public class PG3B {
 		}
 
 		float[] actualValues = new float[256];
-		for (int wiper = 0; wiper <= 255; wiper++) {
-			float deflection = isTrigger ? wiper / 255f : wiper / 255f * 2 - 1;
-			set(axis, deflection);
-			try {
-				Thread.sleep(16);
-			} catch (InterruptedException ignored) {
+		try {
+			for (int wiper = 0; wiper <= 255; wiper++) {
+				float deflection = isTrigger ? wiper / 255f : wiper / 255f * 2 - 1;
+				set(axis, deflection);
+				if (Thread.interrupted()) return null;
+				try {
+					Thread.sleep(16);
+				} catch (InterruptedException ex) {
+					return null;
+				}
+				actualValues[wiper] = controller.get(axis);
 			}
-			actualValues[isInverted ? 255 - wiper : wiper] = controller.get(axis);
+		} finally {
+			set(axis, 0);
 		}
-		set(axis, 0);
 
 		int[] calibrationTable = new int[256];
 		int minusOneIndex = findClosestIndex(actualValues, -1);
@@ -222,7 +225,7 @@ public class PG3B {
 		calibrationTable[127] = zeroIndex;
 		calibrationTable[255] = plusOneIndex;
 
-		return new AxisCalibration(calibrationTable, actualValues, isInverted);
+		return new AxisCalibration(calibrationTable, actualValues);
 	}
 
 	private int findClosestIndex (float[] actualValues, int target) {

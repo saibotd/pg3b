@@ -7,19 +7,16 @@ import java.net.URL;
 public class AxisCalibration {
 	private final int[] calibrationTable;
 	private final float[] actualValues;
-	private final boolean isInverted;
 
-	public AxisCalibration (int[] calibrationTable, float[] actualValues, boolean isInverted) {
+	public AxisCalibration (int[] calibrationTable, float[] actualValues) {
 		this.calibrationTable = calibrationTable;
 		this.actualValues = actualValues;
-		this.isInverted = isInverted;
 	}
 
 	public URL getChartURL () {
 		StringBuilder raw = new StringBuilder(1024);
 		StringBuilder calibrated = new StringBuilder(1024);
-		for (int i = 0; i <= 255; i += 2) {
-			int wiper = isInverted ? 255 - i : i;
+		for (int wiper = 0; wiper <= 255; wiper += 2) {
 			raw.append((int)(actualValues[wiper] * 100 + 100) / 2);
 			raw.append(",");
 			calibrated.append((int)(actualValues[calibrationTable[wiper]] * 100 + 100) / 2);

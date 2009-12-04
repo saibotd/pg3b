@@ -12,6 +12,7 @@ abstract public class LoaderDialog extends Loader implements Runnable {
 	ProgressDialog dialog = new ProgressDialog();
 	boolean success;
 	Throwable exception;
+	Thread thread;
 
 	public LoaderDialog (String title) {
 		dialog.setMessage("Initializing...");
@@ -20,7 +21,10 @@ abstract public class LoaderDialog extends Loader implements Runnable {
 		dialog.setTitle(title);
 		dialog.addWindowListener(new WindowAdapter() {
 			public void windowClosing (WindowEvent e) {
-				if (!success) cancel();
+				if (!success) {
+					thread.interrupt();
+					cancel();
+				}
 			}
 		});
 	}
@@ -40,10 +44,7 @@ abstract public class LoaderDialog extends Loader implements Runnable {
 	}
 
 	public final void run () {
-		try {
-			Thread.sleep(50);
-		} catch (InterruptedException ignored) {
-		}
+		thread = Thread.currentThread();
 		try {
 			throwCancelled();
 			load();

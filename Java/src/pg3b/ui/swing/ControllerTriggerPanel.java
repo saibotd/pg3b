@@ -90,8 +90,8 @@ public class ControllerTriggerPanel extends JPanel {
 
 		scriptComboModel.removeAllElements();
 		scriptComboModel.addElement("<New Script>");
-		for (Script script : owner.getScriptsTab().getItems())
-			scriptComboModel.addElement(script);
+		for (Script script : owner.getScriptEditor().getItems())
+			scriptComboModel.addElement(script.getName());
 
 		if (trigger == null) {
 			// New trigger.
@@ -237,13 +237,13 @@ public class ControllerTriggerPanel extends JPanel {
 
 		cancelButton.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
-				owner.getConfigTab().showConfigPanel();
+				owner.getConfigTab().showConfigEditor();
 			}
 		});
 
 		saveButton.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
-				owner.getConfigTab().showConfigPanel();
+				owner.getConfigTab().showConfigEditor();
 
 				trigger.setDescription(descriptionText.getText());
 				trigger.setCtrl(ctrlCheckBox.isSelected());
@@ -257,8 +257,8 @@ public class ControllerTriggerPanel extends JPanel {
 				}
 
 				if (isNewTrigger) config.getTriggers().add(trigger);
-				owner.getConfigTab().getConfigPanel().saveItem(config);
-				owner.getConfigTab().getConfigPanel().setTriggerSelected(config.getTriggers().indexOf(trigger));
+				owner.getConfigTab().getConfigEditor().saveItem(true);
+				owner.getConfigTab().getConfigEditor().setTriggerSelected(config.getTriggers().indexOf(trigger));
 			}
 		});
 	}

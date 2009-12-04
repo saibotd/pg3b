@@ -54,23 +54,31 @@ public class DiagnosticsTab extends JPanel {
 							if (button == Button.start || button == Button.guide) continue;
 							setMessage("Testing " + button + "...");
 							throwCancelled();
-							boolean success = waitForButton(pg3b, controller, button, false);
-							throwCancelled();
-							if (success) success = waitForButton(pg3b, controller, button, true);
-							throwCancelled();
-							if (success) success = waitForButton(pg3b, controller, button, false);
-							status.put(button.toString(), success);
+							try {
+								boolean success = waitForButton(pg3b, controller, button, false);
+								throwCancelled();
+								if (success) success = waitForButton(pg3b, controller, button, true);
+								throwCancelled();
+								if (success) success = waitForButton(pg3b, controller, button, false);
+								status.put(button.name(), success);
+							} finally {
+								pg3b.set(button, false);
+							}
 						}
 
 						for (Axis axis : Axis.values()) {
 							setMessage("Testing " + axis + "...");
 							throwCancelled();
-							boolean success = waitForAxis(pg3b, controller, axis, 0);
-							throwCancelled();
-							if (success) success = waitForAxis(pg3b, controller, axis, 1);
-							throwCancelled();
-							if (success) success = waitForAxis(pg3b, controller, axis, 0);
-							status.put(axis.toString(), success);
+							try {
+								boolean success = waitForAxis(pg3b, controller, axis, 1);
+								throwCancelled();
+								if (axis != Axis.leftTrigger && axis != Axis.rightTrigger) {
+									if (success) success = waitForAxis(pg3b, controller, axis, -1);
+								}
+								status.put(axis.name(), success);
+							} finally {
+								pg3b.set(axis, 0);
+							}
 						}
 
 						owner.getControllerPanel().setStatus(status);
@@ -87,7 +95,7 @@ public class DiagnosticsTab extends JPanel {
 
 		calibrateButton.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
-				new LoaderDialog("Calibration") {
+				new LoaderDialog("Axes Calibration") {
 					LinkedHashMap<String, URL> nameToURL = new LinkedHashMap();
 
 					public void load () throws Exception {
@@ -100,7 +108,9 @@ public class DiagnosticsTab extends JPanel {
 							setMessage("Calibrating " + axis + "...");
 							throwCancelled();
 							AxisCalibration calibration = pg3b.calibrate(axis, controller);
+							if (calibration == null) return;
 							nameToURL.put(axis.toString(), calibration.getChartURL());
+							if (INFO) info(axis + " chart:\n" + calibration.getChartURL());
 							setPercentageComplete(++i / (float)values.length);
 						}
 					}
@@ -138,9 +148,11 @@ public class DiagnosticsTab extends JPanel {
 		try {
 			pg3b.set(axis, value);
 			long startTime = System.currentTimeMillis();
-			while (Math.abs(controller.get(axis) - value) > 0.05f) {
+			while (true) {
+				float actualValue = controller.get(axis);
+				if (Math.abs(actualValue - value) < 0.05f) break;
 				if (System.currentTimeMillis() - startTime > TIMEOUT) {
-					if (WARN) warn("Timed out setting axis: " + axis);
+					if (WARN) warn("Timed out setting axis: " + axis + " (actual value: " + actualValue + ", needed: " + value + ")");
 					return false;
 				}
 				Thread.yield();
@@ -165,7 +177,7 @@ public class DiagnosticsTab extends JPanel {
 				new Insets(6, 0, 6, 6), 0, 0));
 		}
 		{
-			calibrateButton = new JButton("Calibrate");
+			calibrateButton = new JButton("Axes Calibration");
 			this.add(calibrateButton, new GridBagConstraints(0, 1, 2, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST,
 				GridBagConstraints.NONE, new Insets(0, 6, 6, 6), 0, 0));
 		}

@@ -85,7 +85,10 @@ public class EditorPanel<T extends Editable> extends JPanel {
 		monitor.scan(rootDir, 3000);
 	}
 
-	protected void itemSelected (T item) {
+	protected void updateFieldsFromItem (T item) {
+	}
+
+	protected void updateItemFromFields (T item) {
 	}
 
 	public JPanel getContentPanel () {
@@ -120,7 +123,7 @@ public class EditorPanel<T extends Editable> extends JPanel {
 					nameText.setText(item.getName());
 					descriptionText.setText(item.getDescription());
 				}
-				itemSelected(item);
+				updateFieldsFromItem(item);
 			}
 		});
 
@@ -139,7 +142,7 @@ public class EditorPanel<T extends Editable> extends JPanel {
 					break;
 				}
 				try {
-					saveItem(type.getConstructor(File.class).newInstance(new File(rootDir, name + extension)));
+					saveItem(type.getConstructor(File.class).newInstance(new File(rootDir, name + extension)), true);
 				} catch (Exception ex) {
 					throw new RuntimeException(ex);
 				}
@@ -158,52 +161,59 @@ public class EditorPanel<T extends Editable> extends JPanel {
 		});
 
 		FocusAdapter focusListener = new FocusAdapter() {
-			public void focusLost (FocusEvent e) {
-				synchronized (monitor) {
-					T item = getSelectedItem();
-					T oldItem = (T)item.clone();
-
-					// Rename file if needed.
-					String name = new File(nameText.getText().trim()).getName();
-					if (name.length() == 0) name = item.getName();
-					if (!name.equalsIgnoreCase(item.getName())) {
-						File newFile = new File(item.getFile().getParent(), name + extension);
-						item.getFile().renameTo(newFile);
-						try {
-							item = Editable.load(newFile, type);
-						} catch (IOException ex) {
-							if (Log.ERROR) error("Unable to load file: " + item.getFile(), ex);
-							UI.errorDialog(owner, "Error", //
-								"An error occurred while attempting to load the file.");
-							return;
-						}
-					}
-
-					item.setDescription(descriptionText.getText());
-
-					if (!oldItem.equals(item)) saveItem(item);
-				}
+			public void focusLost (FocusEvent event) {
+				saveItem(false);
 			}
 		};
 		nameText.addFocusListener(focusListener);
 		descriptionText.addFocusListener(focusListener);
 	}
 
-	public void saveItem (T item) {
-		try {
-			item.save();
-			monitor.scan(rootDir);
-		} catch (IOException ex) {
-			if (Log.ERROR) error("Unable to save file: " + item.getFile(), ex);
-			UI.errorDialog(owner, "Error", //
-				"An error occurred while attempting to save the file.");
-			return;
-		}
-		for (int i = 0, n = listModel.getSize(); i < n; i++) {
-			T listItem = (T)listModel.getElementAt(i);
-			if (listItem.getFile().equals(item.getFile())) {
-				list.setSelectedIndex(i);
-				break;
+	public void saveItem (boolean force) {
+		saveItem(getSelectedItem(), force);
+	}
+
+	public void saveItem (T item, boolean force) {
+		synchronized (monitor) {
+			if (item == null) return;
+			T oldItem = (T)item.clone();
+
+			// Rename file if needed.
+			String name = new File(nameText.getText().trim()).getName();
+			if (name.length() == 0) name = item.getName();
+			if (!name.equalsIgnoreCase(item.getName())) {
+				File newFile = new File(item.getFile().getParent(), name + extension);
+				item.getFile().renameTo(newFile);
+				try {
+					item = Editable.load(newFile, type);
+				} catch (IOException ex) {
+					if (Log.ERROR) error("Unable to load file: " + item.getFile(), ex);
+					UI.errorDialog(owner, "Error", //
+						"An error occurred while attempting to load the file.");
+					return;
+				}
+			}
+
+			item.setDescription(descriptionText.getText());
+			updateItemFromFields(item);
+
+			if (!force && oldItem.equals(item)) return;
+			try {
+				item.save();
+				monitor.scan(rootDir);
+			} catch (IOException ex) {
+				if (Log.ERROR) error("Unable to save file: " + item.getFile(), ex);
+				UI.errorDialog(owner, "Error", //
+					"An error occurred while attempting to save the file.");
+				return;
+			}
+			for (int i = 0, n = listModel.getSize(); i < n; i++) {
+				T listItem = (T)listModel.getElementAt(i);
+				if (listItem.getFile().equals(item.getFile())) {
+					list.clearSelection();
+					list.setSelectedIndex(i);
+					break;
+				}
 			}
 		}
 	}

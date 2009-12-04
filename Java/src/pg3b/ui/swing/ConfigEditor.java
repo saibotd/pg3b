@@ -31,14 +31,14 @@ import pg3b.ui.Settings;
 import pg3b.ui.Trigger;
 import pg3b.util.UI;
 
-public class ConfigPanel extends EditorPanel<Config> {
+public class ConfigEditor extends EditorPanel<Config> {
 	private int lastSelectedTriggerIndex;
 
 	private JTable triggersTable;
 	private DefaultTableModel triggersTableModel;
 	private JButton newTriggerButton, deleteTriggerButton, editTriggerButton;
 
-	public ConfigPanel (PG3BUI owner) {
+	public ConfigEditor (PG3BUI owner) {
 		super(owner, Config.class, new File("config"), ".config");
 
 		initializeLayout();
@@ -54,7 +54,7 @@ public class ConfigPanel extends EditorPanel<Config> {
 		if (getSelectedItem() == null && items.size() > 0) setSelectedItem(items.get(0));
 	}
 
-	protected void itemSelected (Config config) {
+	protected void updateFieldsFromItem (Config config) {
 		triggersTableModel.setRowCount(0);
 		if (config == null)
 			owner.getCaptureButton().setSelected(false);
@@ -86,9 +86,8 @@ public class ConfigPanel extends EditorPanel<Config> {
 
 		deleteTriggerButton.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
-				Config config = getSelectedItem();
-				config.getTriggers().remove(triggersTable.getSelectedRow());
-				saveItem(config);
+				getSelectedItem().getTriggers().remove(triggersTable.getSelectedRow());
+				saveItem(true);
 			}
 		});
 
