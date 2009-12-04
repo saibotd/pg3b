@@ -56,6 +56,7 @@ public class ConfigEditor extends EditorPanel<Config> {
 
 	protected void updateFieldsFromItem (Config config) {
 		triggersTableModel.setRowCount(0);
+		owner.getCaptureButton().setEnabled(config != null);
 		if (config == null)
 			owner.getCaptureButton().setSelected(false);
 		else {
@@ -70,7 +71,15 @@ public class ConfigEditor extends EditorPanel<Config> {
 		}
 	}
 
+	protected void clearItemSpecificState () {
+		lastSelectedTriggerIndex = -1;
+	}
+
 	public void setTriggerSelected (int index) {
+		if (index == -1) {
+			triggersTable.clearSelection();
+			return;
+		}
 		if (index >= triggersTable.getRowCount()) return;
 		triggersTable.setRowSelectionInterval(index, index);
 		UI.scrollRowToVisisble(triggersTable, index);
@@ -171,7 +180,7 @@ public class ConfigEditor extends EditorPanel<Config> {
 			}
 		}
 
-		UI.enableWhenModelHasSelection(getSelectionModel(), triggersTable, newTriggerButton, owner.getCaptureButton());
+		UI.enableWhenModelHasSelection(getSelectionModel(), triggersTable, newTriggerButton);
 		UI.enableWhenModelHasSelection(triggersTable.getSelectionModel(), deleteTriggerButton);
 	}
 }

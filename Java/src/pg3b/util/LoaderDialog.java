@@ -9,10 +9,10 @@ import java.awt.event.WindowEvent;
 import javax.swing.SwingUtilities;
 
 abstract public class LoaderDialog extends Loader implements Runnable {
-	ProgressDialog dialog = new ProgressDialog();
-	boolean success;
-	Throwable exception;
-	Thread thread;
+	private ProgressDialog dialog = new ProgressDialog();
+	private boolean success;
+	private Throwable exception;
+	private Thread thread;
 
 	public LoaderDialog (String title) {
 		dialog.setMessage("Initializing...");

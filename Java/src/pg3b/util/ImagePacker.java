@@ -17,15 +17,15 @@ import java.util.regex.Pattern;
 import javax.imageio.ImageIO;
 
 public class ImagePacker {
-	static Pattern numberedImagePattern = Pattern.compile(".*?(\\d+)");
+	static private Pattern numberedImagePattern = Pattern.compile(".*?(\\d+)");
 
 	private ArrayList<Image> images = new ArrayList();
-	FileWriter writer;
-	final File inputDir;
+	private FileWriter writer;
+	private final File inputDir;
 	private int uncompressedSize, compressedSize;
 	private int alphaThreshold = 0;
 	private boolean debug = false;
-	int canvasWidth, canvasHeight;
+	private int canvasWidth, canvasHeight;
 
 	public ImagePacker (File inputDir, int maxWidth, int maxHeight, String prefix) throws IOException {
 		this.inputDir = inputDir;

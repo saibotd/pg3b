@@ -21,9 +21,9 @@ import pg3b.XboxController;
 import pg3b.util.UI;
 
 public class ConnectControllerDialog extends JDialog {
-	PG3BUI owner;
-	JList controllerList;
-	DefaultComboBoxModel controllerListModel;
+	private PG3BUI owner;
+	private JList controllerList;
+	private DefaultComboBoxModel controllerListModel;
 	private JButton connectButton, cancelButton;
 
 	public ConnectControllerDialog (PG3BUI owner) {
@@ -41,6 +41,7 @@ public class ConnectControllerDialog extends JDialog {
 		connectButton.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
 				owner.setController(new XboxController((Controller)controllerList.getSelectedValue()));
+				owner.getStatusBar().setMessage("Controller connected.");
 				dispose();
 			}
 		});

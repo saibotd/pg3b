@@ -48,21 +48,22 @@ import pg3b.util.UI;
 public class ControllerTriggerPanel extends JPanel {
 	static final Timer timer = new Timer("MonitorControllers", true);
 
-	PG3BUI owner;
-	Config config;
-	ControllerTrigger trigger;
-	boolean isNewTrigger;
-	TimerTask monitorConrollersTask;
+	private PG3BUI owner;
+	private Config config;
+	private ControllerTrigger trigger;
+	private boolean isNewTrigger;
+	private TimerTask monitorConrollersTask;
 
-	JPanel titlePanel;
-	JRadioButton targetRadio, scriptRadio;
-	JButton saveButton, cancelButton;
-	JTextField triggerText, descriptionText;
-	JComboBox targetCombo, scriptCombo;
-	JCheckBox altCheckBox, ctrlCheckBox, shiftCheckBox;
-	DefaultComboBoxModel scriptComboModel, targetComboModel;
+	private JPanel titlePanel;
+	private JLabel triggerLabel;
+	private JRadioButton targetRadio, scriptRadio;
+	private JButton saveButton, cancelButton;
+	private JTextField descriptionText;
+	private JComboBox targetCombo, scriptCombo;
+	private JCheckBox altCheckBox, ctrlCheckBox, shiftCheckBox;
+	private DefaultComboBoxModel scriptComboModel, targetComboModel;
 
-	Listener controllerPanelListener = new Listener() {
+	private Listener controllerPanelListener = new Listener() {
 		public void axisChanged (Axis axis, float state) {
 			if (!isVisible()) return;
 			if (Math.abs(state) > 0.1f) targetCombo.setSelectedItem(axis);
@@ -99,8 +100,8 @@ public class ControllerTriggerPanel extends JPanel {
 			isNewTrigger = true;
 			titlePanel.setBorder(BorderFactory.createTitledBorder("New Trigger"));
 
-			triggerText.setText("Click to set trigger...");
-			triggerText.setFont(triggerText.getFont().deriveFont(Font.ITALIC));
+			triggerLabel.setText("Click to set trigger...");
+			triggerLabel.setFont(triggerLabel.getFont().deriveFont(Font.ITALIC));
 			descriptionText.setText("");
 			targetRadio.setSelected(true);
 			shiftCheckBox.setSelected(false);
@@ -115,7 +116,7 @@ public class ControllerTriggerPanel extends JPanel {
 			titlePanel.setBorder(BorderFactory.createTitledBorder("Edit Trigger"));
 
 			setTriggerText(trigger);
-			triggerText.setFont(triggerText.getFont().deriveFont(Font.PLAIN));
+			triggerLabel.setFont(triggerLabel.getFont().deriveFont(Font.PLAIN));
 			descriptionText.setText(trigger.getDescription());
 			shiftCheckBox.setSelected(trigger.getShift());
 			ctrlCheckBox.setSelected(trigger.getCtrl());
@@ -162,7 +163,7 @@ public class ControllerTriggerPanel extends JPanel {
 							SwingUtilities.invokeLater(new Runnable() {
 								public void run () {
 									setTriggerText(trigger);
-									triggerText.setFont(triggerText.getFont().deriveFont(Font.PLAIN));
+									triggerLabel.setFont(triggerLabel.getFont().deriveFont(Font.PLAIN));
 									cancelButton.setEnabled(true);
 									saveButton.setEnabled(true);
 								}
@@ -185,7 +186,7 @@ public class ControllerTriggerPanel extends JPanel {
 		trigger.setCtrl(false);
 		trigger.setAlt(false);
 		trigger.setShift(false);
-		triggerText.setText(trigger.toString());
+		triggerLabel.setText(trigger.toString());
 		trigger.setCtrl(ctrl);
 		trigger.setAlt(alt);
 		trigger.setShift(shift);
@@ -223,12 +224,12 @@ public class ControllerTriggerPanel extends JPanel {
 			}
 		});
 
-		triggerText.addMouseListener(new MouseAdapter() {
+		triggerLabel.addMouseListener(new MouseAdapter() {
 			public void mousePressed (MouseEvent event) {
 				if (monitorConrollersTask != null) return;
-				triggerText.setText("Waiting for trigger...");
-				triggerText.setFont(triggerText.getFont().deriveFont(Font.ITALIC));
-				triggerText.requestFocusInWindow();
+				triggerLabel.setText("Waiting for trigger...");
+				triggerLabel.setFont(triggerLabel.getFont().deriveFont(Font.ITALIC));
+				triggerLabel.requestFocusInWindow();
 				listenForTrigger(true);
 				cancelButton.setEnabled(false);
 				saveButton.setEnabled(false);
@@ -336,18 +337,20 @@ public class ControllerTriggerPanel extends JPanel {
 			}
 		}
 		{
-			triggerText = new JTextField();
-			titlePanel.add(triggerText, new GridBagConstraints(2, 1, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER,
+			triggerLabel = new JLabel();
+			titlePanel.add(triggerLabel, new GridBagConstraints(2, 1, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER,
 				GridBagConstraints.HORIZONTAL, new Insets(0, 6, 6, 6), 0, 0));
-			triggerText.setEditable(false);
+			triggerLabel.setOpaque(true);
+			triggerLabel.setBorder(descriptionText.getBorder());
+			triggerLabel.setFocusable(false);
 		}
 		{
 			JPanel spacer = new JPanel();
 			titlePanel.add(spacer, new GridBagConstraints(1, 5, 2, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
 				new Insets(0, 0, 0, 0), 0, 0));
-			spacer.setMinimumSize(new Dimension(375, 0));
-			spacer.setMaximumSize(new Dimension(375, 0));
-			spacer.setPreferredSize(new Dimension(375, 0));
+			spacer.setMinimumSize(new Dimension(450, 0));
+			spacer.setMaximumSize(new Dimension(450, 0));
+			spacer.setPreferredSize(new Dimension(450, 0));
 		}
 		{
 			JLabel label = new JLabel("Key modifier:");

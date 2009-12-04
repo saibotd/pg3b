@@ -3,6 +3,7 @@ package pg3b.ui.swing;
 
 import static com.esotericsoftware.minlog.Log.*;
 
+import java.awt.EventQueue;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -28,7 +29,7 @@ import com.esotericsoftware.minlog.Log;
 public class DiagnosticsTab extends JPanel {
 	static private final int TIMEOUT = 250;
 
-	PG3BUI owner;
+	private PG3BUI owner;
 	private JButton roundTripTestButton;
 	private JButton clearButton;
 	private JButton calibrateButton;
@@ -48,7 +49,7 @@ public class DiagnosticsTab extends JPanel {
 
 						PG3B pg3b = owner.getPg3b();
 						XboxController controller = owner.getController();
-						HashMap<String, Boolean> status = new HashMap();
+						final HashMap<String, Boolean> status = new HashMap();
 
 						for (Button button : Button.values()) {
 							if (button == Button.start || button == Button.guide) continue;
@@ -82,6 +83,15 @@ public class DiagnosticsTab extends JPanel {
 						}
 
 						owner.getControllerPanel().setStatus(status);
+
+						EventQueue.invokeLater(new Runnable() {
+							public void run () {
+								if (status.values().contains(Boolean.FALSE))
+									owner.getStatusBar().setMessage("Round trip failed.");
+								else
+									owner.getStatusBar().setMessage("Round trip successful.");
+							}
+						});
 					}
 				}.start("RoundTripTest");
 			}
@@ -108,7 +118,7 @@ public class DiagnosticsTab extends JPanel {
 							setMessage("Calibrating " + axis + "...");
 							throwCancelled();
 							AxisCalibration calibration = pg3b.calibrate(axis, controller);
-							if (calibration == null) return;
+							if (calibration == null) throwCancelled();
 							nameToURL.put(axis.toString(), calibration.getChartURL());
 							if (INFO) info(axis + " chart:\n" + calibration.getChartURL());
 							setPercentageComplete(++i / (float)values.length);
@@ -120,6 +130,7 @@ public class DiagnosticsTab extends JPanel {
 						CalibrationResultsFrame frame = new CalibrationResultsFrame(nameToURL);
 						frame.setLocationRelativeTo(owner);
 						frame.setVisible(true);
+						owner.getStatusBar().setMessage("Calibration successful.");
 					}
 				}.start("Calibrate");
 			}

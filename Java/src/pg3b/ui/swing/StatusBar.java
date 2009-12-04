@@ -3,11 +3,14 @@ package pg3b.ui.swing;
 
 import java.awt.Color;
 import java.awt.EventQueue;
+import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
@@ -18,8 +21,13 @@ import pg3b.PG3B;
 import pg3b.XboxController;
 
 public class StatusBar extends JPanel {
-	JLabel pg3bLabel, controllerLabel;
-	ImageIcon greenImage, redImage;
+	static final Timer timer = new Timer("StatusBar", true);
+
+	private TimerTask clearMessageTask;
+
+	private JLabel pg3bLabel, controllerLabel;
+	private JLabel messageLabel;
+	private ImageIcon greenImage, redImage;
 
 	public StatusBar () {
 		greenImage = new ImageIcon(getClass().getResource("/green.png"));
@@ -40,9 +48,10 @@ public class StatusBar extends JPanel {
 			controllerLabel.setIcon(redImage);
 		}
 		{
-			JPanel panel = new JPanel();
-			add(panel, new GridBagConstraints(2, 0, 1, 1, 1.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(
-				0, 0, 0, 0), 0, 0));
+			messageLabel = new JLabel();
+			messageLabel.setFont(messageLabel.getFont().deriveFont(Font.BOLD));
+			this.add(messageLabel, new GridBagConstraints(2, 0, 1, 1, 1.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE,
+				new Insets(0, 0, 0, 6), 0, 0));
 		}
 	}
 
@@ -74,5 +83,33 @@ public class StatusBar extends JPanel {
 	public void setController (final XboxController controller) {
 		controllerLabel.setIcon(controller == null ? redImage : greenImage);
 		controllerLabel.setText(controller == null ? "Controller" : "Controller: " + (controller.getPort() + 1));
+	}
+
+	public void setMessage (String message) {
+		if (clearMessageTask != null) clearMessageTask.cancel();
+		clearMessageTask = new TimerTask() {
+			float alpha = 1;
+
+			public void run () {
+				try {
+					EventQueue.invokeAndWait(new Runnable() {
+						public void run () {
+							alpha -= 0.03f;
+							if (alpha > 0)
+								messageLabel.setForeground(new Color(0, 0, 0, alpha));
+							else {
+								cancel();
+								clearMessageTask = null;
+								setMessage("");
+							}
+						}
+					});
+				} catch (Exception ignored) {
+				}
+			}
+		};
+		timer.scheduleAtFixedRate(clearMessageTask, 83, 166);
+		messageLabel.setText(message);
+		messageLabel.setForeground(Color.black);
 	}
 }

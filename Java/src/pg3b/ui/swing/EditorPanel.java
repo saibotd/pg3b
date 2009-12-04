@@ -37,8 +37,6 @@ import pg3b.util.UI;
 import com.esotericsoftware.minlog.Log;
 
 // BOZO - Highlight triggers table for missing controllers, scripts, etc.
-// BOZO - Use GridLayout for buttons.
-// BOZO - Change to private.
 
 public class EditorPanel<T extends Editable> extends JPanel {
 	static Settings settings = Settings.get();
@@ -49,6 +47,7 @@ public class EditorPanel<T extends Editable> extends JPanel {
 	private File rootDir;
 	private String extension;
 	private DirectoryMonitor<T> monitor;
+	private T lastSelectedItem;
 
 	private JList list;
 	private DefaultComboBoxModel listModel;
@@ -85,10 +84,20 @@ public class EditorPanel<T extends Editable> extends JPanel {
 		monitor.scan(rootDir, 3000);
 	}
 
+	/**
+	 * @param item If null, clear the fields.
+	 */
 	protected void updateFieldsFromItem (T item) {
 	}
 
 	protected void updateItemFromFields (T item) {
+	}
+
+	/**
+	 * Due to the DirectoryMonitor, an item will be removed and then selected again when saved. Subclasses should store state (eg,
+	 * scrollbar positions) between selections and clear the state only when clearItemSpecificState is called.
+	 */
+	protected void clearItemSpecificState () {
 	}
 
 	public JPanel getContentPanel () {
@@ -120,6 +129,8 @@ public class EditorPanel<T extends Editable> extends JPanel {
 					nameText.setText("");
 					descriptionText.setText("");
 				} else {
+					if (lastSelectedItem == null || !lastSelectedItem.getFile().equals(item.getFile())) clearItemSpecificState();
+					lastSelectedItem = item;
 					nameText.setText(item.getName());
 					descriptionText.setText(item.getDescription());
 				}
@@ -142,7 +153,10 @@ public class EditorPanel<T extends Editable> extends JPanel {
 					break;
 				}
 				try {
-					saveItem(type.getConstructor(File.class).newInstance(new File(rootDir, name + extension)), true);
+					T item = type.getConstructor(File.class).newInstance(new File(rootDir, name + extension));
+					updateFieldsFromItem(item);
+					saveItem(item, true);
+					owner.getStatusBar().setMessage(type.getSimpleName() + " created.");
 				} catch (Exception ex) {
 					throw new RuntimeException(ex);
 				}
@@ -154,7 +168,7 @@ public class EditorPanel<T extends Editable> extends JPanel {
 				if (JOptionPane.showConfirmDialog(owner,
 					"Are you sure you want to delete the selected item?\nThis action cannot be undone.", "Confirm Delete",
 					JOptionPane.WARNING_MESSAGE) != JOptionPane.YES_OPTION) return;
-				getSelectedItem().getFile().delete();
+				if (getSelectedItem().getFile().delete()) owner.getStatusBar().setMessage(type.getSimpleName() + " deleted.");
 				monitor.scan(rootDir);
 				if (list.getSelectedIndex() == -1 && listModel.getSize() > 0) list.setSelectedIndex(0);
 			}
@@ -178,19 +192,23 @@ public class EditorPanel<T extends Editable> extends JPanel {
 			if (item == null) return;
 			T oldItem = (T)item.clone();
 
-			// Rename file if needed.
-			String name = new File(nameText.getText().trim()).getName();
-			if (name.length() == 0) name = item.getName();
-			if (!name.equalsIgnoreCase(item.getName())) {
-				File newFile = new File(item.getFile().getParent(), name + extension);
-				item.getFile().renameTo(newFile);
-				try {
-					item = Editable.load(newFile, type);
-				} catch (IOException ex) {
-					if (Log.ERROR) error("Unable to load file: " + item.getFile(), ex);
-					UI.errorDialog(owner, "Error", //
-						"An error occurred while attempting to load the file.");
-					return;
+			if (!force) {
+				// Rename file if needed.
+				String name = new File(nameText.getText().trim()).getName();
+				if (name.length() == 0) name = item.getName();
+				if (!name.equalsIgnoreCase(item.getName())) {
+					File newFile = new File(item.getFile().getParent(), name + extension);
+					if (!newFile.exists()) {
+						item.getFile().renameTo(newFile);
+						try {
+							item = Editable.load(newFile, type);
+						} catch (IOException ex) {
+							if (Log.ERROR) error("Unable to load file: " + item.getFile(), ex);
+							UI.errorDialog(owner, "Error", //
+								"An error occurred while attempting to load the file.");
+							return;
+						}
+					}
 				}
 			}
 
@@ -201,7 +219,9 @@ public class EditorPanel<T extends Editable> extends JPanel {
 			try {
 				item.save();
 				monitor.scan(rootDir);
+				owner.getStatusBar().setMessage(type.getSimpleName() + " saved.");
 			} catch (IOException ex) {
+				owner.getStatusBar().setMessage("Unable to save file.");
 				if (Log.ERROR) error("Unable to save file: " + item.getFile(), ex);
 				UI.errorDialog(owner, "Error", //
 					"An error occurred while attempting to save the file.");
@@ -290,7 +310,6 @@ public class EditorPanel<T extends Editable> extends JPanel {
 			}
 		}
 
-		UI.enableWhenModelHasSelection(list.getSelectionModel(), deleteButton, contentPanel, nameText, descriptionText, owner
-			.getCaptureButton());
+		UI.enableWhenModelHasSelection(list.getSelectionModel(), deleteButton, nameText, descriptionText);
 	}
 }

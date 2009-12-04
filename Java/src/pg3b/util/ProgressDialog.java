@@ -18,7 +18,7 @@ import javax.swing.JProgressBar;
  * Dialog displaying a message and a progress bar.
  */
 public class ProgressDialog extends JDialog {
-	JProgressBar progressBar;
+	private JProgressBar progressBar;
 	private JLabel messageLabel;
 
 	public ProgressDialog () {

@@ -3,12 +3,18 @@ package pg3b.ui.swing;
 
 import static com.esotericsoftware.minlog.Log.*;
 
+import java.awt.AWTEvent;
+import java.awt.Component;
 import java.awt.EventQueue;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.KeyboardFocusManager;
+import java.awt.Toolkit;
+import java.awt.event.AWTEventListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
 
@@ -33,23 +39,24 @@ import pg3b.util.LoaderDialog;
 public class PG3BUI extends JFrame {
 	static Settings settings = Settings.get();
 
-	PG3B pg3b;
-	XboxController controller;
+	private PG3B pg3b;
+	private XboxController controller;
 
-	JMenuItem pg3bConnectMenuItem, controllerConnectMenuItem, exitMenuItem;
-	JCheckBoxMenuItem showControllerMenuItem;
+	private JMenuItem pg3bConnectMenuItem, controllerConnectMenuItem, exitMenuItem;
+	private JCheckBoxMenuItem showControllerMenuItem;
 
-	XboxControllerPanel controllerPanel;
-	JToggleButton captureButton;
-	StatusBar statusBar;
+	private XboxControllerPanel controllerPanel;
+	private JToggleButton captureButton;
+	private StatusBar statusBar;
 
-	JTabbedPane tabs;
-	ConfigTab configTab;
-	ScriptEditor scriptEditor;
-	DiagnosticsTab diagnosticsTab;
+	private JTabbedPane tabs;
+	private ConfigTab configTab;
+	private ScriptEditor scriptEditor;
+	private DiagnosticsTab diagnosticsTab;
 
-	Listener controllerListener = new Listener() {
+	private Listener controllerListener = new Listener() {
 		public void disconnected () {
+			statusBar.setMessage("Controller disconnected.");
 			setController(null);
 		}
 	};
@@ -107,7 +114,10 @@ public class PG3BUI extends JFrame {
 	}
 
 	public void setPg3b (PG3B newPg3b) {
-		if (pg3b != null) pg3b.close();
+		if (pg3b != null) {
+			pg3b.close();
+			statusBar.setMessage("PG3B disconnected.");
+		}
 
 		pg3b = newPg3b;
 
@@ -166,6 +176,10 @@ public class PG3BUI extends JFrame {
 		return scriptEditor;
 	}
 
+	public StatusBar getStatusBar () {
+		return statusBar;
+	}
+
 	private void initializeEvents () {
 		pg3bConnectMenuItem.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
@@ -209,6 +223,14 @@ public class PG3BUI extends JFrame {
 				// BOZO
 			}
 		});
+
+		Toolkit.getDefaultToolkit().addAWTEventListener(new AWTEventListener() {
+			public void eventDispatched (AWTEvent event) {
+				if (event.getID() != MouseEvent.MOUSE_PRESSED) return;
+				Component focused = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+				if (event.getSource() != focused) PG3BUI.this.requestFocusInWindow();
+			}
+		}, AWTEvent.MOUSE_EVENT_MASK);
 	}
 
 	protected void processWindowEvent (WindowEvent event) {
@@ -222,6 +244,7 @@ public class PG3BUI extends JFrame {
 		CalibrationResultsFrame.close();
 		if (pg3b != null) pg3b.close();
 		dispose();
+		System.exit(0);
 	}
 
 	private void initializeLayout () {

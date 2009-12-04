@@ -18,25 +18,8 @@ public class XboxController {
 	static final int DPAD_UP = 4, DPAD_DOWN = 8, DPAD_LEFT = 16, DPAD_RIGHT = 32;
 
 	private final Controller controller;
-	int dpadDirection;
+	private int dpadDirection;
 	private Listeners<Listener> listeners = new Listeners(Listener.class);
-
-	public static void main (String[] args) throws Exception {
-		XboxController controller = new XboxController(getAllControllers().get(0));
-		controller.addListener(new Listener() {
-			public void buttonChanged (Button button, boolean pressed) {
-				System.out.println(button + " " + pressed);
-			}
-
-			public void axisChanged (Axis axis, float state) {
-				System.out.println(axis + " " + state);
-			}
-		});
-		while (true) {
-			controller.poll();
-			Thread.sleep(100);
-		}
-	}
 
 	public XboxController (Controller controller) {
 		this.controller = controller;

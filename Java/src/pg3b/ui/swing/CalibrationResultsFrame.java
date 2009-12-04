@@ -19,10 +19,10 @@ import javax.swing.JLabel;
 public class CalibrationResultsFrame extends JFrame {
 	static private CalibrationResultsFrame openFrame;
 
-	Map<String, URL> nameToURL;
-	JComboBox chartCombo;
-	DefaultComboBoxModel chartComboModel;
-	JLabel imageLabel;
+	private Map<String, URL> nameToURL;
+	private JComboBox chartCombo;
+	private DefaultComboBoxModel chartComboModel;
+	private JLabel imageLabel;
 
 	public CalibrationResultsFrame (Map<String, URL> nameToURL) {
 		super("PG3B - Calibration Results");

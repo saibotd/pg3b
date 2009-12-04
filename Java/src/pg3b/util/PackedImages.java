@@ -15,7 +15,7 @@ import java.util.PriorityQueue;
 import javax.imageio.ImageIO;
 
 public class PackedImages {
-	public final PackedImage[] images;
+	private final PackedImage[] images;
 
 	public PackedImages (String packPath) throws IOException {
 		PriorityQueue<PackedImage> sortedImages = new PriorityQueue(16, indexComparator);

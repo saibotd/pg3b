@@ -32,7 +32,7 @@ public class UI {
 			component.setEnabled(enabled);
 	}
 
-	public static void scrollRowToVisisble (JTable table, int index) {
+	static public void scrollRowToVisisble (JTable table, int index) {
 		JViewport viewport = (JViewport)table.getParent();
 		Rectangle rect = table.getCellRect(index, 0, true);
 		Point position = viewport.getViewPosition();

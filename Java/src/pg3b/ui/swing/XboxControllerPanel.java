@@ -38,18 +38,18 @@ public class XboxControllerPanel extends JPanel {
 	static final int DPAD_NONE = 0, DPAD_DEADZONE = 2, DPAD_UP = 4, DPAD_DOWN = 8, DPAD_LEFT = 16, DPAD_RIGHT = 32;
 	static final Timer timer = new Timer("PollController", true);
 
-	PG3B pg3b;
-	XboxController controller;
-	PackedImages packedImages;
-	String overImageName;
-	int dragStartX = -1, dragStartY = -1;
-	int dpadDirection;
-	float lastTriggerValue, lastValueX, lastValueY;
-	Map<String, Boolean> nameToStatus;
-	BufferedImage checkImage, xImage;
-	Listeners<Listener> listeners = new Listeners(Listener.class);
+	private PG3B pg3b;
+	private XboxController controller;
+	private PackedImages packedImages;
+	private String overImageName;
+	private int dragStartX = -1, dragStartY = -1;
+	private int dpadDirection;
+	private float lastTriggerValue, lastValueX, lastValueY;
+	private Map<String, Boolean> nameToStatus;
+	private BufferedImage checkImage, xImage;
+	private Listeners<Listener> listeners = new Listeners(Listener.class);
 
-	XboxController.Listener controllerListener = new XboxController.Listener() {
+	private XboxController.Listener controllerListener = new XboxController.Listener() {
 		public void buttonChanged (Button button, boolean pressed) {
 			repaint();
 		}

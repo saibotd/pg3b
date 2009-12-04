@@ -145,6 +145,7 @@ public class PG3B {
 	}
 
 	public void set (Stick stick, float stateX, float stateY) throws IOException {
+		if (stick == null) throw new IllegalArgumentException("stick cannot be null.");
 		Axis axisX = stick == Stick.left ? Axis.leftStickX : Axis.rightStickX;
 		Axis axisY = stick == Stick.left ? Axis.leftStickY : Axis.rightStickY;
 		set(axisX, stateX);
@@ -152,6 +153,7 @@ public class PG3B {
 	}
 
 	public void set (Target target, boolean pressed) throws IOException {
+		if (target == null) throw new IllegalArgumentException("target cannot be null.");
 		if (target instanceof Button)
 			set((Button)target, pressed);
 		else if (target instanceof Axis)
@@ -161,6 +163,7 @@ public class PG3B {
 	}
 
 	public void set (Target target, float state) throws IOException {
+		if (target == null) throw new IllegalArgumentException("target cannot be null.");
 		if (target instanceof Button)
 			set((Button)target, state != 0);
 		else if (target instanceof Axis)
@@ -170,10 +173,12 @@ public class PG3B {
 	}
 
 	public void set (String target, boolean pressed) throws IOException {
+		if (target == null) throw new IllegalArgumentException("target cannot be null.");
 		set(getTarget(target), pressed);
 	}
 
 	public void set (String target, float state) throws IOException {
+		if (target == null) throw new IllegalArgumentException("target cannot be null.");
 		set(getTarget(target), state);
 	}
 
@@ -186,6 +191,9 @@ public class PG3B {
 	}
 
 	public AxisCalibration calibrate (Axis axis, XboxController controller) throws IOException {
+		if (axis == null) throw new IllegalArgumentException("axis cannot be null.");
+		if (controller == null) throw new IllegalArgumentException("controller cannot be null.");
+
 		boolean isTrigger = axis == Axis.leftTrigger || axis == Axis.rightTrigger;
 		if (isTrigger) {
 			// The triggers are mapped to the same Z axis by the MS driver and interfere with each other if not zero.

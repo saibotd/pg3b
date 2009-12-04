@@ -26,12 +26,11 @@ import pg3b.util.LoaderDialog;
 import pg3b.util.UI;
 
 public class ConnectPG3BDialog extends JDialog {
-	PG3BUI owner;
-	JList portList;
-	private JButton refreshButton;
-	DefaultComboBoxModel portListModel;
-	PG3B pg3b;
-	private JButton connectButton, cancelButton;
+	private PG3BUI owner;
+	private JList portList;
+	private JButton refreshButton, connectButton, cancelButton;
+	private DefaultComboBoxModel portListModel;
+	private PG3B pg3b;
 
 	public ConnectPG3BDialog (final PG3BUI owner) {
 		super(owner, "Connect to PG3b", true);
@@ -73,14 +72,16 @@ public class ConnectPG3BDialog extends JDialog {
 					}
 
 					public void complete () {
-						if (!failed()) {
-							ConnectPG3BDialog.this.dispose();
+						if (failed()) {
+							owner.getStatusBar().setMessage("PG3B connection failed.");
+							UI.errorDialog(ConnectPG3BDialog.this, "Connect Error",
+								"An error occurred while attempting to connect to the PG3B.");
 							return;
 						}
-						UI.errorDialog(ConnectPG3BDialog.this, "Connect Error",
-							"An error occurred while attempting to connect to the PG3B.");
+						ConnectPG3BDialog.this.dispose();
+						owner.getStatusBar().setMessage("PG3B connected.");
 					}
-				}.start("Pg3bConnect");
+				}.start("PG3BConnect");
 			}
 		});
 
