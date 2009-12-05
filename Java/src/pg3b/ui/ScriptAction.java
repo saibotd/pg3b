@@ -2,7 +2,7 @@
 package pg3b.ui;
 
 public class ScriptAction implements Action {
-	private String script;
+	private String scriptName;
 
 	public ScriptAction () {
 	}
@@ -12,15 +12,15 @@ public class ScriptAction implements Action {
 	}
 
 	public String getScriptName () {
-		return script;
+		return scriptName;
 	}
 
 	public void setScriptName (String scriptName) {
-		this.script = scriptName;
+		this.scriptName = scriptName;
 	}
 
 	public String toString () {
-		return "Script: " + script.toString();
+		return "Script: " + scriptName.toString();
 	}
 
 	public void execute () {

@@ -5,6 +5,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Reader;
+import java.lang.reflect.InvocationTargetException;
 
 import net.sourceforge.yamlbeans.YamlConfig;
 import net.sourceforge.yamlbeans.YamlException;
@@ -17,24 +19,28 @@ import pg3b.Target;
 public class Editable implements Cloneable {
 	static public final YamlConfig yamlConfig = new YamlConfig();
 	static {
-		yamlConfig.writeConfig.setWriteRootTags(false);
-		yamlConfig.writeConfig.setWriteDefaultValues(true);
+		yamlConfig.setPrivateFields(true);
+		yamlConfig.setBeanProperties(false);
 		yamlConfig.setScalarSerializer(Target.class, new ScalarSerializer<Target>() {
-			public Target read (String value) throws YamlException {
+			public Target read (String value) {
 				return PG3B.getTarget(value);
 			}
 
-			public String write (Target target) throws YamlException {
+			public String write (Target target) {
 				return target.toString();
 			}
 		});
+		yamlConfig.writeConfig.setAutoAnchor(false);
+		yamlConfig.writeConfig.setWriteRootTags(false);
+		// yamlConfig.writeConfig.setWriteDefaultValues(true);
+
 		yamlConfig.setClassTag("controller", ControllerTrigger.class);
 		yamlConfig.setClassTag("PG3B", PG3BAction.class);
 		yamlConfig.setClassTag("script", ScriptAction.class);
 	}
 
-	private transient File file;
-	private String description;
+	protected transient File file;
+	private String description = "";
 
 	public Editable () {
 	}
@@ -60,34 +66,25 @@ public class Editable implements Cloneable {
 	}
 
 	public void setDescription (String description) {
+		if (description != null) description = description.trim();
 		this.description = description;
 	}
 
 	public void save () throws IOException {
 		if (file == null) throw new IllegalStateException("A file has not been set.");
-		YamlWriter writer = null;
+		YamlWriter writer = new YamlWriter(new FileWriter(file), yamlConfig);
 		try {
-			try {
-				writer = new YamlWriter(new FileWriter(file), yamlConfig);
-				writer.write(this);
-			} finally {
-				if (writer != null) writer.close();
-			}
-		} catch (YamlException ex) {
-			IOException ioEx = new IOException();
-			ioEx.initCause(ex);
-			throw ioEx;
+			writer.write(this);
+		} finally {
+			writer.close();
 		}
 	}
 
-	static public <T extends Editable> T load (File file, Class<T> c) throws IOException {
-		YamlReader reader = null;
+	public void load (File file) throws IOException {
+		this.file = file;
+		YamlReader reader = getYamlReader(new FileReader(file));
 		try {
-			reader = new YamlReader(new FileReader(file), yamlConfig);
-			T object = reader.read(c);
-			if (object == null) object = c.newInstance();
-			object.file = file;
-			return object;
+			reader.read(getClass());
 		} catch (Exception ex) {
 			IOException ioEx = new IOException();
 			ioEx.initCause(ex);
@@ -98,6 +95,15 @@ public class Editable implements Cloneable {
 			} catch (IOException ignored) {
 			}
 		}
+	}
+
+	protected YamlReader getYamlReader (Reader reader) throws IOException {
+		return new YamlReader(reader, yamlConfig) {
+			protected Object createObject (Class type) throws InvocationTargetException {
+				if (type == Editable.this.getClass()) return Editable.this;
+				return super.createObject(type);
+			}
+		};
 	}
 
 	public Editable clone () {

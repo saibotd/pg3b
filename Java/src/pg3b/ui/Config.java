@@ -41,8 +41,4 @@ public class Config extends Editable {
 		} else if (!triggers.equals(other.triggers)) return false;
 		return true;
 	}
-
-	static public Config load (File file) throws IOException {
-		return Editable.load(file, Config.class);
-	}
 }

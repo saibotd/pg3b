@@ -3,20 +3,26 @@ package pg3b.ui.swing;
 
 import static com.esotericsoftware.minlog.Log.*;
 
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Insets;
+import java.awt.KeyboardFocusManager;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.awt.event.InputEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
+import javax.swing.AbstractAction;
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.InputMap;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -25,6 +31,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -47,7 +54,8 @@ public class EditorPanel<T extends Editable> extends JPanel {
 	private File rootDir;
 	private String extension;
 	private DirectoryMonitor<T> monitor;
-	private T lastSelectedItem;
+	private T selectedItem;
+	private boolean isListAdjusting;
 
 	private JList list;
 	private DefaultComboBoxModel listModel;
@@ -70,18 +78,35 @@ public class EditorPanel<T extends Editable> extends JPanel {
 
 		monitor = new DirectoryMonitor<T>(extension) {
 			protected T load (File file) throws IOException {
-				return Editable.load(file, type);
+				try {
+					T newItem = type.newInstance();
+					newItem.load(file);
+					return newItem;
+				} catch (Exception ex) {
+					throw new IOException("Error creating new item: " + file, ex);
+				}
 			}
 
 			protected void updated () {
+				Component focused = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
 				T selectedItem = getSelectedItem();
+				isListAdjusting = true;
 				listModel.removeAllElements();
 				for (T item : getItems())
 					listModel.addElement(item);
-				list.setSelectedValue(selectedItem, true);
+				isListAdjusting = false;
+				setSelectedFile(selectedItem == null ? null : selectedItem.getFile());
+				if (focused != null) focused.requestFocus();
 			}
 		};
 		monitor.scan(rootDir, 3000);
+
+		getInputMap(WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke('S', InputEvent.CTRL_MASK), "save");
+		getActionMap().put("save", new AbstractAction() {
+			public void actionPerformed (ActionEvent event) {
+				saveItem(false);
+			}
+		});
 	}
 
 	/**
@@ -105,11 +130,25 @@ public class EditorPanel<T extends Editable> extends JPanel {
 	}
 
 	public T getSelectedItem () {
-		return (T)list.getSelectedValue();
+		return selectedItem;
 	}
 
 	public void setSelectedItem (T item) {
 		list.setSelectedValue(item, true);
+	}
+
+	public void setSelectedFile (File file) {
+		for (int i = 0, n = listModel.getSize(); i < n; i++) {
+			T listItem = (T)listModel.getElementAt(i);
+			if (listItem.getFile().equals(file)) {
+				isListAdjusting = true;
+				list.clearSelection();
+				isListAdjusting = false;
+				list.setSelectedIndex(i);
+				return;
+			}
+		}
+		list.clearSelection();
 	}
 
 	public List<T> getItems () {
@@ -123,16 +162,20 @@ public class EditorPanel<T extends Editable> extends JPanel {
 	private void initializeEvents () {
 		list.addListSelectionListener(new ListSelectionListener() {
 			public void valueChanged (ListSelectionEvent event) {
-				if (event.getValueIsAdjusting()) return;
-				T item = getSelectedItem();
+				if (event.getValueIsAdjusting() || isListAdjusting) return;
+				T item = (T)list.getSelectedValue();
 				if (item == null) {
+					selectedItem = null;
 					nameText.setText("");
 					descriptionText.setText("");
 				} else {
-					if (lastSelectedItem == null || !lastSelectedItem.getFile().equals(item.getFile())) clearItemSpecificState();
-					lastSelectedItem = item;
+					if (item.equals(selectedItem)) return;
+					boolean clearItemSpecificState = selectedItem == null || !selectedItem.getFile().equals(item.getFile());
+					if (clearItemSpecificState) clearItemSpecificState();
+					selectedItem = item;
 					nameText.setText(item.getName());
 					descriptionText.setText(item.getDescription());
+					if (clearItemSpecificState) descriptionText.setCaretPosition(0);
 				}
 				updateFieldsFromItem(item);
 			}
@@ -154,6 +197,8 @@ public class EditorPanel<T extends Editable> extends JPanel {
 				}
 				try {
 					T item = type.getConstructor(File.class).newInstance(new File(rootDir, name + extension));
+					nameText.setText(item.getName());
+					descriptionText.setText(item.getDescription());
 					updateFieldsFromItem(item);
 					saveItem(item, true);
 					owner.getStatusBar().setMessage(type.getSimpleName() + " created.");
@@ -168,7 +213,10 @@ public class EditorPanel<T extends Editable> extends JPanel {
 				if (JOptionPane.showConfirmDialog(owner,
 					"Are you sure you want to delete the selected item?\nThis action cannot be undone.", "Confirm Delete",
 					JOptionPane.WARNING_MESSAGE) != JOptionPane.YES_OPTION) return;
-				if (getSelectedItem().getFile().delete()) owner.getStatusBar().setMessage(type.getSimpleName() + " deleted.");
+				if (getSelectedItem().getFile().delete())
+					owner.getStatusBar().setMessage(type.getSimpleName() + " deleted.");
+				else
+					owner.getStatusBar().setMessage(type.getSimpleName() + " could not be deleted.");
 				monitor.scan(rootDir);
 				if (list.getSelectedIndex() == -1 && listModel.getSize() > 0) list.setSelectedIndex(0);
 			}
@@ -188,8 +236,11 @@ public class EditorPanel<T extends Editable> extends JPanel {
 	}
 
 	public void saveItem (T item, boolean force) {
+		Component focused = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
 		synchronized (monitor) {
 			if (item == null) return;
+			if (!force && !item.getFile().exists()) return;
+
 			T oldItem = (T)item.clone();
 
 			if (!force) {
@@ -201,7 +252,7 @@ public class EditorPanel<T extends Editable> extends JPanel {
 					if (!newFile.exists()) {
 						item.getFile().renameTo(newFile);
 						try {
-							item = Editable.load(newFile, type);
+							item.load(newFile);
 						} catch (IOException ex) {
 							if (Log.ERROR) error("Unable to load file: " + item.getFile(), ex);
 							UI.errorDialog(owner, "Error", //
@@ -227,15 +278,9 @@ public class EditorPanel<T extends Editable> extends JPanel {
 					"An error occurred while attempting to save the file.");
 				return;
 			}
-			for (int i = 0, n = listModel.getSize(); i < n; i++) {
-				T listItem = (T)listModel.getElementAt(i);
-				if (listItem.getFile().equals(item.getFile())) {
-					list.clearSelection();
-					list.setSelectedIndex(i);
-					break;
-				}
-			}
+			setSelectedFile(item.getFile());
 		}
+		if (focused != null) focused.requestFocus();
 	}
 
 	private void initializeLayout () {
@@ -294,9 +339,9 @@ public class EditorPanel<T extends Editable> extends JPanel {
 					JScrollPane scroll = new JScrollPane();
 					panel.add(scroll, new GridBagConstraints(1, 1, 1, 1, 1.0, 0.0, GridBagConstraints.CENTER,
 						GridBagConstraints.HORIZONTAL, new Insets(6, 0, 0, 6), 0, 0));
-					scroll.setMinimumSize(new Dimension(3, 50));
-					scroll.setMaximumSize(new Dimension(3, 50));
-					scroll.setPreferredSize(new Dimension(3, 50));
+					scroll.setMinimumSize(new Dimension(3, 62));
+					scroll.setMaximumSize(new Dimension(3, 62));
+					scroll.setPreferredSize(new Dimension(3, 62));
 					{
 						descriptionText = new JTextArea();
 						scroll.setViewportView(descriptionText);

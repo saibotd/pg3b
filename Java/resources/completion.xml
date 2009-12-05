@@ -1,0 +1,237 @@
+<api language="Java">
+	<environment paramStartChar="(" paramEndChar=")"
+		paramSeparator=", " terminal=";" />
+	<keywords>
+		<keyword name='Process' type='constant' definedIn='java.lang'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='Exception' type='constant' definedIn='java.lang'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='NumberFormatException' type='constant'
+			definedIn='java.lang'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='StrictMath' type='constant' definedIn='java.lang'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='IllegalStateException' type='constant'
+			definedIn='java.lang'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='UnsupportedOperationException' type='constant'
+			definedIn='java.lang'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='Enum' type='constant' definedIn='java.lang'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='InterruptedException' type='constant'
+			definedIn='java.lang'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='ThreadLocal' type='constant' definedIn='java.lang'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='Math' type='constant' definedIn='java.lang'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='StringBuilder' type='constant' definedIn='java.lang'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='Runtime' type='constant' definedIn='java.lang'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='NullPointerException' type='constant'
+			definedIn='java.lang'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='Long' type='constant' definedIn='java.lang'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='Integer' type='constant' definedIn='java.lang'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='Short' type='constant' definedIn='java.lang'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='Byte' type='constant' definedIn='java.lang'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='Double' type='constant' definedIn='java.lang'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='Number' type='constant' definedIn='java.lang'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='Float' type='constant' definedIn='java.lang'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='Character' type='constant' definedIn='java.lang'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='Boolean' type='constant' definedIn='java.lang'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='StringBuffer' type='constant' definedIn='java.lang'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='Iterable' type='constant' definedIn='java.lang'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='Runnable' type='constant' definedIn='java.lang'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='Thread' type='constant' definedIn='java.lang'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='ClassCastException' type='constant' definedIn='java.lang'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='RuntimeException' type='constant' definedIn='java.lang'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='Throwable' type='constant' definedIn='java.lang'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='System' type='constant' definedIn='java.lang'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='ClassLoader' type='constant' definedIn='java.lang'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='Cloneable' type='constant' definedIn='java.lang'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='Class' type='constant' definedIn='java.lang'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='CharSequence' type='constant' definedIn='java.lang'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='Comparable' type='constant' definedIn='java.lang'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='String' type='constant' definedIn='java.lang'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='Object' type='constant' definedIn='java.lang'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='EnumMap' type='constant' definedIn='java.util'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='EnumSet' type='constant' definedIn='java.util'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='Formatter' type='constant' definedIn='java.util'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='NoSuchElementException' type='constant'
+			definedIn='java.util'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='PriorityQueue' type='constant' definedIn='java.util'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='Timer' type='constant' definedIn='java.util'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='TimerTask' type='constant' definedIn='java.util'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='Executors' type='constant' definedIn='java.util.concurrent'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='Preferences' type='constant' definedIn='java.util.prefs'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='Calendar' type='constant' definedIn='java.util'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='Random' type='constant' definedIn='java.util'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='Matcher' type='constant' definedIn='java.util.regex'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='Date' type='constant' definedIn='java.util'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='Pattern' type='constant' definedIn='java.util.regex'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='TreeMap' type='constant' definedIn='java.util'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='TreeSet' type='constant' definedIn='java.util'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='LinkedList' type='constant' definedIn='java.util'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='LinkedHashSet' type='constant' definedIn='java.util'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='HashSet' type='constant' definedIn='java.util'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='BitSet' type='constant' definedIn='java.util'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='StringTokenizer' type='constant' definedIn='java.util'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='IdentityHashMap' type='constant' definedIn='java.util'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='ArrayList' type='constant' definedIn='java.util'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='Arrays' type='constant' definedIn='java.util'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='LinkedHashMap' type='constant' definedIn='java.util'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='Set' type='constant' definedIn='java.util'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='Collections' type='constant' definedIn='java.util'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='Iterator' type='constant' definedIn='java.util'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='Enumeration' type='constant' definedIn='java.util'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='Stack' type='constant' definedIn='java.util'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='HashMap' type='constant' definedIn='java.util'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='Comparator' type='constant' definedIn='java.util'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='Collection' type='constant' definedIn='java.util'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='List' type='constant' definedIn='java.util'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='Map' type='constant' definedIn='java.util'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='Hashtable' type='constant' definedIn='java.util'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='Properties' type='constant' definedIn='java.util'>
+			<desc>Moo</desc>
+		</keyword>
+		<keyword name='URL' type='constant' definedIn='java.net'>
+			<desc>Moo</desc>
+		</keyword>
+	</keywords>
+</api>

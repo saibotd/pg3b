@@ -9,8 +9,6 @@ import javax.swing.JToggleButton;
 import pg3b.ui.Config;
 import pg3b.ui.ControllerTrigger;
 
-// BOZO - Fix text field resizing on trigger panel.
-
 public class ConfigTab extends JPanel {
 	private PG3BUI owner;
 	private CardLayout cardLayout;

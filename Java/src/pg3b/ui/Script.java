@@ -1,10 +1,17 @@
 
 package pg3b.ui;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.StringReader;
+
+import net.sourceforge.yamlbeans.YamlWriter;
 
 public class Script extends Editable {
-	private String code;
+	private transient String code;
 
 	public Script () {
 	}
@@ -18,7 +25,50 @@ public class Script extends Editable {
 	}
 
 	public void setCode (String code) {
+		if (code != null) {
+			// Normalize EOL characters.
+			code = code.replaceAll("\r\n", "\n").replaceAll("\r", "\n");
+			// Prevent whitespace before EOL, allows YAML block style output.
+			code = code.replaceAll("[ \t]+\n", "\n");
+		}
 		this.code = code;
+	}
+
+	public void save () throws IOException {
+		if (getFile() == null) throw new IllegalStateException("A file has not been set.");
+
+		FileWriter writer = new FileWriter(getFile());
+		YamlWriter yamlWriter = new YamlWriter(writer, yamlConfig);
+		try {
+			yamlWriter.write(this);
+			yamlWriter.clearAnchors();
+			writer.write("---\r\n");
+			writer.write(code.replaceAll("\n", "\r\n"));
+		} finally {
+			yamlWriter.close();
+		}
+	}
+
+	public void load (File file) throws IOException {
+		this.file = file;
+		BufferedReader reader = new BufferedReader(new FileReader(getFile()));
+		try {
+			StringBuilder buffer = new StringBuilder(4096);
+			while (true) {
+				String line = reader.readLine();
+				if (line == null) break;
+				if (line.equals("---")) {
+					getYamlReader(new StringReader(buffer.toString())).read(Script.class);
+					buffer.setLength(0);
+				} else {
+					buffer.append(line);
+					buffer.append("\n");
+				}
+			}
+			setCode(buffer.toString());
+		} finally {
+			reader.close();
+		}
 	}
 
 	public int hashCode () {

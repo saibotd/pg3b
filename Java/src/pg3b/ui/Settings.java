@@ -63,8 +63,6 @@ public class Settings {
 			}
 		} catch (IOException ex) {
 			if (ERROR) error("Error saving file: " + fileName, ex);
-		} catch (YamlException ex) {
-			if (ERROR) error("Error saving file: " + fileName, ex);
 		}
 	}
 }
