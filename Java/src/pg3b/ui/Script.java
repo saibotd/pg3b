@@ -8,8 +8,11 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringReader;
 
+import static com.esotericsoftware.minlog.Log.*;
+
 import net.sourceforge.yamlbeans.YamlWriter;
 import pnuts.lang.Context;
+import pnuts.lang.ParseException;
 import pnuts.lang.Pnuts;
 
 public class Script extends Editable {
@@ -37,11 +40,12 @@ public class Script extends Editable {
 		this.code = code;
 
 		pnuts = null;
-		try {
-			pnuts = Pnuts.parse(code);
-		} catch (Exception ex) {
-			// BOZO - Add error markers to the code textarea or gutter. Also indicate compilation failure elsewhere in UI.
-			ex.printStackTrace();
+		if (code != null) {
+			try {
+				pnuts = Pnuts.parse(code);
+			} catch (ParseException ex) {
+				if (TRACE) trace("Code cannot be compiled.", ex);
+			}
 		}
 	}
 

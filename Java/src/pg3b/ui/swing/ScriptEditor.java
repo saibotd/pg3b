@@ -6,10 +6,10 @@ import static org.fife.ui.rsyntaxtextarea.Token.*;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.GridBagConstraints;
-import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -18,15 +18,22 @@ import java.awt.event.FocusEvent;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.io.StringReader;
 import java.util.HashMap;
+import java.util.TimerTask;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
+import javax.swing.JToolTip;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.text.BadLocationException;
 
 import org.fife.ui.autocomplete.AutoCompletion;
 import org.fife.ui.autocomplete.Completion;
@@ -35,6 +42,8 @@ import org.fife.ui.autocomplete.DefaultCompletionProvider;
 import org.fife.ui.autocomplete.FunctionCompletion;
 import org.fife.ui.autocomplete.VariableCompletion;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
+import org.fife.ui.rsyntaxtextarea.RSyntaxTextAreaHighlighter;
+import org.fife.ui.rsyntaxtextarea.SquiggleUnderlineHighlightPainter;
 import org.fife.ui.rsyntaxtextarea.Style;
 import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
 import org.fife.ui.rsyntaxtextarea.SyntaxScheme;
@@ -42,17 +51,26 @@ import org.fife.ui.rsyntaxtextarea.Token;
 import org.fife.ui.rtextarea.RTextScrollPane;
 
 import pg3b.ui.Script;
+import pg3b.ui.ScriptAction;
+import pg3b.util.JMultilineTooltip;
 import pg3b.util.UI;
+import pnuts.lang.ParseException;
+import pnuts.lang.Pnuts;
+import pnuts.lang.PnutsException;
 
 import com.esotericsoftware.minlog.Log;
 
 public class ScriptEditor extends EditorPanel<Script> {
 	private int lastCaretPosition;
 	private HashMap<File, Integer> fileToPosition = new HashMap();
+	private TimerTask compileTask;
 
 	private RSyntaxTextArea codeText;
 	private RTextScrollPane codeScroll;
-	private JButton recordButton;
+	private RSyntaxTextAreaHighlighter highlighter;
+	private SquiggleUnderlineHighlightPainter errorPainter = new SquiggleUnderlineHighlightPainter(Color.red);
+	private JButton executeButton, recordButton;
+	private JLabel errorLabel;
 
 	public ScriptEditor (PG3BUI owner) {
 		super(owner, Script.class, new File("scripts"), ".script");
@@ -95,6 +113,7 @@ public class ScriptEditor extends EditorPanel<Script> {
 
 	protected void clearItemSpecificState () {
 		lastCaretPosition = 0;
+		codeText.discardAllEdits();
 	}
 
 	private void initializeEvents () {
@@ -115,6 +134,60 @@ public class ScriptEditor extends EditorPanel<Script> {
 				if (codeText.getText().length() > 0) fileToPosition.put(getSelectedItem().getFile(), event.getDot());
 			}
 		});
+
+		codeText.getDocument().addDocumentListener(new DocumentListener() {
+			public void removeUpdate (DocumentEvent event) {
+				changedUpdate(event);
+			}
+
+			public void insertUpdate (DocumentEvent event) {
+				changedUpdate(event);
+			}
+
+			public void changedUpdate (DocumentEvent event) {
+				if (compileTask != null) compileTask.cancel();
+				UI.timer.schedule(compileTask = new TimerTask() {
+					public void run () {
+						Script script = getSelectedItem();
+						if (script == null) return;
+						highlighter.removeAllHighlights();
+						try {
+							Pnuts.parse(codeText.getText());
+							errorLabel.setText("");
+						} catch (ParseException ex) {
+							if (DEBUG) debug("Error during script compilation.", ex);
+							highlightError(ex.getMessage(), ex.getErrorLine(), ex.getErrorColumn() - 1);
+						}
+					}
+				}, 500);
+			}
+		});
+
+		executeButton.addActionListener(new ActionListener() {
+			public void actionPerformed (ActionEvent event) {
+				try {
+					Pnuts.load(new StringReader(codeText.getText()), ScriptAction.getContext(null));
+					PG3BUI.instance.getControllerPanel().repaint();
+					errorLabel.setForeground(Color.black);
+					errorLabel.setText("Script executed successfully.");
+				} catch (PnutsException ex) {
+					if (DEBUG) debug("Error during script execution.", ex);
+					highlightError(ex.getMessage(), ex.getLine(), ex.getColumn());
+				}
+			}
+		});
+	}
+
+	private void highlightError (String message, int line, int column) {
+		errorLabel.setForeground(Color.red);
+		errorLabel.setText(message);
+		errorLabel.setToolTipText(message);
+		try {
+			int start = codeText.getLineStartOffset(line - 1) + column;
+			int end = codeText.getLineEndOffset(line - 1);
+			highlighter.addHighlight(start, end, errorPainter);
+		} catch (BadLocationException ignored) {
+		}
 	}
 
 	private void setFontSize (float size) {
@@ -179,27 +252,44 @@ public class ScriptEditor extends EditorPanel<Script> {
 			codeText.setCaretColor(Color.black);
 			codeText.setBackground(Color.white);
 			codeText.setSelectionColor(new Color(0xb8ddff));
+			highlighter = new RSyntaxTextAreaHighlighter();
+			codeText.setHighlighter(highlighter);
 			{
 				codeScroll = new RTextScrollPane(codeText);
 				getContentPanel().add(
 					codeScroll,
-					new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0,
+					new GridBagConstraints(0, 0, 2, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0,
 						0, 0), 0, 0));
 			}
 		}
 		{
-			JPanel panel = new JPanel(new GridLayout(1, 1, 6, 6));
+			errorLabel = new JLabel() {
+				public JToolTip createToolTip () {
+					return new JMultilineTooltip(640);
+				}
+			};
+			getContentPanel().add(
+				errorLabel,
+				new GridBagConstraints(0, 1, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
+					new Insets(0, 6, 6, 0), 0, 0));
+		}
+		{
+			JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 6, 6));
 			getContentPanel().add(
 				panel,
-				new GridBagConstraints(0, 1, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE,
+				new GridBagConstraints(1, 1, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE,
 					new Insets(6, 6, 6, 0), 0, 0));
 			{
 				recordButton = new JButton("Record");
 				panel.add(recordButton);
 			}
+			{
+				executeButton = new JButton("Execute");
+				panel.add(executeButton);
+			}
 		}
 
-		UI.enableWhenModelHasSelection(getSelectionModel(), recordButton, codeText);
+		UI.enableWhenModelHasSelection(getSelectionModel(), codeText, recordButton, executeButton);
 	}
 
 	static class CellRenderer extends CompletionCellRenderer {

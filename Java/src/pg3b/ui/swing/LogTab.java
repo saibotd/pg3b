@@ -19,6 +19,7 @@ import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
+import pg3b.ui.Settings;
 import pg3b.util.MultiplexOutputStream;
 import pg3b.util.TextComponentOutputStream;
 
@@ -57,26 +58,36 @@ public class LogTab extends JPanel {
 		traceRadio.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
 				Log.set(LEVEL_TRACE);
+				Settings.get().logLevel = LEVEL_TRACE;
+				Settings.save();
 			}
 		});
 		debugRadio.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
 				Log.set(LEVEL_DEBUG);
+				Settings.get().logLevel = LEVEL_DEBUG;
+				Settings.save();
 			}
 		});
 		infoRadio.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
 				Log.set(LEVEL_INFO);
+				Settings.get().logLevel = LEVEL_INFO;
+				Settings.save();
 			}
 		});
 		warnRadio.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
 				Log.set(LEVEL_WARN);
+				Settings.get().logLevel = LEVEL_WARN;
+				Settings.save();
 			}
 		});
 		errorRadio.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
 				Log.set(LEVEL_ERROR);
+				Settings.get().logLevel = LEVEL_ERROR;
+				Settings.save();
 			}
 		});
 		if (TRACE)
@@ -123,7 +134,7 @@ public class LogTab extends JPanel {
 		{
 			logScroll = new JScrollPane();
 			this.add(logScroll, new GridBagConstraints(0, 1, 2, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
-				new Insets(6, 6, 6, 6), 0, 0));
+				new Insets(0, 6, 6, 6), 0, 0));
 			{
 				logText = new JTextArea();
 				logScroll.setViewportView(logText);

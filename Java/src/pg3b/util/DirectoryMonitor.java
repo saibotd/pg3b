@@ -14,8 +14,6 @@ import java.util.TimerTask;
 import java.util.TreeSet;
 
 public abstract class DirectoryMonitor<T> {
-	static private final Timer timer = new Timer("DirectoryMonitor", true);
-
 	private final TreeSet<Item> items = new TreeSet();
 	private final ArrayList<Item> ignoredItems = new ArrayList();
 	private final String fileExtension;
@@ -39,7 +37,7 @@ public abstract class DirectoryMonitor<T> {
 				scan(dir);
 			}
 		};
-		timer.scheduleAtFixedRate(task, interval, interval);
+		UI.timer.scheduleAtFixedRate(task, interval, interval);
 		return task;
 	}
 
@@ -54,7 +52,7 @@ public abstract class DirectoryMonitor<T> {
 			if (!item.file.exists()) {
 				updated = true;
 				iter.remove();
-				if (INFO) info("Removed file: " + item);
+				if (DEBUG) debug("Removed file: " + item);
 				continue;
 			}
 			long lastModified = item.file.lastModified();
@@ -63,7 +61,7 @@ public abstract class DirectoryMonitor<T> {
 			try {
 				item.lastModified = lastModified;
 				item.object = load(item.file);
-				if (INFO) info("Updated file: " + item);
+				if (DEBUG) debug("Updated file: " + item);
 			} catch (Exception ex) {
 				if (ERROR) error("File ignored: " + item, ex);
 				ignoredItems.add(item);
@@ -90,7 +88,7 @@ public abstract class DirectoryMonitor<T> {
 			try {
 				item.object = load(file);
 				updated = true;
-				if (INFO) info("Added file: " + item);
+				if (DEBUG) debug("Added file: " + item);
 			} catch (Exception ex) {
 				if (ERROR) error("File ignored: " + item, ex);
 				ignoredItems.add(item);

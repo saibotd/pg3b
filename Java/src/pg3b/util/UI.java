@@ -4,6 +4,7 @@ package pg3b.util;
 import java.awt.Component;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.util.Timer;
 
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
@@ -13,6 +14,8 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 public class UI {
+	static public final Timer timer = new Timer("UtilTimer", true);
+
 	static public void enableWhenModelHasSelection (final ListSelectionModel selectionModel, final Component... components) {
 		selectionModel.addListSelectionListener(new ListSelectionListener() {
 			public void valueChanged (ListSelectionEvent event) {

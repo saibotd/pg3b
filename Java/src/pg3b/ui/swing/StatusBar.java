@@ -9,7 +9,6 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.Timer;
 import java.util.TimerTask;
 
 import javax.swing.BorderFactory;
@@ -20,10 +19,9 @@ import javax.swing.JPanel;
 import pg3b.PG3B;
 import pg3b.XboxController;
 import pg3b.ui.Config;
+import pg3b.util.UI;
 
 public class StatusBar extends JPanel {
-	static final Timer timer = new Timer("StatusBar", true);
-
 	private TimerTask clearMessageTask;
 
 	private JLabel pg3bLabel, controllerLabel, configLabel, messageLabel;
@@ -152,7 +150,7 @@ public class StatusBar extends JPanel {
 					}
 				}
 			};
-			timer.scheduleAtFixedRate(clearMessageTask, 83, 166);
+			UI.timer.scheduleAtFixedRate(clearMessageTask, 83, 166);
 		}
 		messageLabel.setText(message);
 		messageLabel.setForeground(Color.black);

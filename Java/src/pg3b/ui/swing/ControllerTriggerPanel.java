@@ -46,8 +46,6 @@ import pg3b.ui.swing.XboxControllerPanel.Listener;
 import pg3b.util.UI;
 
 public class ControllerTriggerPanel extends JPanel {
-	static final Timer timer = new Timer("MonitorControllers", true);
-
 	private PG3BUI owner;
 	private Config config;
 	private ControllerTrigger trigger;
@@ -176,7 +174,7 @@ public class ControllerTriggerPanel extends JPanel {
 				firstRun = false;
 			}
 		};
-		timer.scheduleAtFixedRate(monitorConrollersTask, 125, 125);
+		UI.timer.scheduleAtFixedRate(monitorConrollersTask, 125, 125);
 	}
 
 	public void setTriggerText (ControllerTrigger trigger) {

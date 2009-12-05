@@ -30,8 +30,11 @@ import javax.swing.JMenuItem;
 import javax.swing.JTabbedPane;
 import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
+import javax.swing.ToolTipManager;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
+
+import com.esotericsoftware.minlog.Log;
 
 import net.java.games.input.Controller;
 import pg3b.Axis;
@@ -75,6 +78,8 @@ public class PG3BUI extends JFrame {
 
 	public PG3BUI () {
 		super("PG3B");
+
+		Log.set(settings.logLevel);
 
 		if (instance != null) throw new IllegalStateException();
 		instance = this;
@@ -343,6 +348,7 @@ public class PG3BUI extends JFrame {
 
 	private void initializeLayout () {
 		UIManager.put("FileChooser.readOnly", Boolean.TRUE);
+		ToolTipManager.sharedInstance().setDismissDelay(Integer.MAX_VALUE);
 
 		for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
 			if ("Nimbus".equals(info.getName())) {
@@ -429,11 +435,11 @@ public class PG3BUI extends JFrame {
 				new GridBagConstraints(0, 2, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0,
 					0), 0, 0));
 			{
+				logTab = new LogTab();
 				configTab = new ConfigTab(this);
 				tabs.addTab("Configuration", null, configTab, null);
 				scriptEditor = new ScriptEditor(this);
 				tabs.addTab("Scripts", null, scriptEditor, null);
-				logTab = new LogTab();
 				tabs.addTab("Log", null, logTab, null);
 			}
 		}

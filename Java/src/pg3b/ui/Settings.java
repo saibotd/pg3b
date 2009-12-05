@@ -8,6 +8,8 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 
+import com.esotericsoftware.minlog.Log;
+
 import net.sourceforge.yamlbeans.YamlConfig;
 import net.sourceforge.yamlbeans.YamlException;
 import net.sourceforge.yamlbeans.YamlReader;
@@ -19,6 +21,7 @@ public class Settings {
 	public int controllerPort;
 	public String controllerName;
 	public String selectedConfig;
+	public int logLevel = LEVEL_INFO;
 
 	static private Settings instance;
 	static private final String fileName = "pg3b.settings";

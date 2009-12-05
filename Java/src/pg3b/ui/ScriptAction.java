@@ -31,13 +31,7 @@ public class ScriptAction implements Action {
 		if (script == null) return false;
 		Pnuts pnuts = script.getPnuts();
 		if (pnuts == null) return false;
-		Package pkg = new Package();
-		pkg.setConstant("payload", payload);
-		pkg.setConstant("pg3b", PG3BUI.instance.getPg3b());
-		// BOZO - Finish setting up script context.
-		Context context = new Context(pkg);
-		// context.setPnutsImpl();
-		pnuts.run(context);
+		pnuts.run(getContext(payload));
 		return true;
 	}
 
@@ -58,5 +52,15 @@ public class ScriptAction implements Action {
 
 	public String toString () {
 		return "Script: " + scriptName.toString();
+	}
+
+	static public Context getContext (Object payload) {
+		Package pkg = new Package();
+		pkg.set("payload".intern(), payload);
+		pkg.set("pg3b".intern(), PG3BUI.instance.getPg3b());
+		// BOZO - Finish setting up script context.
+		Context context = new Context(pkg);
+		// context.setPnutsImpl();
+		return context;
 	}
 }

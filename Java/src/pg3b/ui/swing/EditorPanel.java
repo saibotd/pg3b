@@ -43,8 +43,6 @@ import pg3b.util.UI;
 
 import com.esotericsoftware.minlog.Log;
 
-// BOZO - Highlight triggers table for missing controllers, scripts, etc.
-
 public class EditorPanel<T extends Editable> extends JPanel {
 	static Settings settings = Settings.get();
 

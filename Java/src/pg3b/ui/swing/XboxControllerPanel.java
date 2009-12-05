@@ -49,6 +49,7 @@ public class XboxControllerPanel extends JPanel {
 	private Map<Target, Boolean> nameToStatus;
 	private BufferedImage checkImage, xImage;
 	private Listeners<Listener> listeners = new Listeners(Listener.class);
+	private TimerTask pollControllerTask;
 
 	private XboxController.Listener controllerListener = new XboxController.Listener() {
 		public void buttonChanged (Button button, boolean pressed) {
@@ -80,13 +81,6 @@ public class XboxControllerPanel extends JPanel {
 		} catch (IOException ex) {
 			throw new RuntimeException(ex);
 		}
-
-		timer.scheduleAtFixedRate(new TimerTask() {
-			public void run () {
-				if (controller == null) return;
-				controller.poll();
-			}
-		}, 0, 64);
 
 		MouseAdapter mouseListener = new MouseAdapter() {
 			public void mouseMoved (MouseEvent event) {
@@ -235,7 +229,6 @@ public class XboxControllerPanel extends JPanel {
 		};
 		addMouseMotionListener(mouseListener);
 		addMouseListener(mouseListener);
-
 	}
 
 	void triggerDragged (Axis axis, float value) {
@@ -438,7 +431,16 @@ public class XboxControllerPanel extends JPanel {
 		repaint();
 	}
 
-	public void setController (XboxController controller) {
+	public void setController (final XboxController controller) {
+		if (pollControllerTask != null) pollControllerTask.cancel();
+		if (controller != null) {
+			timer.scheduleAtFixedRate(pollControllerTask = new TimerTask() {
+				public void run () {
+					controller.poll();
+				}
+			}, 0, 64);
+		}
+
 		if (this.controller != null) this.controller.removeListener(controllerListener);
 		this.controller = controller;
 		if (controller != null) controller.addListener(controllerListener);
