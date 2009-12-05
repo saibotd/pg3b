@@ -71,6 +71,7 @@ public class Config extends Editable {
 					for (Trigger trigger : getTriggers()) {
 						if (trigger.poll()) PG3BUI.instance.getControllerPanel().repaint();
 					}
+					Thread.yield();
 				}
 			} catch (RuntimeException ex) {
 				EventQueue.invokeLater(new Runnable() {
