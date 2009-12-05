@@ -253,8 +253,10 @@ public class ControllerTriggerPanel extends JPanel {
 				if (targetRadio.isSelected()) {
 					trigger.setAction(new PG3BAction((Target)targetCombo.getSelectedItem()));
 				} else if (scriptRadio.isSelected()) {
-					// BOZO - Handle new script.
-					trigger.setAction(new ScriptAction((String)scriptCombo.getSelectedItem()));
+					if (scriptCombo.getSelectedIndex() == 0)
+						trigger.setAction(new ScriptAction(owner.getScriptEditor().newItem().getName()));
+					else
+						trigger.setAction(new ScriptAction((String)scriptCombo.getSelectedItem()));
 				}
 
 				if (isNewTrigger) config.getTriggers().add(trigger);

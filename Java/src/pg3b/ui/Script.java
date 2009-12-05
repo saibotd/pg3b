@@ -9,9 +9,12 @@ import java.io.IOException;
 import java.io.StringReader;
 
 import net.sourceforge.yamlbeans.YamlWriter;
+import pnuts.lang.Context;
+import pnuts.lang.Pnuts;
 
 public class Script extends Editable {
 	private transient String code;
+	private transient Pnuts pnuts;
 
 	public Script () {
 	}
@@ -32,6 +35,18 @@ public class Script extends Editable {
 			code = code.replaceAll("[ \t]+\n", "\n");
 		}
 		this.code = code;
+
+		pnuts = null;
+		try {
+			pnuts = Pnuts.parse(code);
+		} catch (Exception ex) {
+			// BOZO - Add error markers to the code textarea or gutter. Also indicate compilation failure elsewhere in UI.
+			ex.printStackTrace();
+		}
+	}
+
+	public Pnuts getPnuts () {
+		return pnuts;
 	}
 
 	public void save () throws IOException {

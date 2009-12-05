@@ -1,13 +1,18 @@
 
 package pg3b.ui;
 
+import java.awt.EventQueue;
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.JToggleButton;
+
+import pg3b.ui.swing.PG3BUI;
+
 public class Config extends Editable {
 	private List<Trigger> triggers = new ArrayList();
+	private transient Poller poller;
 
 	public Config () {
 	}
@@ -22,6 +27,16 @@ public class Config extends Editable {
 
 	public void setTriggers (List<Trigger> triggers) {
 		this.triggers = triggers;
+	}
+
+	public synchronized void setActive (boolean active) {
+		if (active) {
+			if (poller != null) return;
+			poller = new Poller();
+		} else {
+			if (poller != null) poller.running = false;
+			poller = null;
+		}
 	}
 
 	public int hashCode () {
@@ -40,5 +55,33 @@ public class Config extends Editable {
 			if (other.triggers != null) return false;
 		} else if (!triggers.equals(other.triggers)) return false;
 		return true;
+	}
+
+	private class Poller extends Thread {
+		public volatile boolean running = true;
+
+		public Poller () {
+			super(Config.this.getName());
+			start();
+		}
+
+		public void run () {
+			try {
+				while (running) {
+					for (Trigger trigger : getTriggers()) {
+						if (trigger.poll()) PG3BUI.instance.getControllerPanel().repaint();
+					}
+				}
+			} catch (RuntimeException ex) {
+				EventQueue.invokeLater(new Runnable() {
+					public void run () {
+						JToggleButton captureButton = PG3BUI.instance.getCaptureButton();
+						if (captureButton.isSelected()) captureButton.doClick();
+						PG3BUI.instance.getStatusBar().setMessage("Error during config processing.");
+					}
+				});
+				throw ex;
+			}
+		}
 	}
 }

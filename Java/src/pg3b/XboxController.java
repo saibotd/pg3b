@@ -22,10 +22,12 @@ public class XboxController {
 	private Listeners<Listener> listeners = new Listeners(Listener.class);
 
 	public XboxController (Controller controller) {
+		if (controller == null) throw new IllegalArgumentException("controller cannot be null.");
 		this.controller = controller;
 	}
 
 	public boolean get (Button button) {
+		if (button == null) throw new IllegalArgumentException("button cannot be null.");
 		if (!poll()) return false;
 		Identifier.Button id = null;
 		switch (button) {
@@ -73,6 +75,7 @@ public class XboxController {
 	}
 
 	public float get (Axis axis) {
+		if (axis == null) throw new IllegalArgumentException("axis cannot be null.");
 		if (!poll()) return 0;
 		Identifier.Axis id = null;
 		boolean invert = false;
@@ -103,6 +106,20 @@ public class XboxController {
 		float value = controller.getComponent(id).getPollData();
 		if (invert) value = -value;
 		return value;
+	}
+
+	public float get (Target target) {
+		if (target == null) throw new IllegalArgumentException("target cannot be null.");
+		if (target instanceof Button)
+			return get((Button)target) ? 1 : 0;
+		else if (target instanceof Axis)
+			return get((Axis)target);
+		else
+			throw new IllegalArgumentException("target must be a button or axis.");
+	}
+
+	public float get (String target) {
+		return get(PG3B.getTarget(target));
 	}
 
 	public boolean poll () {

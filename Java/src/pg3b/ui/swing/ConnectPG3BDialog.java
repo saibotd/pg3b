@@ -25,6 +25,8 @@ import pg3b.PG3B;
 import pg3b.util.LoaderDialog;
 import pg3b.util.UI;
 
+// BOZO - Fix mouse out of controller panel leaving highlight.
+
 public class ConnectPG3BDialog extends JDialog {
 	private PG3BUI owner;
 	private JList portList;
@@ -33,7 +35,7 @@ public class ConnectPG3BDialog extends JDialog {
 	private PG3B pg3b;
 
 	public ConnectPG3BDialog (final PG3BUI owner) {
-		super(owner, "Connect to PG3b", true);
+		super(owner, "Connect to PG3B", true);
 		this.owner = owner;
 
 		initializeLayout();
@@ -60,6 +62,7 @@ public class ConnectPG3BDialog extends JDialog {
 				}
 			}
 		}
+		if (portListModel.getSize() > 0 && portList.getSelectedIndex() == -1) portList.setSelectedIndex(0);
 	}
 
 	private void initializeEvents () {

@@ -5,12 +5,18 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 public class AxisCalibration {
+	private final Axis axis;
 	private final int[] calibrationTable;
 	private final float[] actualValues;
 
-	public AxisCalibration (int[] calibrationTable, float[] actualValues) {
+	public AxisCalibration (Axis axis, int[] calibrationTable, float[] actualValues) {
+		this.axis = axis;
 		this.calibrationTable = calibrationTable;
 		this.actualValues = actualValues;
+	}
+
+	public Axis getAxis () {
+		return axis;
 	}
 
 	public URL getChartURL () {
@@ -31,5 +37,9 @@ public class AxisCalibration {
 		} catch (MalformedURLException ex) {
 			throw new RuntimeException(ex);
 		}
+	}
+
+	public String toString () {
+		return axis.toString();
 	}
 }

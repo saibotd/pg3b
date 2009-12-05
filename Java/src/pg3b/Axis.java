@@ -3,17 +3,23 @@ package pg3b;
 
 public enum Axis implements Target {
 	// Ordinals defined by firmware.
-	leftStickX("Left Stick X"), //
-	leftStickY("Left Stick Y"), //
-	rightStickX("Right Stick X"), //
-	rightStickY("Right Stick Y"), //
-	leftTrigger("Left Trigger"), //
-	rightTrigger("Right Trigger");
+	leftStickX("Left Stick X", "LX"), //
+	leftStickY("Left Stick Y", "LY"), //
+	rightStickX("Right Stick X", "RY"), //
+	rightStickY("Right Stick Y", "RX"), //
+	leftTrigger("Left Trigger", "LT"), //
+	rightTrigger("Right Trigger", "RT");
 
 	private final String friendlyName;
+	private final String alias;
 
-	private Axis (String friendlyName) {
+	private Axis (String friendlyName, String alias) {
 		this.friendlyName = friendlyName + " axis";
+		this.alias = alias;
+	}
+
+	public String getAlias () {
+		return alias;
 	}
 
 	public String toString () {

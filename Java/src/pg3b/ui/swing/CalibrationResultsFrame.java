@@ -8,6 +8,7 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.net.URL;
+import java.util.List;
 import java.util.Map;
 
 import javax.swing.DefaultComboBoxModel;
@@ -16,23 +17,26 @@ import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 
+import pg3b.Axis;
+import pg3b.AxisCalibration;
+
 public class CalibrationResultsFrame extends JFrame {
 	static private CalibrationResultsFrame openFrame;
 
-	private Map<String, URL> nameToURL;
+	private List<AxisCalibration> results;
 	private JComboBox chartCombo;
 	private DefaultComboBoxModel chartComboModel;
 	private JLabel imageLabel;
 
-	public CalibrationResultsFrame (Map<String, URL> nameToURL) {
+	public CalibrationResultsFrame (List<AxisCalibration> results) {
 		super("PG3B - Calibration Results");
-		this.nameToURL = nameToURL;
+		this.results = results;
 
 		initializeLayout();
 		initializeEvents();
 
-		for (String name : nameToURL.keySet())
-			chartComboModel.addElement(name);
+		for (AxisCalibration calibration : results)
+			chartComboModel.addElement(calibration);
 
 		close();
 		openFrame = this;
@@ -41,7 +45,8 @@ public class CalibrationResultsFrame extends JFrame {
 	private void initializeEvents () {
 		chartCombo.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
-				imageLabel.setIcon(new ImageIcon(nameToURL.get(chartCombo.getSelectedItem())));
+				AxisCalibration calibration = (AxisCalibration)chartCombo.getSelectedItem();
+				imageLabel.setIcon(new ImageIcon(calibration.getChartURL()));
 			}
 		});
 	}

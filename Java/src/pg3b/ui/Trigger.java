@@ -20,4 +20,8 @@ abstract public class Trigger {
 	public void setAction (Action action) {
 		this.action = action;
 	}
+
+	abstract public boolean poll ();
+
+	abstract public boolean isValid ();
 }

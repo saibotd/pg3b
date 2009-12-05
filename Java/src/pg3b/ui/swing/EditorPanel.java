@@ -159,6 +159,33 @@ public class EditorPanel<T extends Editable> extends JPanel {
 		return list.getSelectionModel();
 	}
 
+	public T newItem () {
+		List<T> items = monitor.getItems();
+		int i = 1;
+		String name;
+		outer: // 
+		while (true) {
+			name = "New " + type.getSimpleName();
+			if (i > 1) name += " (" + i + ")";
+			i++;
+			for (T item : items)
+				if (item.getName().equalsIgnoreCase(name)) continue outer;
+			break;
+		}
+		T item;
+		try {
+			item = type.getConstructor(File.class).newInstance(new File(rootDir, name + extension));
+		} catch (Exception ex) {
+			throw new RuntimeException(ex);
+		}
+		nameText.setText(item.getName());
+		descriptionText.setText(item.getDescription());
+		updateFieldsFromItem(item);
+		saveItem(item, true);
+		owner.getStatusBar().setMessage(type.getSimpleName() + " created.");
+		return item;
+	}
+
 	private void initializeEvents () {
 		list.addListSelectionListener(new ListSelectionListener() {
 			public void valueChanged (ListSelectionEvent event) {
@@ -183,28 +210,7 @@ public class EditorPanel<T extends Editable> extends JPanel {
 
 		newButton.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
-				List<T> items = monitor.getItems();
-				int i = 0;
-				String name;
-				outer: // 
-				while (true) {
-					name = "New " + type.getSimpleName();
-					if (i > 0) name += " (" + i + ")";
-					i++;
-					for (T item : items)
-						if (item.getName().equalsIgnoreCase(name)) continue outer;
-					break;
-				}
-				try {
-					T item = type.getConstructor(File.class).newInstance(new File(rootDir, name + extension));
-					nameText.setText(item.getName());
-					descriptionText.setText(item.getDescription());
-					updateFieldsFromItem(item);
-					saveItem(item, true);
-					owner.getStatusBar().setMessage(type.getSimpleName() + " created.");
-				} catch (Exception ex) {
-					throw new RuntimeException(ex);
-				}
+				newItem();
 			}
 		});
 

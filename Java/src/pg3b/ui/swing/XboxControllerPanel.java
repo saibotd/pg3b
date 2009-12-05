@@ -23,6 +23,7 @@ import pg3b.Axis;
 import pg3b.Button;
 import pg3b.PG3B;
 import pg3b.Stick;
+import pg3b.Target;
 import pg3b.XboxController;
 import pg3b.util.Listeners;
 import pg3b.util.PackedImages;
@@ -45,7 +46,7 @@ public class XboxControllerPanel extends JPanel {
 	private int dragStartX = -1, dragStartY = -1;
 	private int dpadDirection;
 	private float lastTriggerValue, lastValueX, lastValueY;
-	private Map<String, Boolean> nameToStatus;
+	private Map<Target, Boolean> nameToStatus;
 	private BufferedImage checkImage, xImage;
 	private Listeners<Listener> listeners = new Listeners(Listener.class);
 
@@ -316,10 +317,8 @@ public class XboxControllerPanel extends JPanel {
 
 		packedImages.get("controller").draw(g, 0, 0);
 
-		if (controller != null) {
-			for (Button button : Button.values())
-				if (controller.get(button)) packedImages.get(button.name()).draw(g, 0, 0);
-		}
+		for (Button button : Button.values())
+			if (getTargetState(button) != 0) packedImages.get(button.name()).draw(g, 0, 0);
 
 		if (pg3b != null && dpadDirection != DPAD_NONE) {
 			if ((dpadDirection & DPAD_RIGHT) == DPAD_RIGHT) packedImages.get("right").draw(g, 0, 0);
@@ -330,12 +329,12 @@ public class XboxControllerPanel extends JPanel {
 			if (overImageName != null) packedImages.get(overImageName).draw(g, 0, 0);
 		}
 
-		float leftTrigger = controller == null ? 0 : controller.get(Axis.leftTrigger);
-		float rightTrigger = controller == null ? 0 : controller.get(Axis.rightTrigger);
-		float leftStickX = controller == null ? 0 : controller.get(Axis.leftStickX);
-		float leftStickY = controller == null ? 0 : controller.get(Axis.leftStickY);
-		float rightStickX = controller == null ? 0 : controller.get(Axis.rightStickX);
-		float rightStickY = controller == null ? 0 : controller.get(Axis.rightStickY);
+		float leftTrigger = getTargetState(Axis.leftTrigger);
+		float rightTrigger = getTargetState(Axis.rightTrigger);
+		float leftStickX = getTargetState(Axis.leftStickX);
+		float leftStickY = getTargetState(Axis.leftStickY);
+		float rightStickX = getTargetState(Axis.rightStickX);
+		float rightStickY = getTargetState(Axis.rightStickY);
 		if (pg3b != null && dragStartX != -1) {
 			Object dragObject = getDragObject();
 			if (dragObject == Axis.leftTrigger)
@@ -356,10 +355,17 @@ public class XboxControllerPanel extends JPanel {
 		drawStickArrows(g, Stick.left, leftStickX, leftStickY);
 		drawStickArrows(g, Stick.right, rightStickX, rightStickY);
 
+		g.setFont(g.getFont().deriveFont(Font.BOLD, 12f));
+		if (controller != null)
+			drawString(g, "Controller", 250, 38);
+		else if (pg3b != null) {
+			drawString(g, "PG3B", 250, 38);
+		}
+
 		if (nameToStatus != null) {
 			// Show button status.
-			for (Entry<String, Boolean> entry : nameToStatus.entrySet()) {
-				PackedImage packedImage = packedImages.get(entry.getKey());
+			for (Entry<Target, Boolean> entry : nameToStatus.entrySet()) {
+				PackedImage packedImage = packedImages.get(entry.getKey().name());
 				if (packedImage == null) continue;
 				int x = packedImage.offsetX + packedImage.image.getWidth() / 2;
 				int y = packedImage.offsetY + packedImage.image.getHeight() / 2;
@@ -367,15 +373,20 @@ public class XboxControllerPanel extends JPanel {
 				g.drawImage(image, x - (entry.getValue() ? 13 : 16), y - (entry.getValue() ? 24 : 16), null);
 			}
 			// Show axes status.
-			g.setFont(g.getFont().deriveFont(Font.BOLD, 12f));
-			drawStatusText(g, 25, 245, "X Axis", nameToStatus.get("leftStickX"));
-			drawStatusText(g, 25, 245 + 31, "Y Axis", nameToStatus.get("leftStickY"));
-			drawStatusText(g, 388, 245, "X Axis", nameToStatus.get("rightStickX"));
-			drawStatusText(g, 388, 245 + 31, "Y Axis", nameToStatus.get("rightStickY"));
+			drawStatusText(g, 25, 245, "X Axis", nameToStatus.get(Axis.leftStickX));
+			drawStatusText(g, 25, 245 + 31, "Y Axis", nameToStatus.get(Axis.leftStickY));
+			drawStatusText(g, 388, 245, "X Axis", nameToStatus.get(Axis.rightStickX));
+			drawStatusText(g, 388, 245 + 31, "Y Axis", nameToStatus.get(Axis.rightStickY));
 		}
 
 		if (pg3b != null && dragStartX != -1 && !overImageName.endsWith("Trigger"))
 			packedImages.get("crosshair").draw(g, dragStartX - 11, dragStartY - 11);
+	}
+
+	private float getTargetState (Target target) {
+		if (controller != null) return controller.get(target);
+		if (pg3b != null) return pg3b.get(target);
+		return 0;
 	}
 
 	private void drawStatusText (Graphics g, int x, int y, String text, Boolean status) {
@@ -422,17 +433,19 @@ public class XboxControllerPanel extends JPanel {
 		g.drawString(text, x - width / 2, y);
 	}
 
-	public void setPg3b (PG3B pg3b) {
+	public void setPG3B (PG3B pg3b) {
 		this.pg3b = pg3b;
+		repaint();
 	}
 
 	public void setController (XboxController controller) {
 		if (this.controller != null) this.controller.removeListener(controllerListener);
 		this.controller = controller;
 		if (controller != null) controller.addListener(controllerListener);
+		repaint();
 	}
 
-	public void setStatus (Map<String, Boolean> nameToStatus) {
+	public void setStatus (Map<Target, Boolean> nameToStatus) {
 		this.nameToStatus = nameToStatus;
 		repaint();
 	}

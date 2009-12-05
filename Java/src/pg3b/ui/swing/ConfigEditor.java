@@ -1,6 +1,7 @@
 
 package pg3b.ui.swing;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.GridLayout;
@@ -17,6 +18,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.JToggleButton;
 import javax.swing.ListSelectionModel;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
@@ -25,11 +27,15 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumnModel;
 
+import pg3b.PG3B;
+import pg3b.ui.Action;
 import pg3b.ui.Config;
 import pg3b.ui.ControllerTrigger;
 import pg3b.ui.Settings;
 import pg3b.ui.Trigger;
 import pg3b.util.UI;
+
+// BOZO - Reset everything on the PG3B when capture ends to avoid leaving targets stuck.
 
 public class ConfigEditor extends EditorPanel<Config> {
 	private int lastSelectedTriggerIndex;
@@ -56,10 +62,10 @@ public class ConfigEditor extends EditorPanel<Config> {
 
 	protected void updateFieldsFromItem (Config config) {
 		triggersTableModel.setRowCount(0);
-		owner.getCaptureButton().setEnabled(config != null);
-		if (config == null)
-			owner.getCaptureButton().setSelected(false);
-		else {
+		JToggleButton captureButton = owner.getCaptureButton();
+		if (config == null) {
+			if (captureButton.isSelected()) captureButton.doClick();
+		} else {
 			for (Trigger trigger : config.getTriggers())
 				triggersTableModel.addRow(new Object[] {trigger, trigger.getAction(), trigger.getDescription()});
 			setTriggerSelected(lastSelectedTriggerIndex);
@@ -69,6 +75,7 @@ public class ConfigEditor extends EditorPanel<Config> {
 				Settings.save();
 			}
 		}
+		captureButton.setEnabled(config != null);
 	}
 
 	protected void clearItemSpecificState () {
@@ -149,6 +156,15 @@ public class ConfigEditor extends EditorPanel<Config> {
 						hasFocus = false; // Disable cell focus.
 						JLabel label = (JLabel)super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 						label.setBorder(new EmptyBorder(new Insets(0, 4, 0, 0))); // Padding.
+						label.setForeground(isSelected ? table.getSelectionForeground() : null);
+						// Highlight invalid triggers and actions.
+						if (column == 0) {
+							Trigger trigger = getSelectedItem().getTriggers().get(row);
+							if (!trigger.isValid()) label.setForeground(Color.red);
+						} else if (column == 1) {
+							Action action = getSelectedItem().getTriggers().get(row).getAction();
+							if (!action.isValid()) label.setForeground(Color.red);
+						}
 						return label;
 					}
 				});
@@ -182,5 +198,9 @@ public class ConfigEditor extends EditorPanel<Config> {
 
 		UI.enableWhenModelHasSelection(getSelectionModel(), triggersTable, newTriggerButton);
 		UI.enableWhenModelHasSelection(triggersTable.getSelectionModel(), deleteTriggerButton);
+	}
+
+	public void setPG3B (PG3B pg3b) {
+		triggersTable.repaint();
 	}
 }

@@ -19,15 +19,21 @@ import javax.swing.JPanel;
 
 import pg3b.PG3B;
 import pg3b.XboxController;
+import pg3b.ui.Config;
 
 public class StatusBar extends JPanel {
 	static final Timer timer = new Timer("StatusBar", true);
 
 	private TimerTask clearMessageTask;
 
-	private JLabel pg3bLabel, controllerLabel;
-	private JLabel messageLabel;
+	private JLabel pg3bLabel, controllerLabel, configLabel, messageLabel;
 	private ImageIcon greenImage, redImage;
+
+	private XboxController lastController;
+
+	private PG3B lastPG3B;
+
+	private Config lastConfig;
 
 	public StatusBar () {
 		greenImage = new ImageIcon(getClass().getResource("/green.png"));
@@ -44,13 +50,19 @@ public class StatusBar extends JPanel {
 		{
 			controllerLabel = new JLabel("Controller");
 			add(controllerLabel, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
-				new Insets(3, 12, 3, 0), 0, 0));
+				new Insets(3, 6, 3, 0), 0, 0));
 			controllerLabel.setIcon(redImage);
+		}
+		{
+			configLabel = new JLabel("Config");
+			add(configLabel, new GridBagConstraints(2, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
+				new Insets(3, 6, 3, 0), 0, 0));
+			configLabel.setIcon(redImage);
 		}
 		{
 			messageLabel = new JLabel();
 			messageLabel.setFont(messageLabel.getFont().deriveFont(Font.BOLD));
-			this.add(messageLabel, new GridBagConstraints(2, 0, 1, 1, 1.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE,
+			this.add(messageLabel, new GridBagConstraints(3, 0, 1, 1, 1.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE,
 				new Insets(0, 0, 0, 6), 0, 0));
 		}
 	}
@@ -71,11 +83,25 @@ public class StatusBar extends JPanel {
 		});
 	}
 
-	public void setPg3b (final PG3B pg3b) {
+	public void setConfigClickedListener (final Runnable listener) {
+		configLabel.addMouseListener(new MouseAdapter() {
+			public void mouseClicked (MouseEvent e) {
+				listener.run();
+			}
+		});
+	}
+
+	public void setPG3B (final PG3B pg3b) {
 		EventQueue.invokeLater(new Runnable() {
 			public void run () {
 				pg3bLabel.setIcon(pg3b == null ? redImage : greenImage);
 				pg3bLabel.setText(pg3b == null ? "PG3B" : "PG3B: " + pg3b.getPort());
+				if (lastPG3B != null && pg3b == null)
+					setMessage("PG3B disconnected.");
+				else if (pg3b != null) {
+					setMessage("PG3B connected.");
+				}
+				lastPG3B = pg3b;
 			}
 		});
 	}
@@ -83,32 +109,51 @@ public class StatusBar extends JPanel {
 	public void setController (final XboxController controller) {
 		controllerLabel.setIcon(controller == null ? redImage : greenImage);
 		controllerLabel.setText(controller == null ? "Controller" : "Controller: " + (controller.getPort() + 1));
+		if (lastController != null && controller == null)
+			setMessage("Controller disconnected.");
+		else if (controller != null) {
+			setMessage("Controller connected.");
+		}
+		lastController = controller;
 	}
 
-	public void setMessage (String message) {
-		if (clearMessageTask != null) clearMessageTask.cancel();
-		clearMessageTask = new TimerTask() {
-			float alpha = 1;
+	public void setConfig (Config config) {
+		configLabel.setIcon(config == null ? redImage : greenImage);
+		configLabel.setText(config == null ? "Config" : "Config: " + config.getName());
+		if (lastConfig != null && config == null)
+			setMessage("Config deactivated.");
+		else if (config != null) {
+			setMessage("Config activated.");
+		}
+		lastConfig = config;
+	}
 
-			public void run () {
-				try {
-					EventQueue.invokeAndWait(new Runnable() {
-						public void run () {
-							alpha -= 0.03f;
-							if (alpha > 0)
-								messageLabel.setForeground(new Color(0, 0, 0, alpha));
-							else {
-								cancel();
-								clearMessageTask = null;
-								setMessage("");
+	public synchronized void setMessage (String message) {
+		if (clearMessageTask != null) clearMessageTask.cancel();
+		if (message != null && message.length() > 0) {
+			clearMessageTask = new TimerTask() {
+				float alpha = 1;
+
+				public void run () {
+					try {
+						EventQueue.invokeAndWait(new Runnable() {
+							public void run () {
+								alpha -= 0.03f;
+								if (alpha > 0)
+									messageLabel.setForeground(new Color(0, 0, 0, alpha));
+								else {
+									cancel();
+									clearMessageTask = null;
+									setMessage("");
+								}
 							}
-						}
-					});
-				} catch (Exception ignored) {
+						});
+					} catch (Exception ignored) {
+					}
 				}
-			}
-		};
-		timer.scheduleAtFixedRate(clearMessageTask, 83, 166);
+			};
+			timer.scheduleAtFixedRate(clearMessageTask, 83, 166);
+		}
 		messageLabel.setText(message);
 		messageLabel.setForeground(Color.black);
 	}

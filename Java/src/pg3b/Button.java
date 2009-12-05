@@ -3,26 +3,32 @@ package pg3b;
 
 public enum Button implements Target {
 	// Ordinals defined by firmware.
-	a("A"), //
-	b("B"), //
-	x("X"), //
-	y("Y"), //
-	up("Up"), //
-	down("Down"), //
-	left("Left"), //
-	right("Right"), //
-	leftShoulder("Left Shoulder"), //
-	rightShoulder("Right Shoulder"), //
-	leftStick("Left Stick"), //
-	rightStick("Right Stick"), //
-	start("Start"), //
-	guide("Guide"), //
-	back("Back");
+	a("A", null), //
+	b("B", null), //
+	x("X", null), //
+	y("Y", null), //
+	up("Up", "U"), //
+	down("Down", "D"), //
+	left("Left", "L"), //
+	right("Right", "R"), //
+	leftShoulder("Left Shoulder", "LB"), //
+	rightShoulder("Right Shoulder", "RB"), //
+	leftStick("Left Stick", "LS"), //
+	rightStick("Right Stick", "RS"), //
+	start("Start", "S"), //
+	guide("Guide", "G"), //
+	back("Back", null);
 
 	private final String friendlyName;
+	private final String alias;
 
-	private Button (String friendlyName) {
+	private Button (String friendlyName, String alias) {
 		this.friendlyName = friendlyName + " button";
+		this.alias = alias;
+	}
+
+	public String getAlias () {
+		return alias;
 	}
 
 	public String toString () {

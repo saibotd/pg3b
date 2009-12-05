@@ -80,7 +80,7 @@ public class ScriptEditor extends EditorPanel<Script> {
 		if (script == null)
 			codeText.setText("");
 		else {
-			Integer position = fileToPosition.get(getSelectedItem().getFile());
+			Integer position = fileToPosition.get(script.getFile());
 			codeText.setText(script.getCode());
 			try {
 				codeText.setCaretPosition(position == null ? 0 : position);

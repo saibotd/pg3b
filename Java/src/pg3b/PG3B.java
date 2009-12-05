@@ -15,8 +15,6 @@ import java.nio.charset.Charset;
 import java.util.Formatter;
 import java.util.HashMap;
 
-import com.esotericsoftware.minlog.Log;
-
 public class PG3B {
 	static private final HashMap<String, Target> nameToTarget = new HashMap();
 	static {
@@ -25,12 +23,14 @@ public class PG3B {
 			String friendlyName = axis.toString().toLowerCase();
 			nameToTarget.put(friendlyName, axis);
 			nameToTarget.put(friendlyName.substring(0, friendlyName.length() - 5), axis);
+			if (axis.getAlias() != null) nameToTarget.put(axis.getAlias().toLowerCase(), axis);
 		}
 		for (Button button : Button.values()) {
 			nameToTarget.put(button.name().toLowerCase(), button);
 			String friendlyName = button.toString().toLowerCase();
 			nameToTarget.put(friendlyName, button);
 			nameToTarget.put(friendlyName.substring(0, friendlyName.length() - 7), button);
+			if (button.getAlias() != null) nameToTarget.put(button.getAlias().toLowerCase(), button);
 		}
 	}
 
@@ -40,6 +40,8 @@ public class PG3B {
 	private Formatter output;
 	private OutputStream outputStream;
 	private final String port;
+	private final boolean[] buttonStates = new boolean[Button.values().length];
+	private final float[] axisStates = new float[Axis.values().length];
 
 	public PG3B (String port) throws IOException {
 		this(port, 100);
@@ -123,11 +125,17 @@ public class PG3B {
 		short actionKey = getActionKey(Device.xbox, (short)state);
 		short actionCode = getActionCode(actionKey, (short)button.ordinal());
 		action(actionCode);
+
+		buttonStates[button.ordinal()] = pressed;
 	}
 
 	public void set (Axis axis, float state) throws IOException {
 		if (axis == null) throw new IllegalArgumentException("axis cannot be null.");
-		if (state < -1 || state > 1) throw new IllegalArgumentException("state must be between -1 and 1 (inclusive): " + state);
+		if (state < -1)
+			state = -1;
+		else if (state > 1) {
+			state = 1;
+		}
 
 		if (DEBUG) debug("pg3b", "Axis " + axis + ": " + state);
 
@@ -142,14 +150,8 @@ public class PG3B {
 		short actionKey = getActionKey(Device.xbox, (short)axis.ordinal());
 		short actionCode = getActionCode(actionKey, (short)wiperValue);
 		action(actionCode);
-	}
 
-	public void set (Stick stick, float stateX, float stateY) throws IOException {
-		if (stick == null) throw new IllegalArgumentException("stick cannot be null.");
-		Axis axisX = stick == Stick.left ? Axis.leftStickX : Axis.rightStickX;
-		Axis axisY = stick == Stick.left ? Axis.leftStickY : Axis.rightStickY;
-		set(axisX, stateX);
-		set(axisY, stateY);
+		axisStates[axis.ordinal()] = state;
 	}
 
 	public void set (Target target, boolean pressed) throws IOException {
@@ -182,6 +184,49 @@ public class PG3B {
 		set(getTarget(target), state);
 	}
 
+	public void set (Stick stick, float stateX, float stateY) throws IOException {
+		if (stick == null) throw new IllegalArgumentException("stick cannot be null.");
+		Axis axisX = stick == Stick.left ? Axis.leftStickX : Axis.rightStickX;
+		Axis axisY = stick == Stick.left ? Axis.leftStickY : Axis.rightStickY;
+		set(axisX, stateX);
+		set(axisY, stateY);
+	}
+
+	public void set (String stick, float stateX, float stateY) throws IOException {
+		if (stick == null) throw new IllegalArgumentException("stick cannot be null.");
+		stick = stick.toLowerCase();
+		if (stick.equals("leftstick") || stick.equals("left") || stick.equals("l"))
+			set(Stick.left, stateX, stateY);
+		else if (stick.equals("rightstick") || stick.equals("right") || stick.equals("r"))
+			set(Stick.right, stateX, stateY);
+		else
+			throw new IllegalArgumentException("stick must be leftStick or rightStick.");
+	}
+
+	public boolean get (Button button) {
+		if (button == null) throw new IllegalArgumentException("button cannot be null.");
+		return buttonStates[button.ordinal()];
+	}
+
+	public float get (Axis axis) {
+		if (axis == null) throw new IllegalArgumentException("axis cannot be null.");
+		return axisStates[axis.ordinal()];
+	}
+
+	public float get (Target target) {
+		if (target == null) throw new IllegalArgumentException("target cannot be null.");
+		if (target instanceof Button)
+			return get((Button)target) ? 1 : 0;
+		else if (target instanceof Axis)
+			return get((Axis)target);
+		else
+			throw new IllegalArgumentException("target must be a button or axis.");
+	}
+
+	public float get (String target) {
+		return get(getTarget(target));
+	}
+
 	public String getPort () {
 		return port;
 	}
@@ -196,7 +241,7 @@ public class PG3B {
 
 		boolean isTrigger = axis == Axis.leftTrigger || axis == Axis.rightTrigger;
 		if (isTrigger) {
-			// The triggers are mapped to the same Z axis by the MS driver and interfere with each other if not zero.
+			// The triggers are mapped to the same Z axis by the (crappy) MS driver and interfere with each other if not zero.
 			set(Axis.leftTrigger, 0);
 			set(Axis.rightTrigger, 0);
 		}
@@ -233,7 +278,7 @@ public class PG3B {
 		calibrationTable[127] = zeroIndex;
 		calibrationTable[255] = plusOneIndex;
 
-		return new AxisCalibration(calibrationTable, actualValues);
+		return new AxisCalibration(axis, calibrationTable, actualValues);
 	}
 
 	private int findClosestIndex (float[] actualValues, int target) {
@@ -292,21 +337,5 @@ public class PG3B {
 		private Command (char code) {
 			this.code = code;
 		}
-	}
-
-	public static void main (String[] args) throws Exception {
-		Log.set(LEVEL_INFO);
-
-		XboxController controller = new XboxController(XboxController.getAllControllers().get(0));
-		PG3B pg3b = new PG3B("COM3");
-
-		for (float i = -1; i <= 1; i += 0.05) {
-			pg3b.set(Axis.leftStickX, i);
-			Thread.sleep(50);
-			float value = controller.get(Axis.leftStickX);
-			System.out.println(i + ", " + value);
-		}
-
-		pg3b.close();
 	}
 }

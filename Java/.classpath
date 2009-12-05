@@ -24,6 +24,8 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="lib" path="lib/autocomplete-svn147.jar"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/yamlbeans"/>
+	<classpathentry kind="lib" path="lib/pnuts-1.2.1-20070724b.jar"/>
+	<classpathentry kind="lib" path="lib/pnuts-modules-1.2.1-20070724b.jar"/>
+	<classpathentry kind="lib" path="lib/yamlbeans-1.1.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

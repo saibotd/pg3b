@@ -35,6 +35,7 @@ public class ConnectControllerDialog extends JDialog {
 
 		for (Controller controller : XboxController.getAllControllers())
 			controllerListModel.addElement(controller);
+		if (controllerListModel.getSize() > 0) controllerList.setSelectedIndex(0);
 	}
 
 	private void initializeEvents () {
