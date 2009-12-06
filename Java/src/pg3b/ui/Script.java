@@ -44,7 +44,7 @@ public class Script extends Editable {
 			try {
 				pnuts = Pnuts.parse(code);
 			} catch (ParseException ex) {
-				if (TRACE) trace("Code cannot be compiled.", ex);
+				if (TRACE) trace("Error compiling script.", ex);
 			}
 		}
 	}

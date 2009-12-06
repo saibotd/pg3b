@@ -83,6 +83,8 @@ public class XboxControllerPanel extends JPanel {
 		}
 
 		MouseAdapter mouseListener = new MouseAdapter() {
+			private int buttonsDown;
+
 			public void mouseMoved (MouseEvent event) {
 				// Highlight buttons when moused over.
 				int x = event.getX(), y = event.getY();
@@ -183,11 +185,13 @@ public class XboxControllerPanel extends JPanel {
 			}
 
 			public void mousePressed (MouseEvent event) {
+				buttonsDown++;
 				if (overImageName != null && !clickOnlyButtons.contains(overImageName))
 					buttonClicked(Button.valueOf(overImageName), true);
 			}
 
 			public void mouseReleased (MouseEvent event) {
+				buttonsDown--;
 				if (dragStartX != -1) {
 					dragStartX = dragStartY = -1;
 					Object dragObject = getDragObject();
@@ -224,6 +228,13 @@ public class XboxControllerPanel extends JPanel {
 						buttonClicked(stickButton, true);
 						buttonClicked(stickButton, false);
 					}
+				}
+			}
+			
+			public void mouseExited (MouseEvent event) {
+				if (buttonsDown == 0) {
+					overImageName = null;
+					repaint();
 				}
 			}
 		};

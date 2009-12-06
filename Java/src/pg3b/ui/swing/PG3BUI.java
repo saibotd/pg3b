@@ -4,29 +4,42 @@ package pg3b.ui.swing;
 import static com.esotericsoftware.minlog.Log.*;
 
 import java.awt.AWTEvent;
+import java.awt.AWTException;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.EventQueue;
+import java.awt.FlowLayout;
+import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.KeyEventDispatcher;
 import java.awt.KeyboardFocusManager;
+import java.awt.Point;
+import java.awt.Robot;
 import java.awt.Toolkit;
 import java.awt.event.AWTEventListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
+import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
@@ -34,9 +47,8 @@ import javax.swing.ToolTipManager;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 
-import com.esotericsoftware.minlog.Log;
-
 import net.java.games.input.Controller;
+import net.java.games.input.Controller.Type;
 import pg3b.Axis;
 import pg3b.AxisCalibration;
 import pg3b.Diagnostics;
@@ -45,8 +57,12 @@ import pg3b.Target;
 import pg3b.XboxController;
 import pg3b.XboxController.Listener;
 import pg3b.ui.Config;
+import pg3b.ui.ControllerTrigger;
 import pg3b.ui.Settings;
+import pg3b.ui.Trigger;
 import pg3b.util.LoaderDialog;
+
+import com.esotericsoftware.minlog.Log;
 
 public class PG3BUI extends JFrame {
 	static public PG3BUI instance;
@@ -73,6 +89,35 @@ public class PG3BUI extends JFrame {
 	private Listener controllerListener = new Listener() {
 		public void disconnected () {
 			setController(null);
+		}
+	};
+
+	private KeyEventDispatcher disableKeyboardListener = new KeyEventDispatcher() {
+		public boolean dispatchKeyEvent (KeyEvent event) {
+			if (event.isControlDown() && event.getKeyCode() == KeyEvent.VK_F4) {
+				EventQueue.invokeLater(new Runnable() {
+					public void run () {
+						captureButton.doClick();
+					}
+				});
+			}
+			return true;
+		}
+	};
+
+	private AWTEventListener disableMouseListener = new AWTEventListener() {
+		private Robot robot;
+		{
+			try {
+				robot = new Robot();
+			} catch (AWTException ex) {
+				if (WARN) warn("Error creating robot.", ex);
+			}
+		}
+
+		public void eventDispatched (AWTEvent event) {
+			// BOZO - This is not quite good enough. Another window can be focused if the mouse is moved and clicked extremely fast.
+			if (robot != null) robot.mouseMove(getX() + getWidth() / 2, getY() + getHeight() / 2);
 		}
 	};
 
@@ -246,13 +291,7 @@ public class PG3BUI extends JFrame {
 
 		captureButton.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
-				if (activeConfig != null) {
-					activeConfig.setActive(false);
-					activeConfig = null;
-				}
-				activeConfig = captureButton.isSelected() ? configTab.getConfigEditor().getSelectedItem() : null;
-				if (activeConfig != null) activeConfig.setActive(true);
-				statusBar.setConfig(activeConfig);
+				capture(captureButton.isSelected() ? configTab.getConfigEditor().getSelectedItem() : null);
 			}
 		});
 		statusBar.setConfigClickedListener(new Runnable() {
@@ -269,6 +308,7 @@ public class PG3BUI extends JFrame {
 				Component focused = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
 				Container editorPanel = SwingUtilities.getAncestorOfClass(EditorPanel.class, focused);
 				if (editorPanel != null && event.getSource() != focused) PG3BUI.this.requestFocusInWindow();
+
 			}
 		}, AWTEvent.MOUSE_EVENT_MASK);
 
@@ -330,6 +370,36 @@ public class PG3BUI extends JFrame {
 				}.start("Calibration");
 			}
 		});
+	}
+
+	private void capture (Config config) {
+		if (activeConfig != null) activeConfig.setActive(false);
+		activeConfig = config;
+		if (config == null) {
+			getGlassPane().setVisible(false);
+			KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(disableKeyboardListener);
+			Toolkit.getDefaultToolkit().removeAWTEventListener(disableMouseListener);
+			return;
+		}
+		config.setActive(true);
+
+		statusBar.setConfig(activeConfig);
+
+		// Disable mouse and/or keyboard.
+		for (Trigger trigger : activeConfig.getTriggers()) {
+			if (trigger instanceof ControllerTrigger) {
+				Controller[] controllers = ((ControllerTrigger)trigger).getControllers();
+				for (Controller controller : controllers) {
+					Type type = controller.getType();
+					if (type == Type.MOUSE || type == Type.KEYBOARD) {
+						getGlassPane().setVisible(true);
+						Toolkit.getDefaultToolkit().addAWTEventListener(disableMouseListener, AWTEvent.MOUSE_MOTION_EVENT_MASK);
+						KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(disableKeyboardListener);
+						return;
+					}
+				}
+			}
+		}
 	}
 
 	protected void processWindowEvent (WindowEvent event) {
@@ -441,6 +511,33 @@ public class PG3BUI extends JFrame {
 				scriptEditor = new ScriptEditor(this);
 				tabs.addTab("Scripts", null, scriptEditor, null);
 				tabs.addTab("Log", null, logTab, null);
+			}
+		}
+		{
+			JPanel glassPane = new JPanel(new GridBagLayout()) {
+				public void paintComponent (Graphics g) {
+					g.setColor(new Color(0, 0, 0, 90));
+					g.fillRect(0, 0, getWidth(), getHeight());
+				}
+			};
+			glassPane.addMouseListener(new MouseAdapter() {
+				public void mousePressed (MouseEvent event) {
+					event.consume();
+				}
+			});
+			glassPane.setOpaque(false);
+			glassPane.setCursor(getToolkit().createCustomCursor(new BufferedImage(3, 3, BufferedImage.TYPE_INT_ARGB),
+				new Point(0, 0), "null"));
+			setGlassPane(glassPane);
+			{
+				JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 6, 6));
+				panel.setBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, Color.black));
+				glassPane.add(panel, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
+					new Insets(0, 0, 0, 0), 0, 0));
+				{
+					JLabel label = new JLabel("Press ctrl+F4 to stop capture.");
+					panel.add(label);
+				}
 			}
 		}
 	}

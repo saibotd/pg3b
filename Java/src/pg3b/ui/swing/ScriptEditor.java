@@ -6,6 +6,7 @@ import static org.fife.ui.rsyntaxtextarea.Token.*;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.EventQueue;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Graphics;
@@ -40,6 +41,7 @@ import org.fife.ui.autocomplete.Completion;
 import org.fife.ui.autocomplete.CompletionCellRenderer;
 import org.fife.ui.autocomplete.DefaultCompletionProvider;
 import org.fife.ui.autocomplete.FunctionCompletion;
+import org.fife.ui.autocomplete.ShorthandCompletion;
 import org.fife.ui.autocomplete.VariableCompletion;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextAreaHighlighter;
@@ -59,6 +61,11 @@ import pnuts.lang.Pnuts;
 import pnuts.lang.PnutsException;
 
 import com.esotericsoftware.minlog.Log;
+
+// BOZO - Preserve selection when changing script error highlight.
+// BOZO - Add beep on, beep off.
+// BOZO - Thread action execution.
+// BOZO - Add listener to PG3B for UI update.
 
 public class ScriptEditor extends EditorPanel<Script> {
 	private int lastCaretPosition;
@@ -86,11 +93,30 @@ public class ScriptEditor extends EditorPanel<Script> {
 		} catch (IOException ex) {
 			if (Log.WARN) warn("Error loading autocompletion.", ex);
 		}
-		// provider.addCompletion(new ShorthandCompletion(provider, "main", "int main(int argc, char **argv)"));
+		provider.addCompletion(new ShorthandCompletion(provider, "A", "pg3b.set(\"a\", getPayload())"));
+		provider.addCompletion(new ShorthandCompletion(provider, "B", "pg3b.set(\"b\", getPayload())"));
+		provider.addCompletion(new ShorthandCompletion(provider, "X", "pg3b.set(\"x\", getPayload())"));
+		provider.addCompletion(new ShorthandCompletion(provider, "Y", "pg3b.set(\"y\", getPayload())"));
+		provider.addCompletion(new ShorthandCompletion(provider, "U", "pg3b.set(\"up\", getPayload())"));
+		provider.addCompletion(new ShorthandCompletion(provider, "D", "pg3b.set(\"down\", getPayload())"));
+		provider.addCompletion(new ShorthandCompletion(provider, "L", "pg3b.set(\"left\", getPayload())"));
+		provider.addCompletion(new ShorthandCompletion(provider, "R", "pg3b.set(\"right\", getPayload())"));
+		provider.addCompletion(new ShorthandCompletion(provider, "RT", "pg3b.set(\"rightTrigger\", getPayload())"));
+		provider.addCompletion(new ShorthandCompletion(provider, "LT", "pg3b.set(\"leftTrigger\", getPayload())"));
+		provider.addCompletion(new ShorthandCompletion(provider, "RS", "pg3b.set(\"rightStick\", getPayload())"));
+		provider.addCompletion(new ShorthandCompletion(provider, "LS", "pg3b.set(\"leftStick\", getPayload())"));
+		provider.addCompletion(new ShorthandCompletion(provider, "RSX", "pg3b.set(\"rightStickX\", getPayload())"));
+		provider.addCompletion(new ShorthandCompletion(provider, "RSY", "pg3b.set(\"rightStickY\", getPayload())"));
+		provider.addCompletion(new ShorthandCompletion(provider, "RSXY", "pg3b.set(\"rightStick\", 1, 1)"));
+		provider.addCompletion(new ShorthandCompletion(provider, "LSX", "pg3b.set(\"leftStickX\", getPayload())"));
+		provider.addCompletion(new ShorthandCompletion(provider, "LSY", "pg3b.set(\"leftStickY\", getPayload())"));
+		provider.addCompletion(new ShorthandCompletion(provider, "LSXY", "pg3b.set(\"leftStick\", 1, 1)"));
 		AutoCompletion autoCompletion = new AutoCompletion(provider);
 		autoCompletion.setListCellRenderer(new CellRenderer());
 		autoCompletion.setShowDescWindow(true);
 		autoCompletion.setParameterAssistanceEnabled(true);
+		autoCompletion.setDescriptionWindowSize(300, 300);
+		autoCompletion.setAutoCompleteSingleChoices(false);
 		autoCompletion.install(codeText);
 	}
 
@@ -165,15 +191,34 @@ public class ScriptEditor extends EditorPanel<Script> {
 
 		executeButton.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
-				try {
-					Pnuts.load(new StringReader(codeText.getText()), ScriptAction.getContext(null));
-					PG3BUI.instance.getControllerPanel().repaint();
-					errorLabel.setForeground(Color.black);
-					errorLabel.setText("Script executed successfully.");
-				} catch (PnutsException ex) {
-					if (DEBUG) debug("Error during script execution.", ex);
-					highlightError(ex.getMessage(), ex.getLine(), ex.getColumn());
-				}
+				errorLabel.setForeground(Color.black);
+				errorLabel.setText("Executing script...");
+				new Thread("Execute") {
+					public void run () {
+						try {
+							Pnuts.load(new StringReader(codeText.getText()), ScriptAction.getContext(1));
+							PG3BUI.instance.getControllerPanel().repaint();
+							EventQueue.invokeLater(new Runnable() {
+								public void run () {
+									errorLabel.setForeground(Color.black);
+									errorLabel.setText("Script completed successfully.");
+								}
+							});
+						} catch (final PnutsException ex) {
+							if (DEBUG) debug("Error during script execution.", ex);
+							final String message;
+							if (ex.getThrowable() != null)
+								message = ex.getThrowable().getClass().getSimpleName() + ": " + ex.getThrowable().getMessage();
+							else
+								message = ex.getMessage();
+							EventQueue.invokeLater(new Runnable() {
+								public void run () {
+									highlightError(message, ex.getLine(), ex.getColumn());
+								}
+							});
+						}
+					}
+				}.start();
 			}
 		});
 	}
@@ -249,6 +294,7 @@ public class ScriptEditor extends EditorPanel<Script> {
 			codeText = new RSyntaxTextArea();
 			codeText.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_JAVA);
 			codeText.setHighlightCurrentLine(false);
+			codeText.setCloseCurlyBraces(false);
 			codeText.setCaretColor(Color.black);
 			codeText.setBackground(Color.white);
 			codeText.setSelectionColor(new Color(0xb8ddff));

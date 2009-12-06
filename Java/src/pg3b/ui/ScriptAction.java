@@ -4,6 +4,7 @@ package pg3b.ui;
 import java.util.List;
 
 import pg3b.ui.swing.PG3BUI;
+import pnuts.compiler.CompilerPnutsImpl;
 import pnuts.lang.Context;
 import pnuts.lang.Package;
 import pnuts.lang.Pnuts;
@@ -54,13 +55,24 @@ public class ScriptAction implements Action {
 		return "Script: " + scriptName.toString();
 	}
 
-	static public Context getContext (Object payload) {
-		Package pkg = new Package();
-		pkg.set("payload".intern(), payload);
+	static {
+		Package pkg = Package.getGlobalPackage();
 		pkg.set("pg3b".intern(), PG3BUI.instance.getPg3b());
-		// BOZO - Finish setting up script context.
-		Context context = new Context(pkg);
-		// context.setPnutsImpl();
+		pkg.set("pg3bui".intern(), PG3BUI.instance);
+		pkg.set("sleep".intern(), new Functions.sleep());
+		pkg.set("play".intern(), new Functions.play());
+		pkg.set("beep".intern(), new Functions.beep());
+		pkg.set("get".intern(), new Functions.get());
+		pkg.set("set".intern(), new Functions.set());
+		pkg.set("getPayload".intern(), new Functions.getPayload());
+		pkg.set("print".intern(), new Functions.print());
+	}
+
+	static public Context getContext (Object payload) {
+		Context context = new Context();
+		context.set("payload", payload);
+		context.setImplementation(new CompilerPnutsImpl());
+		context.usePackage("pnuts.lib");
 		return context;
 	}
 }

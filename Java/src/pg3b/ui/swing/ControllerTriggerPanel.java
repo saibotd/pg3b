@@ -50,7 +50,7 @@ public class ControllerTriggerPanel extends JPanel {
 	private Config config;
 	private ControllerTrigger trigger;
 	private boolean isNewTrigger;
-	private TimerTask monitorConrollersTask;
+	private TimerTask monitorControllersTask;
 
 	private JPanel titlePanel;
 	private JLabel triggerLabel;
@@ -138,12 +138,12 @@ public class ControllerTriggerPanel extends JPanel {
 	}
 
 	void listenForTrigger (boolean enable) {
-		if (monitorConrollersTask != null) {
-			monitorConrollersTask.cancel();
-			monitorConrollersTask = null;
+		if (monitorControllersTask != null) {
+			monitorControllersTask.cancel();
+			monitorControllersTask = null;
 		}
 		if (!enable) return;
-		monitorConrollersTask = new TimerTask() {
+		monitorControllersTask = new TimerTask() {
 			boolean firstRun = true;
 
 			public void run () {
@@ -174,7 +174,7 @@ public class ControllerTriggerPanel extends JPanel {
 				firstRun = false;
 			}
 		};
-		UI.timer.scheduleAtFixedRate(monitorConrollersTask, 125, 125);
+		UI.timer.scheduleAtFixedRate(monitorControllersTask, 125, 125);
 	}
 
 	public void setTriggerText (ControllerTrigger trigger) {
@@ -224,7 +224,7 @@ public class ControllerTriggerPanel extends JPanel {
 
 		triggerLabel.addMouseListener(new MouseAdapter() {
 			public void mousePressed (MouseEvent event) {
-				if (monitorConrollersTask != null) return;
+				if (monitorControllersTask != null) return;
 				triggerLabel.setText("Waiting for trigger...");
 				triggerLabel.setFont(triggerLabel.getFont().deriveFont(Font.ITALIC));
 				triggerLabel.requestFocusInWindow();

@@ -1,6 +1,8 @@
 
 package pg3b.ui;
 
+import java.util.ArrayList;
+
 import net.java.games.input.Component;
 import net.java.games.input.Controller;
 import net.java.games.input.ControllerEnvironment;
@@ -14,9 +16,9 @@ public class ControllerTrigger extends Trigger {
 	private String type;
 	private String controllerName;
 	private boolean shift, ctrl, alt;
-	private transient Controller controller;
-	private transient Component component;
-	private transient float lastState = Float.MAX_VALUE;
+	private transient Controller[] controllers;
+	private transient Component[] components;
+	private transient float[] lastStates;
 
 	public String getID () {
 		return id;
@@ -24,8 +26,7 @@ public class ControllerTrigger extends Trigger {
 
 	public void setID (String id) {
 		this.id = id;
-		component = null;
-		lookupComponent();
+		lookupComponent(true);
 	}
 
 	public String getType () {
@@ -42,36 +43,44 @@ public class ControllerTrigger extends Trigger {
 
 	public void setControllerName (String controllerName) {
 		this.controllerName = controllerName;
-		component = null;
-		lookupComponent();
+		lookupComponent(true);
 	}
 
 	public void setComponent (Controller controller, Component component) {
 		id = component.getIdentifier().toString();
 		type = component.getIdentifier().getClass().getSimpleName().toLowerCase();
 		controllerName = controller.getName();
-		component = null;
-		lookupComponent();
+		lookupComponent(true);
 	}
 
-	public Component getComponent () {
-		return component;
+	public Controller[] getControllers () {
+		lookupComponent(true);
+		return controllers;
 	}
 
-	private void lookupComponent () {
-		if (component != null) return;
+	private void lookupComponent (boolean reset) {
+		if (reset) {
+			components = null;
+			controllers = null;
+			lastStates = null;
+		}
+		if (components != null) return;
 		if (controllerName == null || id == null) return;
+		// There may be more than one controller with the same name, port number, and component id, so we will monitor them all.
+		ArrayList<Controller> controllersList = new ArrayList();
+		ArrayList<Component> componentsList = new ArrayList();
 		for (Controller controller : ControllerEnvironment.getDefaultEnvironment().getControllers()) {
 			if (!controller.getName().equals(controllerName)) continue;
 			for (Component component : controller.getComponents()) {
 				if (component.getIdentifier().toString().equals(id)) {
-					this.controller = controller;
-					this.component = component;
-					lastState = Float.MAX_VALUE;
-					return;
+					controllersList.add(controller);
+					componentsList.add(component);
 				}
 			}
 		}
+		controllers = controllersList.toArray(new Controller[controllersList.size()]);
+		components = componentsList.toArray(new Component[componentsList.size()]);
+		lastStates = new float[components.length];
 	}
 
 	public boolean getShift () {
@@ -99,21 +108,27 @@ public class ControllerTrigger extends Trigger {
 	}
 
 	public boolean isValid () {
-		lookupComponent();
-		return getComponent() != null;
+		lookupComponent(false);
+		return components != null;
 	}
 
 	public boolean poll () {
-		if (component == null) return false;
-		controller.poll();
-		float state = component.getPollData();
-		if (state != lastState) {
-			if (controller.getType() == Type.MOUSE) {
-				// BOZO - Do fancy computation to go from mouse position delta to axis deflection! Will need a configuration GUI.
-				if (state != 0) state = state > 0 ? 1 : -1;
+		if (components == null) return false;
+		for (int i = 0, n = controllers.length; i < n; i++) {
+			Controller controller = controllers[i];
+			if (!controller.poll()) {
+				components = null;
+				continue;
 			}
-			lastState = state;
-			if (getAction().execute(state)) return true;
+			float state = components[i].getPollData();
+			if (state != lastStates[i]) {
+				if (controller.getType() == Type.MOUSE) {
+					// BOZO - Do fancy computation to go from mouse position delta to axis deflection! Will need a configuration GUI.
+					if (state != 0) state = state > 0 ? 1 : -1;
+				}
+				lastStates[i] = state;
+				if (getAction().execute(state)) return true;
+			}
 		}
 		return false;
 	}
