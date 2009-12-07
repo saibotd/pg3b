@@ -64,6 +64,9 @@
 <keyword name="getPayload" type="function" returnType="Object">
 	<desc>Returns the value that caused the trigger to execute this action. The type of payload varies for different triggers.</desc>
 </keyword>
+<keyword name="getConfig" type="function" returnType="Config">
+	<desc>Returns the Config that contains the Trigger that caused this script's Action to execute.</desc>
+</keyword>
 <keyword name="getTrigger" type="function" returnType="Trigger">
 	<desc>Returns the Trigger that caused this script's Action to execute.</desc>
 </keyword>

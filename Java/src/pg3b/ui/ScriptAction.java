@@ -30,12 +30,12 @@ public class ScriptAction implements Action {
 		this.scriptName = scriptName;
 	}
 
-	public void execute (Trigger trigger, Object payload) {
+	public void execute (Config config, Trigger trigger, Object payload) {
 		Script script = getScript();
 		if (script == null) return;
 		Pnuts pnuts = script.getPnuts();
 		if (pnuts == null) return;
-		pnuts.run(getContext(trigger, payload));
+		pnuts.run(getContext(config, trigger, payload));
 	}
 
 	public boolean isValid () {
@@ -62,6 +62,7 @@ public class ScriptAction implements Action {
 		pkg.set("getPayload".intern(), new Functions.getPayload());
 		pkg.set("getAction".intern(), new Functions.getAction());
 		pkg.set("getTrigger".intern(), new Functions.getTrigger());
+		pkg.set("getConfig".intern(), new Functions.getConfig());
 		pkg.set("pg3bui".intern(), PG3BUI.instance);
 		pkg.set("sleep".intern(), new Functions.sleep());
 		pkg.set("play".intern(), new Functions.play());
@@ -78,8 +79,9 @@ public class ScriptAction implements Action {
 	/**
 	 * Returns a script context for executing a Pnuts script.
 	 */
-	public Context getContext (Trigger trigger, Object payload) {
+	public Context getContext (Config config, Trigger trigger, Object payload) {
 		Context context = new Context();
+		context.set("config", config);
 		context.set("trigger", trigger);
 		context.set("action", this);
 		context.set("payload", payload);

@@ -38,7 +38,7 @@ public class PG3BAction implements Action {
 		return PG3BUI.instance.getPg3b() != null;
 	}
 
-	public void execute (Trigger trigger, Object payload) {
+	public void execute (Config config, Trigger trigger, Object payload) {
 		PG3B pg3b = PG3BUI.instance.getPg3b();
 		if (pg3b == null) return;
 		float state = payload instanceof Float ? (Float)payload : 1;

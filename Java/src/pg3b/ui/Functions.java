@@ -287,6 +287,16 @@ public class Functions {
 		}
 	}
 
+	static public class getConfig extends BaseFunction {
+		public getConfig () {
+			super("getConfig", 0, 0, "");
+		}
+
+		protected Object invoke (Object[] args, Context context) {
+			return context.get("config");
+		}
+	}
+
 	static public class print extends BaseFunction {
 		public print () {
 			super("print", 0, 1, "object");

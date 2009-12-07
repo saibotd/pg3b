@@ -91,7 +91,7 @@ public class Config extends Editable {
 							public void run () {
 								final Action action = trigger.getAction();
 								try {
-									action.execute(trigger, state);
+									action.execute(Config.this, trigger, state);
 								} catch (Exception ex) {
 									if (ERROR) error("Error executing action: " + action, ex);
 									hasError = true;

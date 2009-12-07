@@ -163,7 +163,6 @@ public class ScriptEditor extends EditorPanel<Script> {
 			if (needsSave) configEditor.saveItem(config, true);
 		}
 		configEditor.setSelectedItem(selectedConfig);
-		System.out.println(selectedConfig);
 	}
 
 	private void initializeEvents () {
@@ -229,7 +228,8 @@ public class ScriptEditor extends EditorPanel<Script> {
 				new Thread("Execute") {
 					public void run () {
 						try {
-							Context context = new ScriptAction("<temp>").getContext(null, 1);
+							Config config = owner.getConfigTab().getConfigEditor().getSelectedItem();
+							Context context = new ScriptAction("<temp>").getContext(config, null, 1);
 							Pnuts.load(new StringReader(codeText.getText()), context);
 							EventQueue.invokeLater(new Runnable() {
 								public void run () {
