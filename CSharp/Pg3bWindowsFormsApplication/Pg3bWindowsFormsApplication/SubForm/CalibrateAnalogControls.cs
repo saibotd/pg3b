@@ -81,7 +81,7 @@ namespace Pg3bWindowsFormsApplication.SubForm
             stopButton.Enabled = false;
         }
 
-        private void graphTrigger(string titleText, SetTrigger setTrigger, GetTrigger getTrigger, int[] calibrationTable)
+        private void graphTrigger(string titleText, SetTrigger setTrigger, GetTrigger getTrigger, byte[] calibrationTable)
         {
             zedGraphControl.GraphPane.CurveList.Clear();
             GraphPane graphPane = zedGraphControl.GraphPane;
@@ -119,7 +119,7 @@ namespace Pg3bWindowsFormsApplication.SubForm
             setTrigger(0.0F);
         }
 
-        private void graphThumbStick(string titleText, SetThumbStick setThumbStick, GetThumbStick getThumbStick, int[] calibrationTable)
+        private void graphThumbStick(string titleText, SetThumbStick setThumbStick, GetThumbStick getThumbStick, byte[] calibrationTable)
         {
             zedGraphControl.GraphPane.CurveList.Clear();
             GraphPane graphPane = zedGraphControl.GraphPane;
@@ -193,7 +193,7 @@ namespace Pg3bWindowsFormsApplication.SubForm
         private void calibrateThumbStick(string controlName, SetThumbStick setThumbStick, GetThumbStick getThumbStick, bool isInverted)
         {
             float[] actualValues = new float[byte.MaxValue + 1];
-            int[] calibrationTable = new int[byte.MaxValue + 1];
+            byte[] calibrationTable = new byte[byte.MaxValue + 1];
 
             // Read the GamePad ThumbStick deflection for each wiper value
             for (int wiper = 0; wiper <= byte.MaxValue && stopButton.Enabled; wiper++)
@@ -242,12 +242,12 @@ namespace Pg3bWindowsFormsApplication.SubForm
                     if (Math.Abs(actualValues[index] - deflection) < Math.Abs(actualValues[match] - deflection))
                         match = index;
                 }
-                calibrationTable[wiper] = match;
+                calibrationTable[wiper] = (byte)match;
             }
 
-            calibrationTable[byte.MinValue] = (lastMinusOne > byte.MinValue) ? lastMinusOne - 1 : byte.MinValue;
-            calibrationTable[byte.MaxValue] = (firstPlusOne < byte.MaxValue) ? firstPlusOne + 1 : byte.MaxValue;
-            calibrationTable[byte.MaxValue / 2 + 1] = (firstZero + lastZero) / 2;
+            calibrationTable[byte.MinValue] = (byte)((lastMinusOne > byte.MinValue) ? lastMinusOne - 1 : byte.MinValue);
+            calibrationTable[byte.MaxValue] = (byte)((firstPlusOne < byte.MaxValue) ? firstPlusOne + 1 : byte.MaxValue);
+            calibrationTable[byte.MaxValue / 2 + 1] = (byte)((firstZero + lastZero) / 2);
 
             setThumbStick(0.0F);
 
@@ -258,7 +258,7 @@ namespace Pg3bWindowsFormsApplication.SubForm
         private void calibrateTrigger(string controlName, SetTrigger setTrigger, GetTrigger getTrigger, bool isInverted)
         {
             float[] actualValues = new float[byte.MaxValue + 1];
-            int[] calibrationTable = new int[byte.MaxValue + 1];
+            byte[] calibrationTable = new byte[byte.MaxValue + 1];
 
             // Read the GamePad Trigger deflection for each wiper value
             for (int wiper = 0; wiper <= byte.MaxValue && stopButton.Enabled; wiper++)
@@ -295,16 +295,23 @@ namespace Pg3bWindowsFormsApplication.SubForm
                     if (Math.Abs(actualValues[index] - deflection) < Math.Abs(actualValues[match] - deflection))
                         match = index;
                 }
-                calibrationTable[wiper] = match;
+                calibrationTable[wiper] = (byte)match;
             }
 
             setTrigger(0.0F);
 
             graphTrigger(controlName + " Calibrated (Simulation)", setTrigger, getTrigger, calibrationTable);
             writeCalibrationTable(controlName, calibrationTable, isInverted);
+            sendCalibrationTable(controlName, calibrationTable, isInverted);
         }
 
-        private void writeCalibrationTable(string controlName, int[] calibrationTable, bool isInverted)
+        private void sendCalibrationTable(string controlName, byte[] calibrationTable, bool isInverted)
+        {
+            throw new NotImplementedException();
+//          xboxController.Configuration.Calibration.LeftTrigger = calibrationTable;
+        }
+
+        private void writeCalibrationTable(string controlName, byte[] calibrationTable, bool isInverted)
         {
             TextWriter tw = new StreamWriter("Calibration" + controlName + ".h");
             tw.WriteLine("/*");
