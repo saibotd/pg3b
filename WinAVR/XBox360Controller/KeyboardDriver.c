@@ -166,7 +166,7 @@ static void KB_KeyboardEventFilter( uint16_t scancode )
     // AA - Self-test passed
     if( scancode == KB_KeyPress( 0xAA ) )
     {
-        LogByte( 'T', kb_selftest = 1 );
+        SYS_LogByte( 'T', kb_selftest = 1 );
     }
 
     // F12
@@ -231,7 +231,7 @@ static void KB_KeyboardEventFilter( uint16_t scancode )
     // XBox Translation
     if( ! ( scancode == KB_KeyPress( 0xFA ) || scancode == KB_KeyPress( 0xFE ) || scancode == KB_KeyPress( ScrollLockKey ) || scancode == KB_KeyRelease( ScrollLockKey ) ) )
     {
-        LogWord( 'K', scancode );
+        SYS_LogWord( 'K', scancode );
         EVA_InvokeEventAction( scancode );
     }
 }
@@ -243,9 +243,9 @@ static void KB_KeyboardEventFilter( uint16_t scancode )
  */
 static void KB_KeyboardReset( void )
 {
-    LogByte( 'T', kb_selftest = 1 );
+    SYS_LogByte( 'T', kb_selftest = 1 );
     KB_Send( 0xFF );
-    LogByte( 'T', kb_selftest = 0 );
+    SYS_LogByte( 'T', kb_selftest = 0 );
 }
 
 /*

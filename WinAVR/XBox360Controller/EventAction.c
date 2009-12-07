@@ -157,7 +157,7 @@ static uint16_t EVA_LookupEvent( uint16_t event )
 {
     uint16_t action = 0;
 
-    LogWord( 'L', event );
+    SYS_LogWord( 'L', event );
     for ( uint16_t i = 0; i < sizeof( eventaction ) / sizeof( uint16_t ); i += 2 )
     {
         if( event == pgm_read_word( &eventaction[i] ) )
@@ -186,7 +186,7 @@ void EVA_InvokeEventAction( uint16_t event )
     else
         action = EVA_LookupEvent( event );
 
-    LogWord( 'I', action );
+    SYS_LogWord( 'I', action );
 
     EVA_InvokeAction( event, action );
 }

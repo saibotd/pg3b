@@ -37,7 +37,6 @@
  */
 #include <avr/io.h>
 #include <avr/pgmspace.h>
-
 #include "EventAction.h"
 #include "Calibration.h"
 #include "XBoxDriver.h"
@@ -140,8 +139,8 @@ void XB_ButtonAction( uint16_t event, uint16_t action )
     uint8_t port = XB_ButtonPort( button );
     uint8_t pin = _BV( XB_ButtonPin( button ) );
 
-    LogByte( 'B', button );
-    LogByte( 'V', EVA_ActionValue( action ) );
+    SYS_LogByte( 'B', button );
+    SYS_LogByte( 'V', EVA_ActionValue( action ) );
 
     if( ! isWireless )
     {
@@ -185,8 +184,8 @@ void XB_ControlAction( uint16_t event, uint16_t action )
             wiper = XB_CalibrateWiper( target, EVA_EventValue( event ) );
     }
 
-    LogByte( 'C', control );
-    LogByte( 'V', wiper );
+    SYS_LogByte( 'C', control );
+    SYS_LogByte( 'V', wiper );
 
     SPI_TransferBytes( XB_ControlPin( control ), ACTION_WIPER | XB_ControlPot( control ), wiper );
 }

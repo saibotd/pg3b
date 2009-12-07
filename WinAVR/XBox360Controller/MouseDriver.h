@@ -73,25 +73,25 @@
  */
 
 // Vector translation. Uses whole numbers to represent a fraction with offset.
-typedef struct _scale_t
+typedef struct ms_scale
 {
     uint8_t offset;
     uint16_t numerator;
     uint16_t denominator;
-} scale_t;
+} ms_scale_t;
 
 // Vector translation applied between a lower and upper value.
-typedef struct _range_t
+typedef struct ms_range
 {
     int8_t lower;
     int8_t upper;
-    scale_t scale;
-} range_t;
+    ms_scale_t scale;
+} ms_range_t;
 
 // Protocol unit assembled from the stream of bytes sent by the PS2 driver.
 #define MOUSE_VECTOR_SIZE               4
 
-typedef struct _packet_t
+typedef struct ms_packet
 {
     uint8_t size;
     union
@@ -122,10 +122,10 @@ typedef struct _packet_t
             uint8_t z;
         };
     };
-} packet_t;
+} ms_packet_t;
 
 // Vector magnitude.
-typedef struct _vector_t
+typedef struct ms_vector
 {
     struct
     {
@@ -134,53 +134,53 @@ typedef struct _vector_t
         uint8_t label : 6;
     };
     uint8_t data;
-} vector_t;
+} ms_vector_t;
 
 #define MOVING_AVERAGE_BITS         2
 #define MOVING_AVERAGE_SIZE         ( 1 << MOVING_AVERAGE_BITS )
 #define MOVING_AVERAGE_MASK         ( MOVING_AVERAGE_SIZE - 1 )
 
-typedef struct _average_t
+typedef struct ms_average
 {
     uint8_t index;
     uint8_t data[MOVING_AVERAGE_SIZE];
-} average_t;
+} ms_average_t;
 
-typedef struct _trigger_t
+typedef struct ms_trigger
 {
-    volatile uint8_t timeout;
-    volatile uint8_t timer;
-    volatile uint8_t action;
-} trigger_t;
+    uint8_t timeout;
+    uint8_t timer;
+    uint8_t action;
+} ms_trigger_t;
 
 #define MS_BUFSIZE                  2
 
-typedef struct _driver_t
+typedef struct ms_driver
 {
-    volatile uint8_t bit_n;
-    volatile uint8_t buffer;
-    volatile uint8_t error;
+    uint8_t bit_n;
+    uint8_t buffer;
+    uint8_t error;
     uint8_t data[MS_BUFSIZE];
     ringbuff_t ringbuffer;
-} driver_t;
+} ms_driver_t;
 
-typedef struct _config_t
+typedef struct ms_config
 {
     uint8_t frequency;
     uint8_t resolution: 2;
     uint8_t scale: 2;
-} config_t;
+} ms_config_t;
 
-typedef struct _filter
+typedef struct ms_filter
 {
     uint8_t state;
     uint8_t retry;
     uint8_t size;
     uint8_t selftest;
     uint8_t *table;
-} filter_t;
+} ms_filter_t;
 
-typedef struct _dispatch
+typedef struct ms_dispatch
 {
     struct
     {
@@ -191,9 +191,9 @@ typedef struct _dispatch
         uint8_t down: 1;
     };
     uint8_t hysteresis;
-    average_t averagex;
-    average_t averagey;
-} dispatch_t;
+    ms_average_t averagex;
+    ms_average_t averagey;
+} ms_dispatch_t;
 
 /*
  ****************************************************************************************************

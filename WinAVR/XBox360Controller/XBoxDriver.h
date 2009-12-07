@@ -46,6 +46,10 @@
 #define XB_ControlPin(t)        ((uint8_t)(((t)>>4)&0x0f))
 #define XB_ControlPot(t)        ((uint8_t)((t)&0x0f))
 
+#define XB_GetTableAddress(t)   ((uint16_t)(((t)<<8)+32))
+#define XB_GetTableEnabled(t,v) (_BV(t)&(v))
+#define XB_SetTableEnabled(a)   
+
 #define POT1                    1
 #define POT2                    2
 
@@ -78,6 +82,8 @@
  *
  ****************************************************************************************************
  */
+// XBox Controllers
+typedef enum {  WiredCommonLineV1, WirelessCommonGroundV1 } XBoxGamePad_t;
 
 // XBox Targets
 typedef enum {  LeftStickX, LeftStickY, RightStickX, RightStickY, LeftTrigger, RightTrigger, XKeyPress, XKeyRelease } XBoxTarget_t;

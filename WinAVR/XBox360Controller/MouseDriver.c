@@ -117,37 +117,37 @@ static uint8_t ms_state_table[] PROGMEM = {
  * Local Variables
  *******************************************************************************
  */
-static driver_t ms_driver;      // MS_ClockInterrupt variables
-static trigger_t ms_trigger;    // MS_TimerInterrupt variables
-static packet_t ms_packet;      // Current packet in the EventFilter
-static dispatch_t ms_dispatch;  // Average wiper values and current button state
-static config_t ms_config;      // Mouse configuration
-static filter_t ms_filter;      // Event filter state
+static ms_driver_t ms_driver;       // MS_ClockInterrupt variables
+static ms_trigger_t ms_trigger;     // MS_TimerInterrupt variables
+static ms_packet_t ms_packet;       // Current packet in the EventFilter
+static ms_dispatch_t ms_dispatch;   // Average wiper values and current button state
+static ms_config_t ms_config;       // Mouse configuration
+static ms_filter_t ms_filter;       // Event filter state
 
 /*
  ********************************************************************************
  * Private Functions
  ********************************************************************************
  */
-static vector_t *AbsoluteValue( vector_t *vector );
-static uint8_t AddValue( average_t *average, uint8_t value );
-static uint8_t Average( average_t *average );
-static void EventDispatcher( packet_t *packet );
+static ms_vector_t *AbsoluteValue( ms_vector_t *vector );
+static uint8_t AddValue( ms_average_t *average, uint8_t value );
+static uint8_t Average( ms_average_t *average );
+static void EventDispatcher( ms_packet_t *packet );
 static void EventFilter( uint8_t scancode );
-static scale_t *FindScale( vector_t *vector, range_t ranges[] );
+static ms_scale_t *FindScale( ms_vector_t *vector, ms_range_t ranges[] );
 static uint8_t GetScancode( void );
 static uint8_t HasScancode( void );
-static scale_t *InverseSlope( vector_t *vx, vector_t *vy, scale_t *slope );
-static vector_t *LogVector( vector_t *vector, uint8_t eol );
+static ms_scale_t *InverseSlope( ms_vector_t *vx, ms_vector_t *vy, ms_scale_t *slope );
+static ms_vector_t *LogVector( ms_vector_t *vector, uint8_t eol );
 static void ResetState( void );
 static void SendByte( uint8_t data );
 static void SetMouseConfigDefault( void );
 static void SetMouseFilterDefault( void );
 static void SetMouseDriverDefault( void );
 static void TimerInit( void );
-static vector_t *VectorX( packet_t *packet, vector_t *vector );
-static vector_t *VectorY( packet_t *packet, vector_t *vector );
-static uint8_t VectorW( vector_t *vector, scale_t *n, scale_t *ms );
+static ms_vector_t *VectorX( ms_packet_t *packet, ms_vector_t *vector );
+static ms_vector_t *VectorY( ms_packet_t *packet, ms_vector_t *vector );
+static uint8_t VectorW( ms_vector_t *vector, ms_scale_t *n, ms_scale_t *ms );
 
 /*
  ********************************************************************************
@@ -248,7 +248,7 @@ void MS_EventTask( void )
 static void EventFilter( uint8_t scancode )
 {
     if( scancode == 0xAA && ms_filter.state == 0x02 )
-        LogByte( 'T', ms_filter.selftest = 1 );
+        SYS_LogByte( 'T', ms_filter.selftest = 1 );
 
     if( ms_filter.state < ms_filter.size )
     {
@@ -322,7 +322,7 @@ static void EventFilter( uint8_t scancode )
  * is one greater than the biggest value in the previous range.
  *******************************************************************************
  */
-static range_t ms_range[] = {
+static ms_range_t ms_range[] = {
     { lower:  1, upper:  127, scale: { offset: 40, numerator: 179, denominator: 256 } }
 };
 
@@ -331,10 +331,10 @@ static range_t ms_range[] = {
  * EventDispatcher
  ********************************************************************************
  */
-static void EventDispatcher( packet_t *packet )
+static void EventDispatcher( ms_packet_t *packet )
 {
-    vector_t vx, vy;
-    scale_t ms, *nx, *ny;
+    ms_vector_t vx, vy;
+    ms_scale_t ms, *nx, *ny;
     uint8_t wx, wy, zsign, z;
 
     LogVector( VectorX( packet, &vx ), ' ' );   // Extract X vector from the mouse packet.
@@ -407,11 +407,11 @@ static void EventDispatcher( packet_t *packet )
  * is proportional to the mouse vector and larger than the game-pad dead-zone.
  ********************************************************************************
  */
-static scale_t *FindScale( vector_t *vector, range_t ranges[] )
+static ms_scale_t *FindScale( ms_vector_t *vector, ms_range_t ranges[] )
 {
-    static scale_t unity = { offset: 0, numerator: 1, denominator: 1 };
+    static ms_scale_t unity = { offset: 0, numerator: 1, denominator: 1 };
 
-    for( uint8_t i = 0; i < sizeof( ms_range ) / sizeof( range_t ); i++ )
+    for( uint8_t i = 0; i < sizeof( ms_range ) / sizeof( ms_range_t ); i++ )
     {
         if( vector->data >= ms_range[i].lower && vector->data <= ms_range[i].upper )
         {
@@ -427,7 +427,7 @@ static scale_t *FindScale( vector_t *vector, range_t ranges[] )
  * VectorX
  ********************************************************************************
  */
-vector_t *VectorX( packet_t *packet, vector_t *vector )
+ms_vector_t *VectorX( ms_packet_t *packet, ms_vector_t *vector )
 {
     vector->label = 'X' - 64;
     vector->sign = packet->xsign;
@@ -442,7 +442,7 @@ vector_t *VectorX( packet_t *packet, vector_t *vector )
  * VectorY
  ********************************************************************************
  */
-vector_t *VectorY( packet_t *packet, vector_t *vector )
+ms_vector_t *VectorY( ms_packet_t *packet, ms_vector_t *vector )
 {
     vector->label = 'Y' - 64;
     vector->sign = packet->ysign;
@@ -457,7 +457,7 @@ vector_t *VectorY( packet_t *packet, vector_t *vector )
  * AbsoluteValue
  ********************************************************************************
  */
-static vector_t *AbsoluteValue( vector_t *vector )
+static ms_vector_t *AbsoluteValue( ms_vector_t *vector )
 {
     // Need absolute value. Two's complement negative values.
     if( vector->sign )
@@ -475,7 +475,7 @@ static vector_t *AbsoluteValue( vector_t *vector )
  * InverseSlope
  ********************************************************************************
  */
-static scale_t *InverseSlope( vector_t *vx, vector_t *vy, scale_t *slope )
+static ms_scale_t *InverseSlope( ms_vector_t *vx, ms_vector_t *vy, ms_scale_t *slope )
 {
     uint16_t max = ( vx->data >= vy->data )? vx->data : vy->data;
     uint16_t min = ( vx->data <= vy->data )? vx->data : vy->data;
@@ -492,7 +492,7 @@ static scale_t *InverseSlope( vector_t *vx, vector_t *vy, scale_t *slope )
  * VectorW
  ********************************************************************************
  */
-static uint8_t VectorW( vector_t *vector, scale_t *n, scale_t *ms )
+static uint8_t VectorW( ms_vector_t *vector, ms_scale_t *n, ms_scale_t *ms )
 {
     uint8_t wiper;
 
@@ -508,7 +508,7 @@ static uint8_t VectorW( vector_t *vector, scale_t *n, scale_t *ms )
  * Average
  ********************************************************************************
  */
-static uint8_t Average( average_t *average )
+static uint8_t Average( ms_average_t *average )
 {
     uint16_t sum = 0;
 
@@ -525,7 +525,7 @@ static uint8_t Average( average_t *average )
  * AddValue
  ********************************************************************************
  */
-static uint8_t AddValue( average_t *average, uint8_t value )
+static uint8_t AddValue( ms_average_t *average, uint8_t value )
 {
     average->index = ( average->index + 1 ) & MOVING_AVERAGE_MASK;
     average->data[average->index] = value;
@@ -571,7 +571,7 @@ static void SetMouseFilterDefault( void )
 
     ms_filter.retry = 0;
     ms_filter.state = 2;
-    LogByte( 'T', ms_filter.selftest = 0 );
+    SYS_LogByte( 'T', ms_filter.selftest = 0 );
     ms_filter.size = sizeof( ms_state_table ) / sizeof( uint8_t );
     ms_filter.table = ms_state_table;
 }
@@ -615,9 +615,9 @@ static void SetMouseDriverDefault( void )
 void MS_MouseReset( void )
 {
     SetMouseConfigDefault( );
-    LogByte( 'T', ms_filter.selftest = 1 );
+    SYS_LogByte( 'T', ms_filter.selftest = 1 );
     ResetState( );
-    LogByte( 'T', ms_filter.selftest = 0 );
+    SYS_LogByte( 'T', ms_filter.selftest = 0 );
 }
 
 /*
@@ -752,7 +752,7 @@ void MS_SetScaling( uint8_t scale )
 
 static uint8_t GetScancode( void )
 {
-    return LogByte( 'R', RING_GetElement( &ms_driver.ringbuffer ) );
+    return SYS_LogByte( 'R', RING_GetElement( &ms_driver.ringbuffer ) );
 }
 
 /*
@@ -806,7 +806,7 @@ static void SendByte( uint8_t data )
 
     ms_clock_disable_interrupt( );
     ms_timer_disable_interrupt( );
-    LogByte( 'S', data );
+    SYS_LogByte( 'S', data );
 
     // Clear the ISR state variables
     ms_driver.buffer = 0;
@@ -914,7 +914,7 @@ ISR( MS_ClockInterrupt )
     {
         if( bit_is_set( MS_DATA_PIN, MS_DATA_BIT ) == parity_even_bit( ms_driver.buffer ) )
         {
-            LogByte( 'P', ms_driver.buffer );
+            SYS_LogByte( 'P', ms_driver.buffer );
             if( ms_driver.error == 0 )
                 SendByte( 0xFE );
             ms_driver.error = 1;
@@ -927,7 +927,7 @@ ISR( MS_ClockInterrupt )
     {
         if( bit_is_clear( MS_DATA_PIN, MS_DATA_BIT ) )
         {
-            LogByte( 'B', ms_driver.buffer );
+            SYS_LogByte( 'B', ms_driver.buffer );
             if( ms_driver.error == 0 )
                 SendByte( 0xFE );
             ms_driver.error = 1;
@@ -1084,9 +1084,9 @@ static uint8_t mod10( uint8_t value )
  * LogVector
  ****************************************************************************************************
  */
-static vector_t *LogVector( vector_t *vector, uint8_t eol )
+static ms_vector_t *LogVector( ms_vector_t *vector, uint8_t eol )
 {
-    if( Configuration.datacollection ) {
+    if( SYS_IsLoggingEnabled( ) ) {
         usb_serial_putchar( vector->label + 64 );
         usb_serial_putchar(  ' ' );
         usb_serial_putchar( ( vector->sign )? '-' : '+' );
