@@ -1,6 +1,9 @@
 
 package pg3b;
 
+/**
+ * Represents a PG3B button.
+ */
 public enum Button implements Target {
 	// Ordinals defined by firmware.
 	a("A", null), //

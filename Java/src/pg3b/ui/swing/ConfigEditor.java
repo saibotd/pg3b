@@ -35,9 +35,6 @@ import pg3b.ui.Settings;
 import pg3b.ui.Trigger;
 import pg3b.util.UI;
 
-// BOZO - Reset everything on the PG3B when capture ends to avoid leaving targets stuck.
-// BOZO - Allow multiple configs to be activated at the same time?
-
 public class ConfigEditor extends EditorPanel<Config> {
 	private int lastSelectedTriggerIndex;
 

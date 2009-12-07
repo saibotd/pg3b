@@ -15,6 +15,9 @@ import pnuts.lang.Context;
 import pnuts.lang.ParseException;
 import pnuts.lang.Pnuts;
 
+/**
+ * Stores the code for a Pnuts script.
+ */
 public class Script extends Editable {
 	private transient String code;
 	private transient Pnuts pnuts;

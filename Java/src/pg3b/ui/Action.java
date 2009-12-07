@@ -1,8 +1,18 @@
 
 package pg3b.ui;
 
+/**
+ * Takes some action as a response to a {@link Trigger}.
+ */
 public interface Action {
-	public boolean execute (Object payload);
+	/**
+	 * @param trigger The trigger that executed this action.
+	 * @param payload The value that caused the trigger to execute this action.
+	 */
+	public void execute (Trigger trigger, Object payload);
 
+	/**
+	 * Returns true if this action is ready to be executed.
+	 */
 	public boolean isValid ();
 }

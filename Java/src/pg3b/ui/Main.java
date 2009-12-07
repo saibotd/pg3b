@@ -7,6 +7,9 @@ import java.io.PrintStream;
 import pg3b.ui.swing.PG3BUI;
 import pg3b.util.MultiplexOutputStream;
 
+/**
+ * Main class for the PG3B UI.
+ */
 public class Main {
 	public static void main (String[] args) throws Exception {
 		FileOutputStream logOutput = new FileOutputStream("pg3b.log");

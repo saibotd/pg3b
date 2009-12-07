@@ -7,10 +7,12 @@ import net.java.games.input.Component;
 import net.java.games.input.Controller;
 import net.java.games.input.ControllerEnvironment;
 import net.java.games.input.Controller.Type;
+import pg3b.ui.swing.PG3BUI;
 
-// BOZO - Grab mouse and keyboard during capture with a hotkey to exit.
-// BOZO - Implement ctrl, alt, shift modifiers.
-
+/**
+ * A trigger that executes its action based on the state of a JInput controller (keyboard, mouse, joystick, etc, essentially any
+ * peripheral).
+ */
 public class ControllerTrigger extends Trigger {
 	private String id;
 	private String type;
@@ -20,32 +22,27 @@ public class ControllerTrigger extends Trigger {
 	private transient Component[] components;
 	private transient float[] lastStates;
 
-	public String getID () {
+	/**
+	 * Returns the ID of the button or axis.
+	 */
+	public String getId () {
 		return id;
 	}
 
-	public void setID (String id) {
-		this.id = id;
-		lookupComponent(true);
-	}
-
+	/**
+	 * Returns the type of controller (mouse, keyboard, gamepad, etc).
+	 */
 	public String getType () {
 		return type;
-	}
-
-	public void setType (String type) {
-		this.type = type;
 	}
 
 	public String getControllerName () {
 		return controllerName;
 	}
 
-	public void setControllerName (String controllerName) {
-		this.controllerName = controllerName;
-		lookupComponent(true);
-	}
-
+	/**
+	 * Sets this trigger to execute its action based on the specified component.
+	 */
 	public void setComponent (Controller controller, Component component) {
 		id = component.getIdentifier().toString();
 		type = component.getIdentifier().getClass().getSimpleName().toLowerCase();
@@ -78,6 +75,7 @@ public class ControllerTrigger extends Trigger {
 				}
 			}
 		}
+		if (controllersList.isEmpty()) return;
 		controllers = controllersList.toArray(new Controller[controllersList.size()]);
 		components = componentsList.toArray(new Component[componentsList.size()]);
 		lastStates = new float[components.length];
@@ -112,25 +110,32 @@ public class ControllerTrigger extends Trigger {
 		return components != null;
 	}
 
-	public boolean poll () {
-		if (components == null) return false;
+	public Float poll () {
+		Controller[] controllers = this.controllers;
+		Component[] components = this.components;
+		float[] lastStates = this.lastStates;
+		if (controllers == null || components == null || lastStates == null) return null;
+		PG3BUI pg3bui = PG3BUI.instance;
 		for (int i = 0, n = controllers.length; i < n; i++) {
 			Controller controller = controllers[i];
 			if (!controller.poll()) {
-				components = null;
-				continue;
+				this.components = null;
+				return null;
 			}
 			float state = components[i].getPollData();
 			if (state != lastStates[i]) {
+				if (ctrl && !pg3bui.isCtrlDown()) continue;
+				if (alt && !pg3bui.isAltDown()) continue;
+				if (shift && !pg3bui.isShiftDown()) continue;
 				if (controller.getType() == Type.MOUSE) {
 					// BOZO - Do fancy computation to go from mouse position delta to axis deflection! Will need a configuration GUI.
 					if (state != 0) state = state > 0 ? 1 : -1;
 				}
 				lastStates[i] = state;
-				if (getAction().execute(state)) return true;
+				return state;
 			}
 		}
-		return false;
+		return null;
 	}
 
 	public String toString () {

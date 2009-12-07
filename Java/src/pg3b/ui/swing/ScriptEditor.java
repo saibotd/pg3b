@@ -16,6 +16,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
@@ -23,6 +25,7 @@ import java.io.StringReader;
 import java.util.HashMap;
 import java.util.TimerTask;
 
+import javax.swing.AbstractAction;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -30,11 +33,13 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JToolTip;
+import javax.swing.KeyStroke;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.BadLocationException;
+import javax.swing.text.Caret;
 
 import org.fife.ui.autocomplete.AutoCompletion;
 import org.fife.ui.autocomplete.Completion;
@@ -52,20 +57,18 @@ import org.fife.ui.rsyntaxtextarea.SyntaxScheme;
 import org.fife.ui.rsyntaxtextarea.Token;
 import org.fife.ui.rtextarea.RTextScrollPane;
 
+import pg3b.ui.Config;
 import pg3b.ui.Script;
 import pg3b.ui.ScriptAction;
+import pg3b.ui.Trigger;
 import pg3b.util.JMultilineTooltip;
 import pg3b.util.UI;
+import pnuts.lang.Context;
 import pnuts.lang.ParseException;
 import pnuts.lang.Pnuts;
 import pnuts.lang.PnutsException;
 
 import com.esotericsoftware.minlog.Log;
-
-// BOZO - Preserve selection when changing script error highlight.
-// BOZO - Add beep on, beep off.
-// BOZO - Thread action execution.
-// BOZO - Add listener to PG3B for UI update.
 
 public class ScriptEditor extends EditorPanel<Script> {
 	private int lastCaretPosition;
@@ -142,6 +145,27 @@ public class ScriptEditor extends EditorPanel<Script> {
 		codeText.discardAllEdits();
 	}
 
+	protected void itemRenamed (Script oldScript, Script newScript) {
+		// Update any ScriptActions that reference the old item.
+		ConfigEditor configEditor = owner.getConfigTab().getConfigEditor();
+		Config selectedConfig = configEditor.getSelectedItem();
+		for (Config config : configEditor.getItems()) {
+			boolean needsSave = false;
+			for (Trigger trigger : config.getTriggers()) {
+				if (trigger.getAction() instanceof ScriptAction) {
+					ScriptAction action = (ScriptAction)trigger.getAction();
+					if (action.getScriptName().equals(oldScript.getName())) {
+						action.setScriptName(newScript.getName());
+						needsSave = true;
+					}
+				}
+			}
+			if (needsSave) configEditor.saveItem(config, true);
+		}
+		configEditor.setSelectedItem(selectedConfig);
+		System.out.println(selectedConfig);
+	}
+
 	private void initializeEvents () {
 		recordButton.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
@@ -172,20 +196,29 @@ public class ScriptEditor extends EditorPanel<Script> {
 
 			public void changedUpdate (DocumentEvent event) {
 				if (compileTask != null) compileTask.cancel();
+
 				UI.timer.schedule(compileTask = new TimerTask() {
 					public void run () {
-						Script script = getSelectedItem();
-						if (script == null) return;
-						highlighter.removeAllHighlights();
-						try {
-							Pnuts.parse(codeText.getText());
-							errorLabel.setText("");
-						} catch (ParseException ex) {
-							if (DEBUG) debug("Error during script compilation.", ex);
-							highlightError(ex.getMessage(), ex.getErrorLine(), ex.getErrorColumn() - 1);
-						}
+						EventQueue.invokeLater(new Runnable() {
+							public void run () {
+								Caret caret = codeText.getCaret();
+								int dot = caret.getDot();
+								int mark = caret.getMark();
+								highlighter.removeAllHighlights();
+								if (getSelectedItem() == null) return;
+								try {
+									Pnuts.parse(codeText.getText());
+									errorLabel.setText("");
+								} catch (ParseException ex) {
+									if (DEBUG) debug("Error during script compilation.", ex);
+									highlightError(ex.getMessage(), ex.getErrorLine(), ex.getErrorColumn() - 1);
+								}
+								caret.setDot(mark);
+								caret.moveDot(dot);
+							}
+						});
 					}
-				}, 500);
+				}, 1000);
 			}
 		});
 
@@ -196,8 +229,8 @@ public class ScriptEditor extends EditorPanel<Script> {
 				new Thread("Execute") {
 					public void run () {
 						try {
-							Pnuts.load(new StringReader(codeText.getText()), ScriptAction.getContext(1));
-							PG3BUI.instance.getControllerPanel().repaint();
+							Context context = new ScriptAction("<temp>").getContext(null, 1);
+							Pnuts.load(new StringReader(codeText.getText()), context);
 							EventQueue.invokeLater(new Runnable() {
 								public void run () {
 									errorLabel.setForeground(Color.black);
@@ -219,6 +252,13 @@ public class ScriptEditor extends EditorPanel<Script> {
 						}
 					}
 				}.start();
+			}
+		});
+
+		codeText.getInputMap(WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.CTRL_MASK), "execute");
+		codeText.getActionMap().put("execute", new AbstractAction() {
+			public void actionPerformed (ActionEvent event) {
+				executeButton.doClick();
 			}
 		});
 	}
@@ -324,10 +364,10 @@ public class ScriptEditor extends EditorPanel<Script> {
 			getContentPanel().add(
 				panel,
 				new GridBagConstraints(1, 1, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE,
-					new Insets(6, 6, 6, 0), 0, 0));
+					new Insets(0, 6, 0, 0), 0, 0));
 			{
 				recordButton = new JButton("Record");
-				panel.add(recordButton);
+				// panel.add(recordButton);
 			}
 			{
 				executeButton = new JButton("Execute");

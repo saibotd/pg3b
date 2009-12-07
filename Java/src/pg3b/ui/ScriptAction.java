@@ -9,6 +9,9 @@ import pnuts.lang.Context;
 import pnuts.lang.Package;
 import pnuts.lang.Pnuts;
 
+/**
+ * An action that runs a Pnuts script when executed.
+ */
 public class ScriptAction implements Action {
 	private String scriptName;
 
@@ -27,13 +30,12 @@ public class ScriptAction implements Action {
 		this.scriptName = scriptName;
 	}
 
-	public boolean execute (Object payload) {
+	public void execute (Trigger trigger, Object payload) {
 		Script script = getScript();
-		if (script == null) return false;
+		if (script == null) return;
 		Pnuts pnuts = script.getPnuts();
-		if (pnuts == null) return false;
-		pnuts.run(getContext(payload));
-		return true;
+		if (pnuts == null) return;
+		pnuts.run(getContext(trigger, payload));
 	}
 
 	public boolean isValid () {
@@ -57,19 +59,29 @@ public class ScriptAction implements Action {
 
 	static {
 		Package pkg = Package.getGlobalPackage();
-		pkg.set("pg3b".intern(), PG3BUI.instance.getPg3b());
+		pkg.set("getPayload".intern(), new Functions.getPayload());
+		pkg.set("getAction".intern(), new Functions.getAction());
+		pkg.set("getTrigger".intern(), new Functions.getTrigger());
 		pkg.set("pg3bui".intern(), PG3BUI.instance);
 		pkg.set("sleep".intern(), new Functions.sleep());
 		pkg.set("play".intern(), new Functions.play());
 		pkg.set("beep".intern(), new Functions.beep());
 		pkg.set("get".intern(), new Functions.get());
 		pkg.set("set".intern(), new Functions.set());
-		pkg.set("getPayload".intern(), new Functions.getPayload());
+		pkg.set("toggle".intern(), new Functions.toggle());
 		pkg.set("print".intern(), new Functions.print());
+		pkg.set("isCtrlDown".intern(), new Functions.isCtrlDown());
+		pkg.set("isAltDown".intern(), new Functions.isAltDown());
+		pkg.set("isShiftDown".intern(), new Functions.isShiftDown());
 	}
 
-	static public Context getContext (Object payload) {
+	/**
+	 * Returns a script context for executing a Pnuts script.
+	 */
+	public Context getContext (Trigger trigger, Object payload) {
 		Context context = new Context();
+		context.set("trigger", trigger);
+		context.set("action", this);
 		context.set("payload", payload);
 		context.setImplementation(new CompilerPnutsImpl());
 		context.usePackage("pnuts.lib");

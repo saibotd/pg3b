@@ -1,6 +1,9 @@
 
 package pg3b;
 
+/**
+ * Represents a PG3B axis.
+ */
 public enum Axis implements Target {
 	// Ordinals defined by firmware.
 	leftStickX("Left Stick X", "LX"), //

@@ -14,6 +14,9 @@ import net.java.games.input.EventQueue;
 import net.java.games.input.Component.Identifier;
 import pg3b.util.Listeners;
 
+/**
+ * Reads the state from an Xbox 360 controller.
+ */
 public class XboxController {
 	static final int DPAD_UP = 4, DPAD_DOWN = 8, DPAD_LEFT = 16, DPAD_RIGHT = 32;
 
@@ -21,11 +24,17 @@ public class XboxController {
 	private int dpadDirection;
 	private Listeners<Listener> listeners = new Listeners(Listener.class);
 
+	/**
+	 * @param controller The controller to open. See {@link #getAllControllers()}.
+	 */
 	public XboxController (Controller controller) {
 		if (controller == null) throw new IllegalArgumentException("controller cannot be null.");
 		this.controller = controller;
 	}
 
+	/**
+	 * Returns the button state.
+	 */
 	public boolean get (Button button) {
 		if (button == null) throw new IllegalArgumentException("button cannot be null.");
 		if (!poll()) return false;
@@ -74,6 +83,9 @@ public class XboxController {
 		return controller.getComponent(id).getPollData() != 0;
 	}
 
+	/**
+	 * Returns the axis state.
+	 */
 	public float get (Axis axis) {
 		if (axis == null) throw new IllegalArgumentException("axis cannot be null.");
 		if (!poll()) return 0;
@@ -108,6 +120,9 @@ public class XboxController {
 		return value;
 	}
 
+	/**
+	 * Returns the button or axis state.
+	 */
 	public float get (Target target) {
 		if (target == null) throw new IllegalArgumentException("target cannot be null.");
 		if (target instanceof Button)
@@ -118,10 +133,17 @@ public class XboxController {
 			throw new IllegalArgumentException("target must be a button or axis.");
 	}
 
+	/**
+	 * Returns the button or axis state.
+	 */
 	public float get (String target) {
 		return get(PG3B.getTarget(target));
 	}
 
+	/**
+	 * Checks the buttons and axes for changes since the last call to poll and notifies any listeners of the changes.
+	 * @return false if the controller is no longer connected.
+	 */
 	public boolean poll () {
 		if (!controller.poll()) {
 			Listener[] listeners = this.listeners.toArray();
@@ -188,6 +210,9 @@ public class XboxController {
 			listeners[i].axisChanged(axis, state);
 	}
 
+	/**
+	 * Adds a listener to be notified when any buttons or axes change state.
+	 */
 	public void addListener (Listener listener) {
 		listeners.addListener(listener);
 		if (TRACE) trace("pg3b", "XboxController listener added: " + listener.getClass().getName());
@@ -212,6 +237,7 @@ public class XboxController {
 	}
 
 	public int getPort () {
+		System.out.println(controller.getPortNumber());
 		return controller.getPortNumber();
 	}
 
@@ -219,6 +245,9 @@ public class XboxController {
 		return controller.getName();
 	}
 
+	/**
+	 * Returns a list of all available gamepads. The list may include devices other than Xbox 360 controllers.
+	 */
 	static public List<Controller> getAllControllers () {
 		ArrayList<Controller> list = new ArrayList();
 		for (Controller controller : ControllerEnvironment.getDefaultEnvironment().getControllers())
@@ -226,6 +255,9 @@ public class XboxController {
 		return list;
 	}
 
+	/**
+	 * Listener to be notified when the controller's buttons or axes change state.
+	 */
 	static public class Listener {
 		public void buttonChanged (Button button, boolean pressed) {
 		}

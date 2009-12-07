@@ -15,6 +15,12 @@ import java.nio.charset.Charset;
 import java.util.Formatter;
 import java.util.HashMap;
 
+import pg3b.XboxController.Listener;
+import pg3b.util.Listeners;
+
+/**
+ * Controls the PG3B hardware.
+ */
 public class PG3B {
 	static private final HashMap<String, Target> nameToTarget = new HashMap();
 	static {
@@ -40,26 +46,36 @@ public class PG3B {
 	private Formatter output;
 	private OutputStream outputStream;
 	private final String port;
+	private Listeners<Listener> listeners = new Listeners(Listener.class);
 	private final boolean[] buttonStates = new boolean[Button.values().length];
 	private final float[] axisStates = new float[Axis.values().length];
 
+	/**
+	 * @param port The serial port to open.
+	 */
 	public PG3B (String port) throws IOException {
 		this(port, 100);
 	}
 
+	/**
+	 * @param port The serial port to open.
+	 * @param timeout The amount of time to wait for the PG3B to respond both during initial connection and for each command sent
+	 *           to it.
+	 * @throws IOException When the PG3B could not be opened.
+	 */
 	public PG3B (String port, int timeout) throws IOException {
 		if (port == null) throw new IllegalArgumentException("portID cannot be null.");
 		this.port = port;
 
 		try {
 			CommPortIdentifier identifier = CommPortIdentifier.getPortIdentifier(port);
-			CommPort commPort = identifier.open("PG3B", 2000);
+			CommPort commPort = identifier.open("PG3B", timeout);
 			if (!(commPort instanceof SerialPort)) throw new IOException("Port is not serial: " + port);
 
 			serialPort = (SerialPort)commPort;
 			serialPort.setSerialPortParams(230400, SerialPort.DATABITS_8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE);
 			serialPort.setDTR(true);
-			// serialPort.enableReceiveTimeout(timeout);
+			serialPort.enableReceiveTimeout(timeout);
 
 			Charset ascii = Charset.forName("ASCII");
 			input = new BufferedReader(new InputStreamReader(serialPort.getInputStream(), ascii), 256);
@@ -107,6 +123,9 @@ public class PG3B {
 		return (short)(d << 12 | target << 8);
 	}
 
+	/**
+	 * Returns true if the PG3B is connected and responding.
+	 */
 	public boolean isConnected () {
 		try {
 			command(Command.setDebugMessagesEnabled, 0);
@@ -116,6 +135,10 @@ public class PG3B {
 		}
 	}
 
+	/**
+	 * Sets the button state.
+	 * @throws IOException When communication with the PG3B fails.
+	 */
 	public void set (Button button, boolean pressed) throws IOException {
 		if (button == null) throw new IllegalArgumentException("button cannot be null.");
 
@@ -127,8 +150,16 @@ public class PG3B {
 		action(actionCode);
 
 		buttonStates[button.ordinal()] = pressed;
+
+		Listener[] listeners = this.listeners.toArray();
+		for (int i = 0, n = listeners.length; i < n; i++)
+			listeners[i].buttonChanged(button, pressed);
 	}
 
+	/**
+	 * Sets the axis state.
+	 * @throws IOException When communication with the PG3B fails.
+	 */
 	public void set (Axis axis, float state) throws IOException {
 		if (axis == null) throw new IllegalArgumentException("axis cannot be null.");
 		if (state < -1)
@@ -152,8 +183,16 @@ public class PG3B {
 		action(actionCode);
 
 		axisStates[axis.ordinal()] = state;
+
+		Listener[] listeners = this.listeners.toArray();
+		for (int i = 0, n = listeners.length; i < n; i++)
+			listeners[i].axisChanged(axis, state);
 	}
 
+	/**
+	 * Sets the button or axis state. If the target is an axis, it will be to 0 (false) or 1 (true).
+	 * @throws IOException When communication with the PG3B fails.
+	 */
 	public void set (Target target, boolean pressed) throws IOException {
 		if (target == null) throw new IllegalArgumentException("target cannot be null.");
 		if (target instanceof Button)
@@ -164,6 +203,10 @@ public class PG3B {
 			throw new IllegalArgumentException("target must be a button or axis.");
 	}
 
+	/**
+	 * Sets the button or axis state. If the target is a button, it will be to not pressed (zero) or pressed (nonzero).
+	 * @throws IOException When communication with the PG3B fails.
+	 */
 	public void set (Target target, float state) throws IOException {
 		if (target == null) throw new IllegalArgumentException("target cannot be null.");
 		if (target instanceof Button)
@@ -174,16 +217,28 @@ public class PG3B {
 			throw new IllegalArgumentException("target must be a button or axis.");
 	}
 
+	/**
+	 * Sets the button or axis state. If the target is an axis, it will be to 0 (false) or 1 (true).
+	 * @throws IOException When communication with the PG3B fails.
+	 */
 	public void set (String target, boolean pressed) throws IOException {
 		if (target == null) throw new IllegalArgumentException("target cannot be null.");
 		set(getTarget(target), pressed);
 	}
 
+	/**
+	 * Sets the button or axis state. If the target is a button, it will be to not pressed (zero) or pressed (nonzero).
+	 * @throws IOException When communication with the PG3B fails.
+	 */
 	public void set (String target, float state) throws IOException {
 		if (target == null) throw new IllegalArgumentException("target cannot be null.");
 		set(getTarget(target), state);
 	}
 
+	/**
+	 * Sets the x and y axes for the specified stick.
+	 * @throws IOException When communication with the PG3B fails.
+	 */
 	public void set (Stick stick, float stateX, float stateY) throws IOException {
 		if (stick == null) throw new IllegalArgumentException("stick cannot be null.");
 		Axis axisX = stick == Stick.left ? Axis.leftStickX : Axis.rightStickX;
@@ -192,6 +247,10 @@ public class PG3B {
 		set(axisY, stateY);
 	}
 
+	/**
+	 * Sets the x and y axes for the specified stick.
+	 * @throws IOException When communication with the PG3B fails.
+	 */
 	public void set (String stick, float stateX, float stateY) throws IOException {
 		if (stick == null) throw new IllegalArgumentException("stick cannot be null.");
 		stick = stick.toLowerCase();
@@ -203,16 +262,26 @@ public class PG3B {
 			throw new IllegalArgumentException("stick must be leftStick or rightStick.");
 	}
 
+	/**
+	 * Returns the last state of the button as set by the PG3B.
+	 */
 	public boolean get (Button button) {
 		if (button == null) throw new IllegalArgumentException("button cannot be null.");
 		return buttonStates[button.ordinal()];
 	}
 
+	/**
+	 * Returns the last state of the axis as set by the PG3B.
+	 */
 	public float get (Axis axis) {
 		if (axis == null) throw new IllegalArgumentException("axis cannot be null.");
 		return axisStates[axis.ordinal()];
 	}
 
+	/**
+	 * Returns the last state of the button or axis as set by the PG3B. If the taret is a button, either 0 (not pressed) or 1
+	 * (pressed) is returned.
+	 */
 	public float get (Target target) {
 		if (target == null) throw new IllegalArgumentException("target cannot be null.");
 		if (target instanceof Button)
@@ -223,95 +292,68 @@ public class PG3B {
 			throw new IllegalArgumentException("target must be a button or axis.");
 	}
 
+	/**
+	 * Returns the last state of the button or axis as set by the PG3B. If the taret is a button, either 0 (not pressed) or 1
+	 * (pressed) is returned.
+	 */
 	public float get (String target) {
 		return get(getTarget(target));
 	}
 
+	/**
+	 * Returns the port where the PG3B is connected.
+	 */
 	public String getPort () {
 		return port;
 	}
 
+	/**
+	 * Closes the port for this PG3B. No further communication with the PG3B will be possible with this instance.
+	 */
 	public void close () {
 		if (serialPort != null) serialPort.close();
 	}
 
-	public AxisCalibration calibrate (Axis axis, XboxController controller) throws IOException {
-		if (axis == null) throw new IllegalArgumentException("axis cannot be null.");
-		if (controller == null) throw new IllegalArgumentException("controller cannot be null.");
-
-		boolean isTrigger = axis == Axis.leftTrigger || axis == Axis.rightTrigger;
-		if (isTrigger) {
-			// The triggers are mapped to the same Z axis by the (crappy) MS driver and interfere with each other if not zero.
-			set(Axis.leftTrigger, 0);
-			set(Axis.rightTrigger, 0);
-		}
-
-		float[] actualValues = new float[256];
-		try {
-			for (int wiper = 0; wiper <= 255; wiper++) {
-				float deflection = isTrigger ? wiper / 255f : wiper / 255f * 2 - 1;
-				set(axis, deflection);
-				if (Thread.interrupted()) return null;
-				try {
-					Thread.sleep(16);
-				} catch (InterruptedException ex) {
-					return null;
-				}
-				actualValues[wiper] = controller.get(axis);
-			}
-		} finally {
+	/**
+	 * Sets all buttons to not pressed and all axis to zero.
+	 */
+	public void reset () throws IOException {
+		for (Button button : Button.values())
+			set(button, false);
+		for (Axis axis : Axis.values())
 			set(axis, 0);
-		}
-
-		int[] calibrationTable = new int[256];
-		int minusOneIndex = findClosestIndex(actualValues, -1);
-		int zeroIndex = findClosestIndex(actualValues, 0);
-		int plusOneIndex = findClosestIndex(actualValues, 1);
-		for (int wiper = 0; wiper <= 255; wiper++) {
-			float deflection = isTrigger ? wiper / 255f : wiper / 255f * 2 - 1;
-			int match = zeroIndex;
-			for (int index = minusOneIndex; index <= plusOneIndex; index++)
-				if (Math.abs(actualValues[index] - deflection) < Math.abs(actualValues[match] - deflection)) match = index;
-			calibrationTable[wiper] = match;
-		}
-		calibrationTable[0] = minusOneIndex;
-		calibrationTable[127] = zeroIndex;
-		calibrationTable[255] = plusOneIndex;
-
-		return new AxisCalibration(axis, calibrationTable, actualValues);
 	}
 
-	private int findClosestIndex (float[] actualValues, int target) {
-		// If target is negative, finds index of the last number closest to the target.
-		// Otherwise, finds index of the first number closest to the target.
-		int closestIndex = -1;
-		float closestToZero = Float.MAX_VALUE;
-		for (int i = 0; i < actualValues.length; i++) {
-			float absValue = Math.abs(actualValues[i] - target);
-			boolean isLess = target < 0 ? absValue <= closestToZero : absValue < closestToZero;
-			if (isLess) {
-				closestToZero = absValue;
-				closestIndex = i;
-			}
-		}
-		if (target == 0) {
-			// If looking for zero, handle the closest value to zero appearing multiple times in a row.
-			int zeroCount = 0;
-			for (int i = closestIndex + 1; i < actualValues.length; i++) {
-				float absValue = Math.abs(actualValues[i]);
-				if (absValue == closestToZero)
-					zeroCount++;
-				else
-					break;
-			}
-			closestIndex += zeroCount / 2;
-		}
-		return closestIndex;
+	/**
+	 * Adds a listener to be notified when the PG3B manipulates a button or axis.
+	 */
+	public void addListener (Listener listener) {
+		listeners.addListener(listener);
+		if (TRACE) trace("pg3b", "XboxController listener added: " + listener.getClass().getName());
 	}
 
+	public void removeListener (Listener listener) {
+		listeners.removeListener(listener);
+		if (TRACE) trace("pg3b", "XboxController listener removed: " + listener.getClass().getName());
+	}
+
+	/**
+	 * Returns the target with the specified name or alias (case insensitive).
+	 */
 	static public Target getTarget (String name) {
 		if (name == null) throw new IllegalArgumentException("name cannot be null.");
 		return nameToTarget.get(name.trim().toLowerCase());
+	}
+
+	/**
+	 * Listener to be notified when the PG3B manipulates a button or axis.
+	 */
+	static public class Listener {
+		public void buttonChanged (Button button, boolean pressed) {
+		}
+
+		public void axisChanged (Axis axis, float state) {
+		}
 	}
 
 	static private enum Device {

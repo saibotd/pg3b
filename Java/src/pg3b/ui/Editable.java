@@ -15,7 +15,11 @@ import net.sourceforge.yamlbeans.YamlWriter;
 import net.sourceforge.yamlbeans.scalar.ScalarSerializer;
 import pg3b.PG3B;
 import pg3b.Target;
+import pg3b.ui.swing.EditorPanel;
 
+/**
+ * Base class for a file-based object that can be edited and saved by an {@link EditorPanel}.
+ */
 public class Editable implements Cloneable {
 	static public final YamlConfig yamlConfig = new YamlConfig();
 	static {

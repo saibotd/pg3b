@@ -7,7 +7,6 @@ import java.awt.AWTEvent;
 import java.awt.AWTException;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Container;
 import java.awt.EventQueue;
 import java.awt.FlowLayout;
 import java.awt.Graphics;
@@ -61,6 +60,7 @@ import pg3b.ui.ControllerTrigger;
 import pg3b.ui.Settings;
 import pg3b.ui.Trigger;
 import pg3b.util.LoaderDialog;
+import pnuts.lang.Package;
 
 import com.esotericsoftware.minlog.Log;
 
@@ -92,18 +92,8 @@ public class PG3BUI extends JFrame {
 		}
 	};
 
-	private KeyEventDispatcher disableKeyboardListener = new KeyEventDispatcher() {
-		public boolean dispatchKeyEvent (KeyEvent event) {
-			if (event.isControlDown() && event.getKeyCode() == KeyEvent.VK_F4) {
-				EventQueue.invokeLater(new Runnable() {
-					public void run () {
-						captureButton.doClick();
-					}
-				});
-			}
-			return true;
-		}
-	};
+	private boolean ctrlDown, altDown, shiftDown;
+	private boolean disableKeyboard = false;
 
 	private AWTEventListener disableMouseListener = new AWTEventListener() {
 		private Robot robot;
@@ -116,7 +106,7 @@ public class PG3BUI extends JFrame {
 		}
 
 		public void eventDispatched (AWTEvent event) {
-			// BOZO - This is not quite good enough. Another window can be focused if the mouse is moved and clicked extremely fast.
+			// Note this is not quite perfect. Another window can be focused if the mouse is moved and clicked extremely fast.
 			if (robot != null) robot.mouseMove(getX() + getWidth() / 2, getY() + getHeight() / 2);
 		}
 	};
@@ -184,6 +174,7 @@ public class PG3BUI extends JFrame {
 		if (pg3b != null) pg3b.close();
 
 		pg3b = newPg3b;
+		Package.getGlobalPackage().set("pg3b".intern(), pg3b);
 
 		EventQueue.invokeLater(new Runnable() {
 			public void run () {
@@ -250,6 +241,18 @@ public class PG3BUI extends JFrame {
 		return statusBar;
 	}
 
+	public boolean isCtrlDown () {
+		return ctrlDown;
+	}
+
+	public boolean isAltDown () {
+		return altDown;
+	}
+
+	public boolean isShiftDown () {
+		return shiftDown;
+	}
+
 	private void initializeEvents () {
 		pg3bConnectMenuItem.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
@@ -302,15 +305,32 @@ public class PG3BUI extends JFrame {
 
 		Toolkit.getDefaultToolkit().addAWTEventListener(new AWTEventListener() {
 			public void eventDispatched (AWTEvent event) {
-				// If mouse pressed when a component in an EditorPanel is focused, unfocus the component. This allows users
-				// to click focus away from the component to easily save rather than have to click a different component.
+				// If mouse pressed when a component in an EditorPanel is focused, save the editor.
 				if (event.getID() != MouseEvent.MOUSE_PRESSED) return;
 				Component focused = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-				Container editorPanel = SwingUtilities.getAncestorOfClass(EditorPanel.class, focused);
-				if (editorPanel != null && event.getSource() != focused) PG3BUI.this.requestFocusInWindow();
-
+				EditorPanel editorPanel = (EditorPanel)SwingUtilities.getAncestorOfClass(EditorPanel.class, focused);
+				if (editorPanel != null && event.getSource() != focused) editorPanel.saveItem(false);
 			}
 		}, AWTEvent.MOUSE_EVENT_MASK);
+
+		KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(new KeyEventDispatcher() {
+			public boolean dispatchKeyEvent (KeyEvent event) {
+				ctrlDown = event.isControlDown();
+				altDown = event.isAltDown();
+				shiftDown = event.isShiftDown();
+				if (disableKeyboard) {
+					if (event.isControlDown() && event.getKeyCode() == KeyEvent.VK_F4) {
+						EventQueue.invokeLater(new Runnable() {
+							public void run () {
+								captureButton.doClick();
+							}
+						});
+					}
+					return true;
+				}
+				return false;
+			}
+		});
 
 		roundTripMenuItem.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
@@ -373,17 +393,23 @@ public class PG3BUI extends JFrame {
 	}
 
 	private void capture (Config config) {
+		try {
+			if (pg3b != null) pg3b.reset();
+		} catch (IOException ex) {
+			if (WARN) warn("Unable to reset PG3B.", ex);
+		}
+
 		if (activeConfig != null) activeConfig.setActive(false);
 		activeConfig = config;
+		statusBar.setConfig(config);
+
 		if (config == null) {
 			getGlassPane().setVisible(false);
-			KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(disableKeyboardListener);
+			disableKeyboard = false;
 			Toolkit.getDefaultToolkit().removeAWTEventListener(disableMouseListener);
 			return;
 		}
 		config.setActive(true);
-
-		statusBar.setConfig(activeConfig);
 
 		// Disable mouse and/or keyboard.
 		for (Trigger trigger : activeConfig.getTriggers()) {
@@ -394,7 +420,7 @@ public class PG3BUI extends JFrame {
 					if (type == Type.MOUSE || type == Type.KEYBOARD) {
 						getGlassPane().setVisible(true);
 						Toolkit.getDefaultToolkit().addAWTEventListener(disableMouseListener, AWTEvent.MOUSE_MOTION_EVENT_MASK);
-						KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(disableKeyboardListener);
+						disableKeyboard = true;
 						return;
 					}
 				}
@@ -516,7 +542,7 @@ public class PG3BUI extends JFrame {
 		{
 			JPanel glassPane = new JPanel(new GridBagLayout()) {
 				public void paintComponent (Graphics g) {
-					g.setColor(new Color(0, 0, 0, 90));
+					g.setColor(new Color(0, 0, 0, 70));
 					g.fillRect(0, 0, getWidth(), getHeight());
 				}
 			};

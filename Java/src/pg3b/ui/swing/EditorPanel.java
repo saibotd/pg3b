@@ -10,7 +10,6 @@ import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.KeyboardFocusManager;
-import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
@@ -22,7 +21,6 @@ import java.util.List;
 
 import javax.swing.AbstractAction;
 import javax.swing.DefaultComboBoxModel;
-import javax.swing.InputMap;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -36,8 +34,11 @@ import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
+import pg3b.ui.Config;
 import pg3b.ui.Editable;
+import pg3b.ui.ScriptAction;
 import pg3b.ui.Settings;
+import pg3b.ui.Trigger;
 import pg3b.util.DirectoryMonitor;
 import pg3b.util.UI;
 
@@ -114,6 +115,9 @@ public class EditorPanel<T extends Editable> extends JPanel {
 	}
 
 	protected void updateItemFromFields (T item) {
+	}
+
+	protected void itemRenamed (T oldItem, T newItem) {
 	}
 
 	/**
@@ -263,6 +267,7 @@ public class EditorPanel<T extends Editable> extends JPanel {
 								"An error occurred while attempting to load the file.");
 							return;
 						}
+						itemRenamed(oldItem, item);
 					}
 				}
 			}

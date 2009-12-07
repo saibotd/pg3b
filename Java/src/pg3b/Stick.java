@@ -1,6 +1,9 @@
 
 package pg3b;
 
+/**
+ * Represents a PG3B thumbstick.
+ */
 public enum Stick {
 	left("Left"), //
 	right("Right");

@@ -13,26 +13,58 @@ import javax.sound.midi.MidiUnavailableException;
 import javax.sound.midi.Patch;
 import javax.sound.midi.Synthesizer;
 
+import pg3b.ui.swing.PG3BUI;
 import pg3b.util.UI;
 import pnuts.lang.Context;
 import pnuts.lang.Package;
+import pnuts.lang.PnutsException;
 import pnuts.lang.PnutsFunction;
 
+/**
+ * PG3B specific Pnuts functions.
+ */
 public class Functions {
-	static public class sleep extends PnutsFunction {
-		public sleep () {
-			super("sleep");
-		}
+	static private abstract class BaseFunction extends PnutsFunction {
+		private final int minArgs;
+		private final int maxArgs;
+		private final String toString;
 
-		public boolean defined (int nargs) {
-			return nargs == 1;
+		public BaseFunction (String name, int minArgs, int maxArgs, String argNames) {
+			super(name);
+			this.minArgs = minArgs;
+			this.maxArgs = maxArgs;
+			toString = "function " + name + "(" + argNames + ")";
 		}
 
 		protected Object exec (Object[] args, Context context) {
-			if (args.length != 1) {
-				undefined(args, context);
-				return null;
+			if (!defined(args.length)) {
+				PnutsException ex = new PnutsException("function.notDefined", new Object[] {name, new Integer(args.length)}, context);
+				throw new PnutsException(ex.getMessage() + " \nmin/max args: " + minArgs + "/" + maxArgs, context);
 			}
+			return invoke(args, context);
+		}
+
+		abstract protected Object invoke (Object[] args, Context context);
+
+		protected float getFloat (Object object) {
+			return Float.valueOf(object.toString()).floatValue();
+		}
+
+		public boolean defined (int argCount) {
+			return argCount >= minArgs && argCount <= maxArgs;
+		}
+
+		public String toString () {
+			return toString;
+		}
+	}
+
+	static public class sleep extends BaseFunction {
+		public sleep () {
+			super("sleep", 1, 1, "millis");
+		}
+
+		protected Object invoke (Object[] args, Context context) {
 			long sleepMillis = (Integer)args[0];
 			long endTime = System.nanoTime() + sleepMillis * 1000000;
 			if (sleepMillis > 100) {
@@ -45,13 +77,9 @@ public class Functions {
 			}
 			return null;
 		}
-
-		public String toString () {
-			return "function sleep(millis)";
-		}
 	}
 
-	static public class play extends PnutsFunction {
+	static public class play extends BaseFunction {
 		static private MidiChannel[] channels;
 		static private int currentChannel;
 		static private HashMap<String, Instrument> nameToInstrument = new HashMap();
@@ -70,47 +98,40 @@ public class Functions {
 		}
 
 		public play () {
-			super("play");
+			super("play", 0, 4, "[name,] note [,duration] [,pitch]");
 		}
 
-		play (String name) {
-			super(name);
-		}
-
-		public boolean defined (int nargs) {
-			return nargs <= 2;
-		}
-
-		protected Object exec (Object[] args, Context context) {
+		protected Object invoke (Object[] args, Context context) {
 			if (nameToInstrument.size() == 0) return null;
 
-			int note;
-			String instrumentName;
-			int duration;
+			int note = 60, duration = 500;
+			String instrumentName = "Muted Guitar";
+			float pitch = 1;
 
 			switch (args.length) {
 			case 0:
+				System.out.println("Available instruments:");
 				for (String name : nameToInstrument.keySet())
 					System.out.println(name);
 				return null;
 			case 1:
-				instrumentName = "Muted Guitar";
 				note = (Integer)args[0];
-				duration = 500;
 				break;
 			case 2:
 				instrumentName = (String)args[0];
 				note = (Integer)args[1];
-				duration = 500;
 				break;
 			case 3:
 				instrumentName = (String)args[0];
 				note = (Integer)args[1];
 				duration = (Integer)args[2];
 				break;
-			default:
-				undefined(args, context);
-				return null;
+			case 4:
+				instrumentName = (String)args[0];
+				note = (Integer)args[1];
+				duration = (Integer)args[2];
+				pitch = getFloat(args[3]);
+				break;
 			}
 
 			MidiChannel channel = null;
@@ -120,6 +141,7 @@ public class Functions {
 				if (channelNumber >= channels.length) channelNumber = currentChannel = 0;
 				channel = channels[channelNumber];
 			}
+			channel.setPitchBend((int)Math.max(0, Math.min(16383, (pitch + 1) * 8192)));
 
 			Instrument instrument = nameToInstrument.get(instrumentName);
 			if (instrument == null) instrument = nameToInstrument.values().iterator().next();
@@ -127,7 +149,7 @@ public class Functions {
 			int program = patch.getProgram();
 			channel.programChange(program);
 
-			channel.noteOn(note, 50);
+			channel.noteOn(note, 45);
 
 			final MidiChannel turnOffChannel = channel;
 			final int turnOffNote = note;
@@ -139,130 +161,173 @@ public class Functions {
 
 			return null;
 		}
-
-		public String toString () {
-			return "function sleep([name, ] note [, duration])";
-		}
 	}
 
-	static public class beep extends play {
+	static public class beep extends BaseFunction {
+		private play play;
+
 		public beep () {
-			super("beep");
+			super("beep", 0, 1, "on");
+			play = new play();
 		}
 
-		public boolean defined (int nargs) {
-			return nargs == 0;
-		}
-
-		protected Object exec (Object[] args, Context context) {
-			if (args.length != 0) {
-				undefined(args, context);
+		protected Object invoke (Object[] args, Context context) {
+			switch (args.length) {
+			case 0:
+				play.invoke(new Object[] {"Muted Guitar", 60, 100, 1}, context);
+				return null;
+			case 1:
+				int pitch = (Boolean)args[0] ? 1 : -1;
+				play.invoke(new Object[] {"Muted Guitar", 60, 100, pitch}, context);
 				return null;
 			}
-			super.exec(new Object[] {"Muted Guitar", 68, 100}, context);
 			return null;
-		}
-
-		public String toString () {
-			return "function beep()";
 		}
 	}
 
-	static public class set extends PnutsFunction {
+	static public class set extends BaseFunction {
 		public set () {
-			super("set");
+			super("set", 2, 3, "[packageName,] name, value");
 		}
 
-		public boolean defined (int nargs) {
-			return nargs == 3;
-		}
-
-		protected Object exec (Object[] args, Context context) {
-			if (args.length != 3) {
-				undefined(args, context);
-				return null;
+		protected Object invoke (Object[] args, Context context) {
+			String packageName = "__global";
+			String valueName = null;
+			Object value = null;
+			switch (args.length) {
+			case 2:
+				valueName = (String)args[0];
+				value = args[1];
+				break;
+			case 3:
+				packageName = (String)args[0];
+				valueName = (String)args[1];
+				value = args[2];
+				break;
 			}
-			String packageName = (String)args[0];
-			String valueName = (String)args[1];
-			Object value = args[2];
-
 			Package.getPackage(packageName).set(valueName.intern(), value);
-
 			return null;
 		}
-
-		public String toString () {
-			return "function set(packageName, name, value)";
-		}
 	}
 
-	static public class get extends PnutsFunction {
+	static public class get extends BaseFunction {
 		public get () {
-			super("get");
+			super("get", 1, 2, "[packageName,] name");
 		}
 
-		public boolean defined (int nargs) {
-			return nargs == 2;
-		}
-
-		protected Object exec (Object[] args, Context context) {
-			if (args.length != 2) {
-				undefined(args, context);
-				return null;
+		protected Object invoke (Object[] args, Context context) {
+			String packageName = "__global";
+			String valueName = null;
+			switch (args.length) {
+			case 1:
+				valueName = (String)args[0];
+				break;
+			case 2:
+				packageName = (String)args[0];
+				valueName = (String)args[1];
+				break;
 			}
-			String packageName = (String)args[0];
-			String valueName = (String)args[1];
-
-			return Package.getPackage(packageName).get(valueName.intern());
-		}
-
-		public String toString () {
-			return "function get(packageName, name)";
+			return Package.getPackage(packageName, context).get(valueName.intern());
 		}
 	}
 
-	static public class getPayload extends PnutsFunction {
-		public getPayload () {
-			super("getPayload");
+	static public class toggle extends BaseFunction {
+		public toggle () {
+			super("toggle", 1, 2, "[packageName,] name");
 		}
 
-		public boolean defined (int nargs) {
-			return nargs == 0;
-		}
-
-		protected Object exec (Object[] args, Context context) {
-			if (args.length != 0) {
-				undefined(args, context);
-				return null;
+		protected Object invoke (Object[] args, Context context) {
+			String packageName = "__global";
+			String valueName = null;
+			switch (args.length) {
+			case 1:
+				valueName = (String)args[0];
+				break;
+			case 2:
+				packageName = (String)args[0];
+				valueName = (String)args[1];
+				break;
 			}
+			valueName = valueName.intern();
+			Package pkg = Package.getPackage(packageName, context);
+			Object object = pkg.get(valueName);
+			object = object != null ? null : Boolean.TRUE;
+			pkg.set(valueName, object);
+			return object != null;
+		}
+	}
+
+	static public class getPayload extends BaseFunction {
+		public getPayload () {
+			super("getPayload", 0, 0, "");
+		}
+
+		protected Object invoke (Object[] args, Context context) {
 			return context.get("payload");
 		}
+	}
 
-		public String toString () {
-			return "function getPayload()";
+	static public class getAction extends BaseFunction {
+		public getAction () {
+			super("getAction", 0, 0, "");
+		}
+
+		protected Object invoke (Object[] args, Context context) {
+			return context.get("action");
 		}
 	}
 
-	static public class print extends PnutsFunction {
+	static public class getTrigger extends BaseFunction {
+		public getTrigger () {
+			super("getTrigger", 0, 0, "");
+		}
+
+		protected Object invoke (Object[] args, Context context) {
+			return context.get("trigger");
+		}
+	}
+
+	static public class print extends BaseFunction {
 		public print () {
-			super("print");
+			super("print", 0, 1, "object");
 		}
 
-		public boolean defined (int nargs) {
-			return nargs == 1;
-		}
-
-		protected Object exec (Object[] args, Context context) {
-			if (args.length != 1) {
-				undefined(args, context);
-				return null;
-			}
-			System.out.println(args[0]);
+		protected Object invoke (Object[] args, Context context) {
+			if (args.length == 0)
+				System.out.println();
+			else
+				System.out.println(args[0]);
 			return null;
 		}
+	}
 
-		public String toString () {
-			return "function print(text)";
+	static public class isCtrlDown extends BaseFunction {
+		public isCtrlDown () {
+			super("isCtrlDown", 0, 0, "");
+		}
+
+		protected Object invoke (Object[] args, Context context) {
+			return PG3BUI.instance.isCtrlDown();
+		}
+	}
+
+	static public class isAltDown extends BaseFunction {
+		public isAltDown () {
+			super("isAltDown", 0, 0, "");
+		}
+
+		protected Object invoke (Object[] args, Context context) {
+			return PG3BUI.instance.isAltDown();
+		}
+	}
+
+	static public class isShiftDown extends BaseFunction {
+		public isShiftDown () {
+			super("isShiftDown", 0, 0, "");
+		}
+
+		protected Object invoke (Object[] args, Context context) {
+			return PG3BUI.instance.isShiftDown();
 		}
 	}
 }

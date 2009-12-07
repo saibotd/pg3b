@@ -15,6 +15,9 @@ import net.sourceforge.yamlbeans.YamlException;
 import net.sourceforge.yamlbeans.YamlReader;
 import net.sourceforge.yamlbeans.YamlWriter;
 
+/**
+ * Stores application wide settings for the PG3B UI.
+ */
 public class Settings {
 	public boolean showController = true;
 	public String pg3bPort;

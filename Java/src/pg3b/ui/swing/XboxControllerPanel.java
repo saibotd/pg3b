@@ -61,6 +61,16 @@ public class XboxControllerPanel extends JPanel {
 		}
 	};
 
+	private PG3B.Listener pg3bListener = new PG3B.Listener() {
+		public void buttonChanged (Button button, boolean pressed) {
+			repaint();
+		}
+
+		public void axisChanged (Axis axis, float state) {
+			repaint();
+		}
+	};
+
 	public XboxControllerPanel () {
 		setMinimumSize(new Dimension(497, 337));
 		setMaximumSize(new Dimension(497, 337));
@@ -230,7 +240,7 @@ public class XboxControllerPanel extends JPanel {
 					}
 				}
 			}
-			
+
 			public void mouseExited (MouseEvent event) {
 				if (buttonsDown == 0) {
 					overImageName = null;
@@ -438,7 +448,9 @@ public class XboxControllerPanel extends JPanel {
 	}
 
 	public void setPG3B (PG3B pg3b) {
+		if (this.pg3b != null) this.pg3b.removeListener(pg3bListener);
 		this.pg3b = pg3b;
+		if (pg3b != null) pg3b.addListener(pg3bListener);
 		repaint();
 	}
 

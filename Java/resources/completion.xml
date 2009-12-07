@@ -4,10 +4,10 @@
 
 <!-- PG3B functions: -->
 
-<keyword name='pg3b' type='constant'>
+<keyword name="pg3b" type="constant">
 	<desc>Provides access to the PG3B hardware.</desc>
 </keyword>
-<keyword name='pg3bui' type='constant'>
+<keyword name="pg3bui" type="constant">
 	<desc>Provides access to the PG3B GUI.</desc>
 </keyword>
 <keyword name="sleep" type="function" returnType="void">
@@ -18,26 +18,30 @@
 </keyword>
 <keyword name="play" type="function" returnType="void">
 	<params>
-		<param type="String" name="name"><desc>(optional) The name of the midi instrument to use.</desc></param>
+		<param type="String" name="name"><desc>(optional) The name of the midi instrument to use. Default is Muted Guitar.</desc></param>
 		<param type="int" name="note"><desc>The midi note to play.</desc></param>
-		<param type="int" name="duration"><desc>(optional) The number of milliseconds to play the note.</desc></param>
+		<param type="int" name="duration"><desc>(optional) The number of milliseconds to play the note. Default is 500.</desc></param>
+		<param type="float" name="pitch"><desc>(optional) The number between -1 and 1 to change the pitch of the note. Default is 0, no change.</desc></param>
 	</params>
 	<desc>Plays a midi note. Pass no arguments to dump a list of the available instrument names.</desc>
 </keyword>
 <keyword name="beep" type="function" returnType="void">
+	<params>
+		<param type="boolean" name="on"><desc>(optional) If false, a lower pitch beep will play. Default is true.</desc></param>
+	</params>
 	<desc>Plays a short beep sound.</desc>
 </keyword>
 <keyword name="set" type="function" returnType="void">
 	<params>
-		<param type="String" name="packageName"><desc>The name of the package where the value will be stored.</desc></param>
+		<param type="String" name="packageName"><desc>(optional) The name of the package where the value will be stored. If omitted, a special global package is used.</desc></param>
 		<param type="String" name="name"><desc>The name of the value to store.</desc></param>
 		<param type="Object" name="value"><desc>The value to store.</desc></param>
 	</params>
 	<desc>Convenience method to store a value in a package.</desc>
 </keyword>
-<keyword name="get" type="function" returnType="void">
+<keyword name="get" type="function" returnType="Object">
 	<params>
-		<param type="String" name="packageName"><desc>The name of the package where the value will be stored.</desc></param>
+		<param type="String" name="packageName"><desc>(optional) The name of the package where the value will be stored. If omitted, a special global package is used.</desc></param>
 		<param type="String" name="name"><desc>The name of the value to store.</desc></param>
 	</params>
 	<desc><![CDATA[
@@ -45,14 +49,41 @@
 		Note that the values in a package are available in the current scope when it is made the <a href="package">current package</a>.
 	]]></desc>
 </keyword>
-<keyword name='getPayload' type='constant'>
+<keyword name="toggle" type="function" returnType="Object">
+	<params>
+		<param type="String" name="packageName"><desc>(optional) The name of the package where the value will be toggled. If omitted, a special global package is used.</desc></param>
+		<param type="String" name="name"><desc>The name of the value to toggled.</desc></param>
+	</params>
+	<desc><![CDATA[
+		Convenience method to toggle a value in a package. Equivalent to the following:<br><br>
+		value = <a href="get">get</a>("packageName", "name") ? null : true<br>
+		<a href="set">set</a>("packageName", "name", value)<br>
+		return value
+	]]></desc>
+</keyword>
+<keyword name="getPayload" type="function" returnType="Object">
 	<desc>Returns the value that caused the trigger to execute this action. The type of payload varies for different triggers.</desc>
+</keyword>
+<keyword name="getTrigger" type="function" returnType="Trigger">
+	<desc>Returns the Trigger that caused this script's Action to execute.</desc>
+</keyword>
+<keyword name="getAction" type="function" returnType="Action">
+	<desc>Returns the Action that executed this script.</desc>
 </keyword>
 <keyword name="print" type="function" returnType="void">
 	<params>
 		<param type="Object" name="object"><desc>The object to print.</desc></param>
 	</params>
 	<desc>Prints the object as a line of text to System.out.</desc>
+</keyword>
+<keyword name="isCtrlDown" type="function" returnType="boolean">
+	<desc>Returns true if the ctrl key is pressed.</desc>
+</keyword>
+<keyword name="isAltDown" type="function" returnType="boolean">
+	<desc>Returns true if the alt key is pressed.</desc>
+</keyword>
+<keyword name="isShiftDown" type="function" returnType="boolean">
+	<desc>Returns true if the shift key is pressed.</desc>
 </keyword>
 
 <!-- Pnuts built-in functions: -->
@@ -79,7 +110,7 @@
 	</params>
 	<desc>Makes the previously used module unavailable in the <a href="package">current package</a>.</desc>
 </keyword>
-<keyword name="getContext" type="function" returnType="void">
+<keyword name="getContext" type="function" returnType="Context">
 	<desc>Returns the current script context, which is responsible for managing the internal state of a script execution.</desc>
 </keyword>
 <keyword name="import" type="function" returnType="void">
@@ -90,7 +121,7 @@
 		Makes the specified class available in the <a href="package">current package</a>. The class name may end with a wildcard, eg: <em>java.awt.*</em>
 	]]></desc>
 </keyword>
-<keyword name="class" type="function" returnType="void">
+<keyword name="class" type="function" returnType="Class">
 	<params>
 		<param type="String" name="className"><desc>The name of the class to look up.</desc></param>
 	</params>
@@ -98,11 +129,11 @@
 </keyword>
 <keyword name="quit" type="function" returnType="void">
 	<params>
-		<param type="String" name="result"><desc>(optional) The result of the script execution. This value will be returned the the code that ran the script.</desc></param>
+		<param type="String" name="result"><desc>(optional) The result of the script execution. This value will be returned the the code that ran the script. Default is null.</desc></param>
 	</params>
 	<desc>Stops script execution without reaching the end of the file.</desc>
 </keyword>
-<keyword name="defined" type="function" returnType="void">
+<keyword name="defined" type="function" returnType="boolean">
 	<params>
 		<param type="String" name="symbol"><desc>The symbol to look for.</desc></param>
 	</params>
@@ -131,26 +162,26 @@
 		If tryFunction is omitted, a handler is installed for the current scope. When the current scope is exited, the finallyFunction is invoked.
 	]]></desc>
 </keyword>
-<keyword name="eval" type="function" returnType="void">
+<keyword name="eval" type="function" returnType="Object">
 	<params>
 		<param type="String" name="code"><desc>The code to evaluate.</desc></param>
-		<param type="String" name="packageName"><desc>(optional) The name of the package to invoke the code in.</desc></param>
+		<param type="String" name="packageName"><desc>(optional) The name of the package to invoke the code in. Default is the current package.</desc></param>
 	</params>
 	<desc>Executes the specified code.</desc>
 </keyword>
-<keyword name="loadFile" type="function" returnType="void">
+<keyword name="loadFile" type="function" returnType="Object">
 	<params>
 		<param type="String" name="path"><desc>The path to the file to load.</desc></param>
 	</params>
 	<desc>Executes the code in the specified file. The current package and imports are reset before execution. The result of the last expression is returned.</desc>
 </keyword>
-<keyword name="require" type="function" returnType="void">
+<keyword name="require" type="function" returnType="Object">
 	<params>
 		<param type="String" name="path"><desc>The path to the file to load.</desc></param>
 	</params>
 	<desc>Executes the code in the specified file if the file has not yet been loaded or has been updated since it was last loaded. The result of the last expression is returned.</desc>
 </keyword>
-<keyword name="load" type="function" returnType="void">
+<keyword name="load" type="function" returnType="Object">
 	<params>
 		<param type="String" name="resource"><desc>The path to the classpath resource to load.</desc></param>
 	</params>
@@ -166,94 +197,94 @@
 
 <!-- pnuts.lib module functions: -->
 
-<keyword name="include" type="function" returnType="void">
+<keyword name="include" type="function" returnType="Object">
 	<params>
 		<param type="String" name="resource"><desc>The path to the classpath resource to load.</desc></param>
 	</params>
 	<desc>Executes the code in the specified classpath resource. Unlike <a href="load">load</a>, the script is executed in the current context. The result of the last expression is returned.</desc>
 </keyword>
-<keyword name="includeFile" type="function" returnType="void">
+<keyword name="includeFile" type="function" returnType="Object">
 	<params>
 		<param type="String" name="path"><desc>The path to the file to load.</desc></param>
 	</params>
 	<desc>Executes the code in the specified file. Unlike <a href="loadFile">loadFile</a>, the script is executed in the current context. The result of the last expression is returned.</desc>
 </keyword>
-<keyword name="string" type="function" returnType="void">
+<keyword name="string" type="function" returnType="String">
 	<params>
 		<param type="Object" name="object"><desc>The object to turn into a String.</desc></param>
 	</params>
 	<desc>Returns the specified object as a String.</desc>
 </keyword>
-<keyword name="format" type="function" returnType="void">
+<keyword name="format" type="function" returnType="String">
 	<params>
 		<param type="Object" name="object"><desc>The object to turn into a String.</desc></param>
 	</params>
 	<desc>Returns the specified object as a formatted String. This function does more than <a href="string">string</a>, eg it handles arrays. When the object is a number, character, boolean, or String, it can be reconstructed by <a href="eval">eval</a>.</desc>
 </keyword>
-<keyword name="getFile" type="function" returnType="void">
+<keyword name="getFile" type="function" returnType="File">
 	<params>
 		<param type="String or File" name="parentPath"><desc>(optional) The parent of the file.</desc></param>
 		<param type="String" name="path"><desc>The path of the file.</desc></param>
 	</params>
 	<desc>Returns a File object for the specified file. If parentPath is specified, the resulting File will be relative to the parentPath.</desc>
 </keyword>
-<keyword name="getURL" type="function" returnType="void">
+<keyword name="getURL" type="function" returnType="URL">
 	<params>
 		<param type="String or URL" name="parentPath"><desc>(optional) The parent of the URL.</desc></param>
 		<param type="String" name="path"><desc>The path of the URL.</desc></param>
 	</params>
 	<desc>Returns a URL object for the specified resource. If parentPath is specified, the resulting URL will be relative to the parentPath.</desc>
 </keyword>
-<keyword name="basename" type="function" returnType="void">
+<keyword name="basename" type="function" returnType="String">
 	<params>
 		<param type="String" name="path"><desc>The path of the file.</desc></param>
 		<param type="String" name="suffix"><desc>(optional) The suffix of the file name to trim.</desc></param>
 	</params>
 	<desc>Returns the name of a file without the path. If suffix is specified and the file name ends with suffix, it is cut off.</desc>
 </keyword>
-<keyword name="dirname" type="function" returnType="void">
+<keyword name="dirname" type="function" returnType="String">
 	<params>
 		<param type="String" name="path"><desc>The path of the file.</desc></param>
 	</params>
 	<desc>Returns the path to a file without the file name.</desc>
 </keyword>
-<keyword name="getPackage" type="function" returnType="void">
+<keyword name="getPackage" type="function" returnType="Package">
 	<params>
 		<param type="String" name="packageName"><desc>The name of the package.</desc></param>
 	</params>
 	<desc>Returns the package with the specified name. If the packakge does not exist, it is created.</desc>
 </keyword>
-<keyword name="list" type="function" returnType="void">
+<keyword name="list" type="function" returnType="ArrayList">
 	<params>
 		<param type="array, Collection, Generator, or int" name="elements"><desc>The elements to insert into the list, or the size of the list.</desc></param>
 	</params>
 	<desc>Returns a new ArrayList with the specified contents or size.</desc>
 </keyword>
-<keyword name="set" type="function" returnType="void">
+<keyword name="set" type="function" returnType="HashSet">
 	<params>
 		<param type="array, Collection, Generator, or int" name="elements"><desc>The elements to insert into the set, or the size of the set.</desc></param>
 	</params>
 	<desc>Returns a new HashSet with the specified contents or size.</desc>
 </keyword>
-<keyword name="map" type="function" returnType="void">
+<keyword name="map" type="function" returnType="HashMap">
 	<params>
 		<param type="array, Map, or int" name="elements"><desc>The elements to insert into the map, or the capacity of the map.</desc></param>
 	</params>
 	<desc>Returns a new HashMap with the specified contents or size.</desc>
 </keyword>
-<keyword name="isEmpty" type="function" returnType="void">
+<keyword name="isEmpty" type="function" returnType="boolean">
 	<params>
 		<param type="Collection, Map, array, or package" name="elements"><desc>The elements to check.</desc></param>
 	</params>
 	<desc>Returns true if the elements are empty.</desc>
 </keyword>
-<keyword name="size" type="function" returnType="void">
+<keyword name="size" type="function" returnType="int">
 	<params>
 		<param type="Collection, Map, array, String, StringBuffer, or File" name="value"><desc>The value to check.</desc></param>
 	</params>
 	<desc>Returns the size of the specified value.</desc>
 </keyword>
-<keyword name="contains" type="function" returnType="void">
+<keyword name="contains" type="function" returnType="boolean">
 	<params>
 		<param type="Collection or String" name="haystack"><desc>The value to check.</desc></param>
 		<param type="Object" name="needle"><desc>The value to check for.</desc></param>

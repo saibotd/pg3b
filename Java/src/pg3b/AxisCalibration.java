@@ -4,6 +4,9 @@ package pg3b;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+/**
+ * Stores calibration information about a PG3B axis.
+ */
 public class AxisCalibration {
 	private final Axis axis;
 	private final int[] calibrationTable;
@@ -19,6 +22,9 @@ public class AxisCalibration {
 		return axis;
 	}
 
+	/**
+	 * Returns a URL to a chart image that shows the actual and calibrated axis values.
+	 */
 	public URL getChartURL () {
 		StringBuilder raw = new StringBuilder(1024);
 		StringBuilder calibrated = new StringBuilder(1024);
