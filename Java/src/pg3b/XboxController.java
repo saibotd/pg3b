@@ -237,7 +237,6 @@ public class XboxController {
 	}
 
 	public int getPort () {
-		System.out.println(controller.getPortNumber());
 		return controller.getPortNumber();
 	}
 

@@ -1,0 +1,6 @@
+
+<project>
+	<id>pg3b</id>
+	<name>PG3B</name>
+	<main>pg3b.ui.Main</main>
+</project>
