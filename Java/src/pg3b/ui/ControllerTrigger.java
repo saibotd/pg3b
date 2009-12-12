@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import net.java.games.input.Component;
 import net.java.games.input.Controller;
 import net.java.games.input.ControllerEnvironment;
+import net.java.games.input.Component.Identifier;
 import net.java.games.input.Controller.Type;
 import pg3b.ui.swing.PG3BUI;
 
@@ -21,6 +22,14 @@ public class ControllerTrigger extends Trigger {
 	private transient Controller[] controllers;
 	private transient Component[] components;
 	private transient float[] lastStates;
+
+	public ControllerTrigger () {
+	}
+
+	public ControllerTrigger (Controller controller, Component component, Action action) {
+		setComponent(controller, component);
+		setAction(action);
+	}
 
 	/**
 	 * Returns the ID of the button or axis.
@@ -123,13 +132,19 @@ public class ControllerTrigger extends Trigger {
 				return null;
 			}
 			float state = components[i].getPollData();
-			if (state != lastStates[i]) {
+			boolean fire = false;
+			if (components[i].getIdentifier() instanceof Identifier.Button) {
+				fire = state != lastStates[i];
+			} else {
+				fire = state != 0 && state != lastStates[i];
+			}
+			if (fire) {
 				if (ctrl && !pg3bui.isCtrlDown()) continue;
 				if (alt && !pg3bui.isAltDown()) continue;
 				if (shift && !pg3bui.isShiftDown()) continue;
 				if (controller.getType() == Type.MOUSE) {
 					// BOZO - Do fancy computation to go from mouse position delta to axis deflection! Will need a configuration GUI.
-					if (state != 0) state = state > 0 ? 1 : -1;
+					//if (state != 0) state = state > 0 ? 1 : -1;
 				}
 				lastStates[i] = state;
 				return state;
