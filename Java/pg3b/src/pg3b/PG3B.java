@@ -15,7 +15,6 @@ import java.nio.charset.Charset;
 import java.util.Formatter;
 import java.util.HashMap;
 
-import pg3b.XboxController.Listener;
 import pg3b.util.Listeners;
 
 /**

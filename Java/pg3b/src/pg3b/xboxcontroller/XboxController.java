@@ -1,0 +1,125 @@
+
+package pg3b.xboxcontroller;
+
+import static com.esotericsoftware.minlog.Log.*;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import pg3b.Axis;
+import pg3b.Button;
+import pg3b.PG3B;
+import pg3b.Target;
+import pg3b.util.Listeners;
+
+public abstract class XboxController {
+	private Listeners<Listener> listeners = new Listeners(Listener.class);
+
+	/**
+	 * Checks the buttons and axes for changes since the last call to poll and notifies any listeners of the changes.
+	 * @return false if the controller is no longer connected.
+	 */
+	abstract public boolean poll ();
+
+	/**
+	 * Returns the button state.
+	 */
+	abstract public boolean get (Button button);
+
+	/**
+	 * Returns the axis state.
+	 */
+	abstract public float get (Axis axis);
+
+	abstract public int getPort ();
+
+	abstract public String getName ();
+
+	/**
+	 * Returns the button or axis state.
+	 */
+	public float get (Target target) {
+		if (target == null) throw new IllegalArgumentException("target cannot be null.");
+		if (target instanceof Button)
+			return get((Button)target) ? 1 : 0;
+		else if (target instanceof Axis)
+			return get((Axis)target);
+		else
+			throw new IllegalArgumentException("target must be a button or axis.");
+	}
+
+	/**
+	 * Returns the button or axis state.
+	 */
+	public float get (String target) {
+		return get(PG3B.getTarget(target));
+	}
+
+	/**
+	 * Adds a listener to be notified when any buttons or axes change state.
+	 */
+	public void addListener (Listener listener) {
+		listeners.addListener(listener);
+		if (TRACE) trace("pg3b", "XboxController listener added: " + listener.getClass().getName());
+	}
+
+	public void removeListener (Listener listener) {
+		listeners.removeListener(listener);
+		if (TRACE) trace("pg3b", "XboxController listener removed: " + listener.getClass().getName());
+	}
+
+	protected void notifyListeners (Button button, boolean pressed) {
+		Listener[] listeners = this.listeners.toArray();
+		for (int i = 0, n = listeners.length; i < n; i++)
+			listeners[i].buttonChanged(button, pressed);
+	}
+
+	protected void notifyListeners (Axis axis, float state) {
+		Listener[] listeners = this.listeners.toArray();
+		for (int i = 0, n = listeners.length; i < n; i++)
+			listeners[i].axisChanged(axis, state);
+	}
+
+	protected void notifyDisconnected () {
+		Listener[] listeners = this.listeners.toArray();
+		for (int i = 0, n = listeners.length; i < n; i++)
+			listeners[i].disconnected();
+	}
+
+	protected void notifyConnected () {
+		Listener[] listeners = this.listeners.toArray();
+		for (int i = 0, n = listeners.length; i < n; i++)
+			listeners[i].connected();
+	}
+
+	/**
+	 * Returns a list of all connected XboxControllers. On operating systems other than Windows, the list may include devices other
+	 * than Xbox 360 controllers.
+	 */
+	static public List<XboxController> getControllers () {
+		if (System.getProperty("os.name").toLowerCase().contains("windows")) {
+			ArrayList<XboxController> list = new ArrayList();
+			for (XInputXboxController controller : XInputXboxController.getXInputControllers())
+				if (controller.isConnected()) list.add(controller);
+			return list;
+		}
+		return JInputXboxController.getJInputControllers();
+	}
+
+	/**
+	 * Listener to be notified when the controller's buttons or axes change state.
+	 */
+	static public class Listener {
+		public void connected () {
+		}
+
+		public void disconnected () {
+		}
+
+		public void buttonChanged (Button button, boolean pressed) {
+		}
+
+		public void axisChanged (Axis axis, float state) {
+		}
+	}
+}

@@ -53,13 +53,14 @@ import pg3b.AxisCalibration;
 import pg3b.Diagnostics;
 import pg3b.PG3B;
 import pg3b.Target;
-import pg3b.XboxController;
-import pg3b.XboxController.Listener;
 import pg3b.ui.Config;
 import pg3b.ui.ControllerTrigger;
 import pg3b.ui.Settings;
 import pg3b.ui.Trigger;
 import pg3b.util.LoaderDialog;
+import pg3b.xboxcontroller.JInputXboxController;
+import pg3b.xboxcontroller.XboxController;
+import pg3b.xboxcontroller.XboxController.Listener;
 import pnuts.lang.Package;
 
 import com.esotericsoftware.minlog.Log;
@@ -154,14 +155,11 @@ public class PG3BUI extends JFrame {
 					}
 				});
 
-				XboxController.getAllControllers(); // Always load all the controllers at startup and not on the EDT.
-
 				boolean reconnectController = settings.controllerName != null && settings.controllerName.length() > 0;
 				if (reconnectController) {
-					for (Controller controller : XboxController.getAllControllers()) {
-						if (settings.controllerPort == controller.getPortNumber()
-							&& settings.controllerName.equals(controller.getName())) {
-							setController(new XboxController(controller));
+					for (XboxController controller : XboxController.getControllers()) {
+						if (settings.controllerPort == controller.getPort() && settings.controllerName.equals(controller.getName())) {
+							setController(controller);
 							break;
 						}
 					}

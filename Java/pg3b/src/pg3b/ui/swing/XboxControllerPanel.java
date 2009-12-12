@@ -24,11 +24,12 @@ import pg3b.Button;
 import pg3b.PG3B;
 import pg3b.Stick;
 import pg3b.Target;
-import pg3b.XboxController;
 import pg3b.util.Listeners;
 import pg3b.util.PackedImages;
 import pg3b.util.Sound;
 import pg3b.util.PackedImages.PackedImage;
+import pg3b.xboxcontroller.JInputXboxController;
+import pg3b.xboxcontroller.XboxController;
 
 public class XboxControllerPanel extends JPanel {
 	static public final String[] imageNames = {"y", "a", "b", "back", "guide", "leftShoulder", "leftStick", "leftTrigger",
@@ -51,7 +52,7 @@ public class XboxControllerPanel extends JPanel {
 	private Listeners<Listener> listeners = new Listeners(Listener.class);
 	private TimerTask pollControllerTask;
 
-	private XboxController.Listener controllerListener = new XboxController.Listener() {
+	private JInputXboxController.Listener controllerListener = new JInputXboxController.Listener() {
 		public void buttonChanged (Button button, boolean pressed) {
 			repaint();
 		}
