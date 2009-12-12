@@ -15,6 +15,7 @@ import javax.swing.event.ListSelectionListener;
 
 public class UI {
 	static public final Timer timer = new Timer("UtilTimer", true);
+	static public final boolean isWindows = System.getProperty("os.name").toLowerCase().contains("windows");
 
 	static public void enableWhenModelHasSelection (final ListSelectionModel selectionModel, final Component... components) {
 		selectionModel.addListSelectionListener(new ListSelectionListener() {

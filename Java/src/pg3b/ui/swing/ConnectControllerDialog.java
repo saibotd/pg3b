@@ -16,16 +16,14 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
-import net.java.games.input.Controller;
 import pg3b.util.UI;
-import pg3b.xboxcontroller.JInputXboxController;
 import pg3b.xboxcontroller.XboxController;
 
 public class ConnectControllerDialog extends JDialog {
 	private PG3BUI owner;
 	private JList controllerList;
 	private DefaultComboBoxModel controllerListModel;
-	private JButton connectButton, cancelButton;
+	private JButton refreshButton, connectButton, cancelButton;
 
 	public ConnectControllerDialog (PG3BUI owner) {
 		super(owner, "Connect to Controller", true);
@@ -34,6 +32,13 @@ public class ConnectControllerDialog extends JDialog {
 		initializeLayout();
 		initializeEvents();
 
+		refresh();
+
+		if (!UI.isWindows) refreshButton.setVisible(false);
+	}
+
+	private void refresh () {
+		controllerListModel.removeAllElements();
 		for (XboxController controller : XboxController.getControllers())
 			controllerListModel.addElement(controller);
 		if (controllerListModel.getSize() > 0) controllerList.setSelectedIndex(0);
@@ -54,6 +59,12 @@ public class ConnectControllerDialog extends JDialog {
 			}
 		});
 
+		refreshButton.addActionListener(new ActionListener() {
+			public void actionPerformed (ActionEvent event) {
+				refresh();
+			}
+		});
+
 		UI.enableWhenModelHasSelection(controllerList.getSelectionModel(), connectButton);
 	}
 
@@ -66,7 +77,7 @@ public class ConnectControllerDialog extends JDialog {
 			JScrollPane scroll = new JScrollPane();
 			getContentPane().add(
 				scroll,
-				new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(6, 6, 0,
+				new GridBagConstraints(0, 1, 2, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(6, 6, 0,
 					6), 0, 0));
 			{
 				controllerList = new JList();
@@ -79,7 +90,7 @@ public class ConnectControllerDialog extends JDialog {
 			JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 6, 6));
 			getContentPane().add(
 				panel,
-				new GridBagConstraints(0, 2, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE,
+				new GridBagConstraints(1, 2, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE,
 					new Insets(0, 0, 0, 0), 0, 0));
 			{
 				cancelButton = new JButton("Cancel");
@@ -94,7 +105,14 @@ public class ConnectControllerDialog extends JDialog {
 			JLabel label = new JLabel("<html>Please choose the Xbox controller for the PG3B.");
 			getContentPane().add(
 				label,
-				new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(6, 6, 0,
+				new GridBagConstraints(0, 0, 2, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(6, 6, 0,
+					6), 0, 0));
+		}
+		{
+			refreshButton = new JButton("Refresh");
+			getContentPane().add(
+				refreshButton,
+				new GridBagConstraints(0, 2, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(6, 6, 6,
 					6), 0, 0));
 		}
 	}

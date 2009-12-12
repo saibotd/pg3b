@@ -14,7 +14,33 @@ import net.java.games.input.ControllerEnvironment;
 import pg3b.Axis;
 import pg3b.Button;
 
+// BOZO - Notify events.
+
 public class XInputXboxController extends XboxController {
+	static {
+		if (System.getProperty("sun.arch.data.model", "").equals("64")) {
+			try {
+				System.loadLibrary("xinput64");
+			} catch (UnsatisfiedLinkError ex64) {
+				try {
+					System.loadLibrary("xinput32");
+				} catch (UnsatisfiedLinkError ignored) {
+					throw ex64;
+				}
+			}
+		} else {
+			try {
+				System.loadLibrary("xinput32");
+			} catch (UnsatisfiedLinkError ex32) {
+				try {
+					System.loadLibrary("xinput64");
+				} catch (UnsatisfiedLinkError ignored) {
+					throw ex32;
+				}
+			}
+		}
+	}
+
 	static private final int BUTTON_DPAD_UP = 0x00000001;
 	static private final int BUTTON_DPAD_DOWN = 0x00000002;
 	static private final int BUTTON_DPAD_LEFT = 0x00000004;
@@ -124,11 +150,15 @@ public class XInputXboxController extends XboxController {
 	}
 
 	public String getName () {
-		return "Xbox Controller " + index;
+		return "Xbox Controller " + (index + 1);
 	}
 
 	public int getPort () {
 		return index;
+	}
+
+	public String toString () {
+		return getName();
 	}
 
 	static public List<XInputXboxController> getXInputControllers () {

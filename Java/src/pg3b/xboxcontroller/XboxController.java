@@ -99,8 +99,10 @@ public abstract class XboxController {
 	static public List<XboxController> getControllers () {
 		if (System.getProperty("os.name").toLowerCase().contains("windows")) {
 			ArrayList<XboxController> list = new ArrayList();
-			for (XInputXboxController controller : XInputXboxController.getXInputControllers())
-				if (controller.isConnected()) list.add(controller);
+			for (XInputXboxController controller : XInputXboxController.getXInputControllers()) {
+				if (controller.poll()) 
+					list.add(controller);
+			}
 			return list;
 		}
 		return JInputXboxController.getJInputControllers();
