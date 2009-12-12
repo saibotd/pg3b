@@ -9,7 +9,7 @@
 #include <tchar.h>
 #include <jni.h>
 #include <windows.h>
-#include "xinput.h"
+#include <xinput.h>
 
 
 JNIEXPORT void JNICALL Java_pg3b_xboxcontroller_XInputXboxController_setEnabled
