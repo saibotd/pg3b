@@ -24,12 +24,13 @@ import pg3b.Button;
 import pg3b.PG3B;
 import pg3b.Stick;
 import pg3b.Target;
+import pg3b.input.JInputXboxController;
+import pg3b.input.Mouse;
+import pg3b.input.XboxController;
 import pg3b.util.Listeners;
 import pg3b.util.PackedImages;
 import pg3b.util.Sound;
 import pg3b.util.PackedImages.PackedImage;
-import pg3b.xboxcontroller.JInputXboxController;
-import pg3b.xboxcontroller.XboxController;
 
 public class XboxControllerPanel extends JPanel {
 	static public final String[] imageNames = {"y", "a", "b", "back", "guide", "leftShoulder", "leftStick", "leftTrigger",
@@ -51,6 +52,7 @@ public class XboxControllerPanel extends JPanel {
 	private BufferedImage checkImage, xImage;
 	private Listeners<Listener> listeners = new Listeners(Listener.class);
 	private TimerTask pollControllerTask;
+	private boolean isOver;
 
 	private JInputXboxController.Listener controllerListener = new JInputXboxController.Listener() {
 		public void buttonChanged (Button button, boolean pressed) {
@@ -94,8 +96,6 @@ public class XboxControllerPanel extends JPanel {
 		}
 
 		MouseAdapter mouseListener = new MouseAdapter() {
-			private int buttonsDown;
-
 			public void mouseMoved (MouseEvent event) {
 				// Highlight buttons when moused over.
 				int x = event.getX(), y = event.getY();
@@ -196,13 +196,11 @@ public class XboxControllerPanel extends JPanel {
 			}
 
 			public void mousePressed (MouseEvent event) {
-				buttonsDown++;
 				if (overImageName != null && !clickOnlyButtons.contains(overImageName))
 					buttonClicked(Button.valueOf(overImageName), true);
 			}
 
 			public void mouseReleased (MouseEvent event) {
-				buttonsDown--;
 				if (dragStartX != -1) {
 					dragStartX = dragStartY = -1;
 					Object dragObject = getDragObject();
@@ -243,10 +241,13 @@ public class XboxControllerPanel extends JPanel {
 			}
 
 			public void mouseExited (MouseEvent event) {
-				if (buttonsDown == 0) {
-					overImageName = null;
-					repaint();
-				}
+				isOver = false;
+				repaint();
+			}
+
+			public void mouseEntered (MouseEvent event) {
+				isOver = true;
+				repaint();
 			}
 		};
 		addMouseMotionListener(mouseListener);
@@ -328,6 +329,12 @@ public class XboxControllerPanel extends JPanel {
 	}
 
 	protected void paintComponent (Graphics g) {
+		if (!isOver && !Mouse.instance.isPressed()) {
+			overImageName = null;
+			dragStartX = -1;
+			dpadDirection = DPAD_NONE;
+		}
+
 		g.setFont(g.getFont().deriveFont(10f));
 
 		packedImages.get("controller").draw(g, 0, 0);
@@ -394,7 +401,7 @@ public class XboxControllerPanel extends JPanel {
 			drawStatusText(g, 388, 245 + 31, "Y Axis", nameToStatus.get(Axis.rightStickY));
 		}
 
-		if (pg3b != null && dragStartX != -1 && !overImageName.endsWith("Trigger"))
+		if (pg3b != null && dragStartX != -1 && overImageName != null && !overImageName.endsWith("Trigger"))
 			packedImages.get("crosshair").draw(g, dragStartX - 11, dragStartY - 11);
 	}
 

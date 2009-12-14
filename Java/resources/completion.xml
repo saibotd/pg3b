@@ -88,6 +88,12 @@
 <keyword name="isShiftDown" type="function" returnType="boolean">
 	<desc>Returns true if the shift key is pressed.</desc>
 </keyword>
+<keyword name="fork" type="function" returnType="void">
+	<params>
+		<param type="function" name="function"><desc>The function execute.</desc></param>
+	</params>
+	<desc>Executes the specified function on a new thread.</desc>
+</keyword>
 
 <!-- Pnuts built-in functions: -->
 
@@ -151,24 +157,24 @@
 <keyword name="catch" type="function" returnType="void">
 	<params>
 		<param type="Class" name="exceptionClass"><desc>The class of the exception to catch.</desc></param>
-		<param type="function" name="catchFunction"><desc>The function to invoke when the exception is caught.</desc></param>
+		<param type="function" name="catchFunction"><desc>The function to execute when the exception is caught.</desc></param>
 	</params>
 	<desc>When used outside of a try/catch/finally block, a handler is installed for the current scope. When the exception is thrown, the execution of the current scope returns the result of the catchFunction.</desc>
 </keyword>
 <keyword name="finally" type="function" returnType="void">
 	<params>
-		<param type="function" name="tryFunction"><desc>The function to try to invoke.</desc></param>
-		<param type="function" name="finallyFunction"><desc>The function to always invoke.</desc></param>
+		<param type="function" name="tryFunction"><desc>The function to try to execute.</desc></param>
+		<param type="function" name="finallyFunction"><desc>The function to always execute.</desc></param>
 	</params>
 	<desc><![CDATA[
-		Invokes tryFunction, then invokes finallyFunction even if tryFunction does not succeed.<br><br>	
-		If tryFunction is omitted, a handler is installed for the current scope. When the current scope is exited, the finallyFunction is invoked.
+		Executes tryFunction, then executes finallyFunction even if tryFunction does not succeed.<br><br>	
+		If tryFunction is omitted, a handler is installed for the current scope. When the current scope is exited, the finallyFunction is executed.
 	]]></desc>
 </keyword>
 <keyword name="eval" type="function" returnType="Object">
 	<params>
 		<param type="String" name="code"><desc>The code to evaluate.</desc></param>
-		<param type="String" name="packageName"><desc>(optional) The name of the package to invoke the code in. Default is the current package.</desc></param>
+		<param type="String" name="packageName"><desc>(optional) The name of the package to evaluate the code in. Default is the current package.</desc></param>
 	</params>
 	<desc>Executes the specified code.</desc>
 </keyword>

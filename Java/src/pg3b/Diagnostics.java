@@ -11,9 +11,8 @@ import java.util.Map;
 
 import org.omg.CORBA.TIMEOUT;
 
+import pg3b.input.XboxController;
 import pg3b.util.Loader;
-import pg3b.xboxcontroller.JInputXboxController;
-import pg3b.xboxcontroller.XboxController;
 
 import com.esotericsoftware.minlog.Log;
 

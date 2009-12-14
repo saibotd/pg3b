@@ -4,7 +4,6 @@ package pg3b.ui.swing;
 import static com.esotericsoftware.minlog.Log.*;
 
 import java.awt.AWTEvent;
-import java.awt.AWTException;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.EventQueue;
@@ -16,7 +15,6 @@ import java.awt.Insets;
 import java.awt.KeyEventDispatcher;
 import java.awt.KeyboardFocusManager;
 import java.awt.Point;
-import java.awt.Robot;
 import java.awt.Toolkit;
 import java.awt.event.AWTEventListener;
 import java.awt.event.ActionEvent;
@@ -25,6 +23,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
+import java.awt.event.WindowFocusListener;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.List;
@@ -46,21 +45,21 @@ import javax.swing.ToolTipManager;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 
-import net.java.games.input.Controller;
-import net.java.games.input.Controller.Type;
 import pg3b.Axis;
 import pg3b.AxisCalibration;
 import pg3b.Diagnostics;
 import pg3b.PG3B;
 import pg3b.Target;
+import pg3b.input.Input;
+import pg3b.input.Keyboard;
+import pg3b.input.Mouse;
+import pg3b.input.XboxController;
+import pg3b.input.XboxController.Listener;
 import pg3b.ui.Config;
-import pg3b.ui.ControllerTrigger;
+import pg3b.ui.InputTrigger;
 import pg3b.ui.Settings;
 import pg3b.ui.Trigger;
 import pg3b.util.LoaderDialog;
-import pg3b.xboxcontroller.JInputXboxController;
-import pg3b.xboxcontroller.XboxController;
-import pg3b.xboxcontroller.XboxController.Listener;
 import pnuts.lang.Package;
 
 import com.esotericsoftware.minlog.Log;
@@ -87,28 +86,11 @@ public class PG3BUI extends JFrame {
 	private ScriptEditor scriptEditor;
 	private LogTab logTab;
 
+	private boolean disableKeyboard = false;
+
 	private Listener controllerListener = new Listener() {
 		public void disconnected () {
 			setController(null);
-		}
-	};
-
-	private boolean ctrlDown, altDown, shiftDown;
-	private boolean disableKeyboard = false;
-
-	private AWTEventListener disableMouseListener = new AWTEventListener() {
-		private Robot robot;
-		{
-			try {
-				robot = new Robot();
-			} catch (AWTException ex) {
-				if (WARN) warn("Error creating robot.", ex);
-			}
-		}
-
-		public void eventDispatched (AWTEvent event) {
-			// Note this is not quite perfect. Another window can be focused if the mouse is moved and clicked extremely fast.
-			if (robot != null) robot.mouseMove(getX() + getWidth() / 2, getY() + getHeight() / 2);
 		}
 	};
 
@@ -157,7 +139,7 @@ public class PG3BUI extends JFrame {
 
 				boolean reconnectController = settings.controllerName != null && settings.controllerName.length() > 0;
 				if (reconnectController) {
-					for (XboxController controller : XboxController.getControllers()) {
+					for (XboxController controller : XboxController.getAll()) {
 						if (settings.controllerPort == controller.getPort() && settings.controllerName.equals(controller.getName())) {
 							setController(controller);
 							break;
@@ -239,18 +221,6 @@ public class PG3BUI extends JFrame {
 		return statusBar;
 	}
 
-	public boolean isCtrlDown () {
-		return ctrlDown;
-	}
-
-	public boolean isAltDown () {
-		return altDown;
-	}
-
-	public boolean isShiftDown () {
-		return shiftDown;
-	}
-
 	private void initializeEvents () {
 		pg3bConnectMenuItem.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
@@ -313,9 +283,6 @@ public class PG3BUI extends JFrame {
 
 		KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(new KeyEventDispatcher() {
 			public boolean dispatchKeyEvent (KeyEvent event) {
-				ctrlDown = event.isControlDown();
-				altDown = event.isAltDown();
-				shiftDown = event.isShiftDown();
 				if (disableKeyboard) {
 					if (event.isControlDown() && event.getKeyCode() == KeyEvent.VK_F4) {
 						EventQueue.invokeLater(new Runnable() {
@@ -324,7 +291,7 @@ public class PG3BUI extends JFrame {
 							}
 						});
 					}
-					return true;
+					event.consume();
 				}
 				return false;
 			}
@@ -388,6 +355,16 @@ public class PG3BUI extends JFrame {
 				}.start("Calibration");
 			}
 		});
+
+		addWindowFocusListener(new WindowFocusListener() {
+			public void windowLostFocus (WindowEvent event) {
+				Mouse.instance.reset();
+				Keyboard.instance.reset();
+			}
+
+			public void windowGainedFocus (WindowEvent event) {
+			}
+		});
 	}
 
 	private void capture (Config config) {
@@ -404,23 +381,21 @@ public class PG3BUI extends JFrame {
 		if (config == null) {
 			getGlassPane().setVisible(false);
 			disableKeyboard = false;
-			Toolkit.getDefaultToolkit().removeAWTEventListener(disableMouseListener);
+			Mouse.instance.release();
 			return;
 		}
+
 		config.setActive(true);
 
 		// Disable mouse and/or keyboard.
 		for (Trigger trigger : activeConfig.getTriggers()) {
-			if (trigger instanceof ControllerTrigger) {
-				Controller[] controllers = ((ControllerTrigger)trigger).getControllers();
-				for (Controller controller : controllers) {
-					Type type = controller.getType();
-					if (type == Type.MOUSE || type == Type.KEYBOARD) {
-						getGlassPane().setVisible(true);
-						Toolkit.getDefaultToolkit().addAWTEventListener(disableMouseListener, AWTEvent.MOUSE_MOTION_EVENT_MASK);
-						disableKeyboard = true;
-						return;
-					}
+			if (trigger instanceof InputTrigger) {
+				Input input = ((InputTrigger)trigger).getInput();
+				if (input instanceof Mouse.MouseInput || input instanceof Keyboard.KeyboardInput) {
+					getGlassPane().setVisible(true);
+					Mouse.instance.grab(PG3BUI.this);
+					disableKeyboard = true;
+					return;
 				}
 			}
 		}

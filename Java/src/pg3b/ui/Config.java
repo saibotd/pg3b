@@ -1,27 +1,24 @@
 
 package pg3b.ui;
 
+import static com.esotericsoftware.minlog.Log.*;
+
 import java.awt.EventQueue;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
-import javax.management.RuntimeErrorException;
 import javax.swing.JToggleButton;
 
-import static com.esotericsoftware.minlog.Log.*;
-
 import pg3b.ui.swing.PG3BUI;
-import pg3b.util.NamedThreadFactory;
 
 /**
- * Maintains a list of triggers and polls them when activated.
+ * Maintains a list of triggers and checks them when activated.
  */
 public class Config extends Editable {
 	private List<Trigger> triggers = new ArrayList();
-	private transient Poller poller;
+	private transient PollerThread pollerThread;
 
 	public Config () {
 	}
@@ -39,16 +36,16 @@ public class Config extends Editable {
 	}
 
 	/**
-	 * If true, starts a thread to poll the triggers and executes their actions as needed using a thread pool. If false, stops
-	 * polling the triggers and shuts down any running thread pool.
+	 * If true, starts a thread to check the triggers and executes their actions as needed. If false, stops checking the triggers
+	 * and shuts down any running thread pool.
 	 */
 	public synchronized void setActive (boolean active) {
 		if (active) {
-			if (poller != null) return;
-			poller = new Poller();
+			if (pollerThread != null) return;
+			pollerThread = new PollerThread();
 		} else {
-			if (poller != null) poller.running = false;
-			poller = null;
+			if (pollerThread != null) pollerThread.running = false;
+			pollerThread = null;
 		}
 	}
 
@@ -70,35 +67,36 @@ public class Config extends Editable {
 		return true;
 	}
 
-	private class Poller extends Thread {
+	private class PollerThread extends Thread {
 		public volatile boolean running = true;
 
-		private ExecutorService threadPool = Executors.newFixedThreadPool(24, new NamedThreadFactory("poller", false));
 		private boolean hasError;
 
-		public Poller () {
+		public PollerThread () {
 			super(Config.this.getName());
 			start();
 		}
 
 		public void run () {
 			try {
+				// Multiple triggers may use the same poller. Obtain a distinct list of pollers to avoid polling the same one twice.
+				HashSet<Poller> pollers = new HashSet();
+				for (Trigger trigger : getTriggers())
+					pollers.add(trigger.getPoller());
 				while (running) {
+					for (Poller poller : pollers)
+						poller.poll();
 					for (final Trigger trigger : getTriggers()) {
-						final Object state = trigger.poll();
+						final Object state = trigger.check();
 						if (state == null) continue;
-						threadPool.execute(new Runnable() {
-							public void run () {
-								final Action action = trigger.getAction();
-								try {
-									action.execute(Config.this, trigger, state);
-								} catch (Exception ex) {
-									if (ERROR) error("Error executing action: " + action, ex);
-									hasError = true;
-									running = false;
-								}
-							}
-						});
+						final Action action = trigger.getAction();
+						try {
+							action.execute(Config.this, trigger, state);
+						} catch (Exception ex) {
+							if (ERROR) error("Error executing action: " + action, ex);
+							hasError = true;
+							running = false;
+						}
 					}
 					Thread.yield();
 				}
@@ -106,7 +104,6 @@ public class Config extends Editable {
 				if (ERROR) error("Error polling triggers.", ex);
 				hasError = true;
 			} finally {
-				threadPool.shutdownNow();
 				EventQueue.invokeLater(new Runnable() {
 					public void run () {
 						JToggleButton captureButton = PG3BUI.instance.getCaptureButton();

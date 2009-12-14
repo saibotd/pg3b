@@ -16,8 +16,8 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
+import pg3b.input.XboxController;
 import pg3b.util.UI;
-import pg3b.xboxcontroller.XboxController;
 
 public class ConnectControllerDialog extends JDialog {
 	private PG3BUI owner;
@@ -39,8 +39,8 @@ public class ConnectControllerDialog extends JDialog {
 
 	private void refresh () {
 		controllerListModel.removeAllElements();
-		for (XboxController controller : XboxController.getControllers())
-			controllerListModel.addElement(controller);
+		for (XboxController controller : XboxController.getAll())
+			if (controller.poll()) controllerListModel.addElement(controller);
 		if (controllerListModel.getSize() > 0) controllerList.setSelectedIndex(0);
 	}
 

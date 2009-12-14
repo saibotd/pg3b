@@ -1,16 +1,11 @@
 
 package pg3b.util;
 
-import java.awt.event.AdjustmentEvent;
-import java.awt.event.AdjustmentListener;
 import java.io.IOException;
 import java.io.OutputStream;
 
-import javax.swing.BoundedRangeModel;
-import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.text.BadLocationException;
-import javax.swing.text.DefaultCaret;
 import javax.swing.text.Document;
 import javax.swing.text.JTextComponent;
 

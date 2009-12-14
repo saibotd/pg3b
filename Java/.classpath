@@ -3,11 +3,6 @@
 	<classpathentry excluding="**/.svn/*" kind="src" path="src"/>
 	<classpathentry excluding="**/.svn/*" kind="src" path="resources"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
-	<classpathentry kind="lib" path="lib/minlog-1.1.jar">
-		<attributes>
-			<attribute name="javadoc_location" value="http://minlog.googlecode.com/svn/api/"/>
-		</attributes>
-	</classpathentry>
 	<classpathentry kind="lib" path="lib/RXTXcomm-2.2pre2-pg3b.jar">
 		<attributes>
 			<attribute name="javadoc_location" value="http://users.frii.com/jarvi/rxtx/doc/"/>
@@ -24,8 +19,21 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="lib" path="lib/autocomplete-svn147.jar"/>
-	<classpathentry kind="lib" path="lib/pnuts-1.2.1-20070724b.jar"/>
+	<classpathentry kind="lib" path="lib/pnuts-1.2.1-20070724b.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="http://pnuts.org/apidoc/"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="lib" path="lib/pnuts-modules-1.2.1-20070724b.jar"/>
-	<classpathentry kind="lib" path="lib/yamlbeans-1.1.jar"/>
+	<classpathentry kind="lib" path="lib/yamlbeans-1.1.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="http://yamlbeans.sourceforge.net/api/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="lib/minlog-1.2.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="http://minlog.googlecode.com/svn/api/"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

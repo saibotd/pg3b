@@ -13,7 +13,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.Timer;
+import java.util.ArrayList;
 import java.util.TimerTask;
 
 import javax.swing.BorderFactory;
@@ -28,27 +28,28 @@ import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
-import net.java.games.input.Component;
-import net.java.games.input.Controller;
-import net.java.games.input.ControllerEnvironment;
-import net.java.games.input.Event;
-import net.java.games.input.EventQueue;
 import pg3b.Axis;
 import pg3b.Button;
 import pg3b.Target;
+import pg3b.input.Input;
+import pg3b.input.InputDevice;
+import pg3b.input.JInputController;
+import pg3b.input.Keyboard;
+import pg3b.input.Mouse;
+import pg3b.input.XboxController;
 import pg3b.ui.Action;
 import pg3b.ui.Config;
-import pg3b.ui.ControllerTrigger;
+import pg3b.ui.InputTrigger;
 import pg3b.ui.PG3BAction;
 import pg3b.ui.Script;
 import pg3b.ui.ScriptAction;
 import pg3b.ui.swing.XboxControllerPanel.Listener;
 import pg3b.util.UI;
 
-public class ControllerTriggerPanel extends JPanel {
+public class InputTriggerPanel extends JPanel {
 	private PG3BUI owner;
 	private Config config;
-	private ControllerTrigger trigger;
+	private InputTrigger trigger;
 	private boolean isNewTrigger;
 	private TimerTask monitorControllersTask;
 
@@ -58,7 +59,7 @@ public class ControllerTriggerPanel extends JPanel {
 	private JButton saveButton, cancelButton;
 	private JTextField descriptionText;
 	private JComboBox targetCombo, scriptCombo;
-	private JCheckBox altCheckBox, ctrlCheckBox, shiftCheckBox;
+	private JCheckBox altCheckBox, ctrlCheckBox, shiftCheckBox, anyCheckBox, noneCheckBox;
 	private DefaultComboBoxModel scriptComboModel, targetComboModel;
 
 	private Listener controllerPanelListener = new Listener() {
@@ -73,7 +74,7 @@ public class ControllerTriggerPanel extends JPanel {
 		}
 	};
 
-	public ControllerTriggerPanel (PG3BUI owner) {
+	public InputTriggerPanel (PG3BUI owner) {
 		this.owner = owner;
 
 		initializeLayout();
@@ -82,7 +83,7 @@ public class ControllerTriggerPanel extends JPanel {
 		owner.getControllerPanel().addListener(controllerPanelListener);
 	}
 
-	public void setTrigger (Config config, ControllerTrigger trigger) {
+	public void setTrigger (Config config, InputTrigger trigger) {
 		this.config = config;
 
 		UI.setEnabled(true, targetRadio, targetCombo, scriptRadio, scriptCombo);
@@ -94,7 +95,7 @@ public class ControllerTriggerPanel extends JPanel {
 
 		if (trigger == null) {
 			// New trigger.
-			this.trigger = new ControllerTrigger();
+			this.trigger = new InputTrigger();
 			isNewTrigger = true;
 			titlePanel.setBorder(BorderFactory.createTitledBorder("New Trigger"));
 
@@ -105,6 +106,8 @@ public class ControllerTriggerPanel extends JPanel {
 			shiftCheckBox.setSelected(false);
 			ctrlCheckBox.setSelected(false);
 			altCheckBox.setSelected(false);
+			anyCheckBox.setSelected(true);
+			noneCheckBox.setSelected(false);
 
 			saveButton.setEnabled(false);
 		} else {
@@ -113,12 +116,18 @@ public class ControllerTriggerPanel extends JPanel {
 			isNewTrigger = false;
 			titlePanel.setBorder(BorderFactory.createTitledBorder("Edit Trigger"));
 
-			setTriggerText(trigger);
 			triggerLabel.setFont(triggerLabel.getFont().deriveFont(Font.PLAIN));
 			descriptionText.setText(trigger.getDescription());
 			shiftCheckBox.setSelected(trigger.getShift());
 			ctrlCheckBox.setSelected(trigger.getCtrl());
 			altCheckBox.setSelected(trigger.getAlt());
+			anyCheckBox.setSelected(false);
+			noneCheckBox.setSelected(false);
+			if (!trigger.getShift() && !trigger.getCtrl() && !trigger.getAlt()) {
+				anyCheckBox.setSelected(!trigger.getNoModifiers());
+				noneCheckBox.setSelected(trigger.getNoModifiers());
+			}
+			setTriggerText(trigger);
 
 			Action action = trigger.getAction();
 			if (action instanceof ScriptAction) {
@@ -143,47 +152,47 @@ public class ControllerTriggerPanel extends JPanel {
 			monitorControllersTask = null;
 		}
 		if (!enable) return;
+		final ArrayList<InputDevice> devices = new ArrayList();
+		devices.add(Keyboard.instance);
+		devices.add(Mouse.instance);
+		devices.addAll(XboxController.getAll());
+		devices.addAll(JInputController.getAll());
+		for (InputDevice device : devices)
+			device.resetLastInput();
 		monitorControllersTask = new TimerTask() {
 			boolean firstRun = true;
 
 			public void run () {
-				boolean triggerSet = false;
-				for (Controller controller : ControllerEnvironment.getDefaultEnvironment().getControllers()) {
-					if (!controller.poll()) continue;
-					EventQueue eventQueue = controller.getEventQueue();
-					Event event = new Event();
-					while (eventQueue.getNextEvent(event)) {
-						if (firstRun) continue; // Clear out all pending events on the first run.
-						Component component = event.getComponent();
-						float value = event.getValue();
-						if (value != 0) {
-							trigger.setComponent(controller, component);
-							SwingUtilities.invokeLater(new Runnable() {
-								public void run () {
-									setTriggerText(trigger);
-									triggerLabel.setFont(triggerLabel.getFont().deriveFont(Font.PLAIN));
-									cancelButton.setEnabled(true);
-									saveButton.setEnabled(true);
-								}
-							});
-							listenForTrigger(false);
-							return;
+				for (InputDevice device : devices) {
+					if (!device.poll()) continue;
+					Input input = device.getLastInput();
+					if (input == null) continue;
+					Float value = input.getState(new InputTrigger());
+					if (value == 0) continue;
+					trigger.setInput(input);
+					SwingUtilities.invokeLater(new Runnable() {
+						public void run () {
+							setTriggerText(trigger);
+							triggerLabel.setFont(triggerLabel.getFont().deriveFont(Font.PLAIN));
+							cancelButton.setEnabled(true);
+							saveButton.setEnabled(true);
 						}
-					}
+					});
+					listenForTrigger(false);
+					return;
 				}
-				firstRun = false;
 			}
 		};
 		UI.timer.scheduleAtFixedRate(monitorControllersTask, 125, 125);
 	}
 
-	public void setTriggerText (ControllerTrigger trigger) {
+	public void setTriggerText (InputTrigger trigger) {
 		boolean ctrl = trigger.getCtrl();
 		boolean alt = trigger.getAlt();
 		boolean shift = trigger.getShift();
-		trigger.setCtrl(false);
-		trigger.setAlt(false);
-		trigger.setShift(false);
+		trigger.setCtrl(ctrlCheckBox.isSelected());
+		trigger.setAlt(altCheckBox.isSelected());
+		trigger.setShift(shiftCheckBox.isSelected());
 		triggerLabel.setText(trigger.toString());
 		trigger.setCtrl(ctrl);
 		trigger.setAlt(alt);
@@ -248,6 +257,7 @@ public class ControllerTriggerPanel extends JPanel {
 				trigger.setCtrl(ctrlCheckBox.isSelected());
 				trigger.setAlt(altCheckBox.isSelected());
 				trigger.setShift(shiftCheckBox.isSelected());
+				trigger.setNoModifiers(noneCheckBox.isSelected());
 				if (targetRadio.isSelected()) {
 					trigger.setAction(new PG3BAction((Target)targetCombo.getSelectedItem()));
 				} else if (scriptRadio.isSelected()) {
@@ -260,6 +270,39 @@ public class ControllerTriggerPanel extends JPanel {
 				if (isNewTrigger) config.getTriggers().add(trigger);
 				owner.getConfigTab().getConfigEditor().saveItem(true);
 				owner.getConfigTab().getConfigEditor().setTriggerSelected(config.getTriggers().indexOf(trigger));
+			}
+		});
+
+		ActionListener updateTriggerText = new ActionListener() {
+			public void actionPerformed (ActionEvent event) {
+				setTriggerText(trigger);
+				anyCheckBox.setSelected(false);
+				noneCheckBox.setSelected(false);
+				if (!ctrlCheckBox.isSelected() && !altCheckBox.isSelected() && !shiftCheckBox.isSelected())
+					anyCheckBox.setSelected(true);
+			}
+		};
+		ctrlCheckBox.addActionListener(updateTriggerText);
+		altCheckBox.addActionListener(updateTriggerText);
+		shiftCheckBox.addActionListener(updateTriggerText);
+
+		anyCheckBox.addActionListener(new ActionListener() {
+			public void actionPerformed (ActionEvent event) {
+				noneCheckBox.setSelected(false);
+				ctrlCheckBox.setSelected(false);
+				altCheckBox.setSelected(false);
+				shiftCheckBox.setSelected(false);
+				if (!anyCheckBox.isSelected()) noneCheckBox.setSelected(true);
+			}
+		});
+
+		noneCheckBox.addActionListener(new ActionListener() {
+			public void actionPerformed (ActionEvent event) {
+				anyCheckBox.setSelected(false);
+				ctrlCheckBox.setSelected(false);
+				altCheckBox.setSelected(false);
+				shiftCheckBox.setSelected(false);
+				if (!noneCheckBox.isSelected()) anyCheckBox.setSelected(true);
 			}
 		});
 	}
@@ -372,6 +415,14 @@ public class ControllerTriggerPanel extends JPanel {
 			{
 				shiftCheckBox = new JCheckBox("Shift");
 				panel.add(shiftCheckBox);
+			}
+			{
+				anyCheckBox = new JCheckBox("Any");
+				panel.add(anyCheckBox);
+			}
+			{
+				noneCheckBox = new JCheckBox("None");
+				panel.add(noneCheckBox);
 			}
 		}
 

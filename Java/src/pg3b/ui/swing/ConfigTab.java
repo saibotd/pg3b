@@ -7,20 +7,20 @@ import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 
 import pg3b.ui.Config;
-import pg3b.ui.ControllerTrigger;
+import pg3b.ui.InputTrigger;
 
 public class ConfigTab extends JPanel {
 	private PG3BUI owner;
 	private CardLayout cardLayout;
 	private ConfigEditor configEditor;
-	private ControllerTriggerPanel controllerTriggerPanel;
+	private InputTriggerPanel inputTriggerPanel;
 	private Boolean wasCaptureButtonDown;
 
 	public ConfigTab (PG3BUI owner) {
 		this.owner = owner;
 		setLayout(cardLayout = new CardLayout());
 		add(configEditor = new ConfigEditor(owner), "config");
-		add(controllerTriggerPanel = new ControllerTriggerPanel(owner), "controllerTrigger");
+		add(inputTriggerPanel = new InputTriggerPanel(owner), "inputTrigger");
 	}
 
 	public void showConfigEditor () {
@@ -32,14 +32,14 @@ public class ConfigTab extends JPanel {
 		cardLayout.show(this, "config");
 	}
 
-	public void showTriggerPanel (Config config, ControllerTrigger input) {
+	public void showInputTriggerPanel (Config config, InputTrigger input) {
 		JToggleButton captureButton = owner.getCaptureButton();
 		wasCaptureButtonDown = captureButton.isSelected();
 		if (wasCaptureButtonDown) captureButton.doClick();
 		captureButton.setEnabled(false);
 
-		controllerTriggerPanel.setTrigger(config, input);
-		cardLayout.show(this, "controllerTrigger");
+		inputTriggerPanel.setTrigger(config, input);
+		cardLayout.show(this, "inputTrigger");
 	}
 
 	public ConfigEditor getConfigEditor () {

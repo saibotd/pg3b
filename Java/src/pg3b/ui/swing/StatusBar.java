@@ -17,9 +17,9 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import pg3b.PG3B;
+import pg3b.input.XboxController;
 import pg3b.ui.Config;
 import pg3b.util.UI;
-import pg3b.xboxcontroller.XboxController;
 
 public class StatusBar extends JPanel {
 	private TimerTask clearMessageTask;

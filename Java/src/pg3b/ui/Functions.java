@@ -5,6 +5,8 @@ import static com.esotericsoftware.minlog.Log.*;
 
 import java.util.HashMap;
 import java.util.TimerTask;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.sound.midi.Instrument;
 import javax.sound.midi.MidiChannel;
@@ -13,7 +15,8 @@ import javax.sound.midi.MidiUnavailableException;
 import javax.sound.midi.Patch;
 import javax.sound.midi.Synthesizer;
 
-import pg3b.ui.swing.PG3BUI;
+import pg3b.input.Keyboard;
+import pg3b.util.NamedThreadFactory;
 import pg3b.util.UI;
 import pnuts.lang.Context;
 import pnuts.lang.Package;
@@ -317,7 +320,7 @@ public class Functions {
 		}
 
 		protected Object invoke (Object[] args, Context context) {
-			return PG3BUI.instance.isCtrlDown();
+			return Keyboard.instance.isCtrlDown();
 		}
 	}
 
@@ -327,7 +330,7 @@ public class Functions {
 		}
 
 		protected Object invoke (Object[] args, Context context) {
-			return PG3BUI.instance.isAltDown();
+			return Keyboard.instance.isAltDown();
 		}
 	}
 
@@ -337,7 +340,26 @@ public class Functions {
 		}
 
 		protected Object invoke (Object[] args, Context context) {
-			return PG3BUI.instance.isShiftDown();
+			return Keyboard.instance.isShiftDown();
+		}
+	}
+
+	static public class fork extends BaseFunction {
+		static private ExecutorService threadPool = Executors.newFixedThreadPool(24, new NamedThreadFactory("fork", false));
+
+		public fork () {
+			super("fork", 1, 1, "function");
+		}
+
+		protected Object invoke (Object[] args, Context context) {
+			final Context functionContext = (Context)context.clone(false, false);
+			final PnutsFunction function = (PnutsFunction)args[0];
+			threadPool.execute(new Runnable() {
+				public void run () {
+					function.call(new Object[0], functionContext);
+				}
+			});
+			return null;
 		}
 	}
 }

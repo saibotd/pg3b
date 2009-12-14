@@ -34,11 +34,8 @@ import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import pg3b.ui.Config;
 import pg3b.ui.Editable;
-import pg3b.ui.ScriptAction;
 import pg3b.ui.Settings;
-import pg3b.ui.Trigger;
 import pg3b.util.DirectoryMonitor;
 import pg3b.util.UI;
 

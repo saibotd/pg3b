@@ -25,14 +25,17 @@ abstract public class Trigger {
 	}
 
 	/**
-	 * Checks if the action should be executed.
-	 * @return Returns null if the action should not be executed. Otherwise, returns a payload that represents what the state that
-	 *         caused the trigger to want to execute its action.
+	 * Returns the object that should be polled prior to this trigger being checked.
 	 */
-	abstract public Object poll ();
+	abstract public Poller getPoller ();
 
 	/**
-	 * Returns true if this trigger is ready to be polled.
+	 * Checks this trigger and returns a non-null object if the trigger was activated.
+	 */
+	abstract public Object check ();
+
+	/**
+	 * Returns true if this trigger is able to be checked.
 	 */
 	abstract public boolean isValid ();
 }

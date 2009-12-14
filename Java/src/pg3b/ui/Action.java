@@ -13,7 +13,7 @@ public interface Action {
 	public void execute (Config config, Trigger trigger, Object payload);
 
 	/**
-	 * Returns true if this action is ready to be executed.
+	 * Returns true if this action is able to be executed.
 	 */
 	public boolean isValid ();
 }

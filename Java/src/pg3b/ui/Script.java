@@ -1,6 +1,8 @@
 
 package pg3b.ui;
 
+import static com.esotericsoftware.minlog.Log.*;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -8,10 +10,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringReader;
 
-import static com.esotericsoftware.minlog.Log.*;
-
 import net.sourceforge.yamlbeans.YamlWriter;
-import pnuts.lang.Context;
 import pnuts.lang.ParseException;
 import pnuts.lang.Pnuts;
 

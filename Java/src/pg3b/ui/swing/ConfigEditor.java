@@ -30,7 +30,7 @@ import javax.swing.table.TableColumnModel;
 import pg3b.PG3B;
 import pg3b.ui.Action;
 import pg3b.ui.Config;
-import pg3b.ui.ControllerTrigger;
+import pg3b.ui.InputTrigger;
 import pg3b.ui.Settings;
 import pg3b.ui.Trigger;
 import pg3b.util.UI;
@@ -94,7 +94,7 @@ public class ConfigEditor extends EditorPanel<Config> {
 		newTriggerButton.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
 				Config config = getSelectedItem();
-				owner.getConfigTab().showTriggerPanel(config, null);
+				owner.getConfigTab().showInputTriggerPanel(config, null);
 			}
 		});
 
@@ -108,8 +108,8 @@ public class ConfigEditor extends EditorPanel<Config> {
 		editTriggerButton.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
 				Config config = getSelectedItem();
-				ControllerTrigger trigger = (ControllerTrigger)config.getTriggers().get(triggersTable.getSelectedRow());
-				owner.getConfigTab().showTriggerPanel(config, trigger);
+				InputTrigger trigger = (InputTrigger)config.getTriggers().get(triggersTable.getSelectedRow());
+				owner.getConfigTab().showInputTriggerPanel(config, trigger);
 			}
 		});
 
@@ -119,7 +119,7 @@ public class ConfigEditor extends EditorPanel<Config> {
 				Config config = getSelectedItem();
 				int selectedRow = triggersTable.getSelectedRow();
 				if (selectedRow != -1) lastSelectedTriggerIndex = selectedRow;
-				editTriggerButton.setEnabled(selectedRow != -1 && config.getTriggers().get(selectedRow) instanceof ControllerTrigger);
+				editTriggerButton.setEnabled(selectedRow != -1 && config.getTriggers().get(selectedRow) instanceof InputTrigger);
 			}
 		});
 

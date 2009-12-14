@@ -141,14 +141,14 @@ public class PG3B {
 	public void set (Button button, boolean pressed) throws IOException {
 		if (button == null) throw new IllegalArgumentException("button cannot be null.");
 
-		if (DEBUG) debug("pg3b", "Button " + button + ": " + pressed);
-
 		int state = pressed ? 6 : 7;
 		short actionKey = getActionKey(Device.xbox, (short)state);
 		short actionCode = getActionCode(actionKey, (short)button.ordinal());
-		action(actionCode);
-
-		buttonStates[button.ordinal()] = pressed;
+		synchronized (this) {
+			action(actionCode);
+			buttonStates[button.ordinal()] = pressed;
+		}
+		if (DEBUG) debug("pg3b", "Button " + button + ": " + pressed);
 
 		Listener[] listeners = this.listeners.toArray();
 		for (int i = 0, n = listeners.length; i < n; i++)
@@ -167,8 +167,6 @@ public class PG3B {
 			state = 1;
 		}
 
-		if (DEBUG) debug("pg3b", "Axis " + axis + ": " + state);
-
 		float wiperValue;
 		if (axis == Axis.leftTrigger || axis == Axis.rightTrigger)
 			wiperValue = 255 - state * 255;
@@ -179,9 +177,11 @@ public class PG3B {
 
 		short actionKey = getActionKey(Device.xbox, (short)axis.ordinal());
 		short actionCode = getActionCode(actionKey, (short)wiperValue);
-		action(actionCode);
-
-		axisStates[axis.ordinal()] = state;
+		synchronized (this) {
+			action(actionCode);
+			axisStates[axis.ordinal()] = state;
+		}
+		if (DEBUG) debug("pg3b", "Axis " + axis + ": " + state);
 
 		Listener[] listeners = this.listeners.toArray();
 		for (int i = 0, n = listeners.length; i < n; i++)

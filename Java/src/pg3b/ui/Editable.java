@@ -9,7 +9,6 @@ import java.io.Reader;
 import java.lang.reflect.InvocationTargetException;
 
 import net.sourceforge.yamlbeans.YamlConfig;
-import net.sourceforge.yamlbeans.YamlException;
 import net.sourceforge.yamlbeans.YamlReader;
 import net.sourceforge.yamlbeans.YamlWriter;
 import net.sourceforge.yamlbeans.scalar.ScalarSerializer;
@@ -38,7 +37,7 @@ public class Editable implements Cloneable {
 		yamlConfig.writeConfig.setWriteRootTags(false);
 		// yamlConfig.writeConfig.setWriteDefaultValues(true);
 
-		yamlConfig.setClassTag("controller", ControllerTrigger.class);
+		yamlConfig.setClassTag("input", InputTrigger.class);
 		yamlConfig.setClassTag("PG3B", PG3BAction.class);
 		yamlConfig.setClassTag("script", ScriptAction.class);
 	}
