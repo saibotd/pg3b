@@ -36,10 +36,7 @@ import javax.swing.JToolTip;
 import javax.swing.KeyStroke;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import javax.swing.text.BadLocationException;
-import javax.swing.text.Caret;
 
 import org.fife.ui.autocomplete.AutoCompletion;
 import org.fife.ui.autocomplete.Completion;
@@ -48,13 +45,17 @@ import org.fife.ui.autocomplete.DefaultCompletionProvider;
 import org.fife.ui.autocomplete.FunctionCompletion;
 import org.fife.ui.autocomplete.ShorthandCompletion;
 import org.fife.ui.autocomplete.VariableCompletion;
+import org.fife.ui.rsyntaxtextarea.RSyntaxDocument;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
-import org.fife.ui.rsyntaxtextarea.RSyntaxTextAreaHighlighter;
 import org.fife.ui.rsyntaxtextarea.SquiggleUnderlineHighlightPainter;
 import org.fife.ui.rsyntaxtextarea.Style;
 import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
 import org.fife.ui.rsyntaxtextarea.SyntaxScheme;
 import org.fife.ui.rsyntaxtextarea.Token;
+import org.fife.ui.rsyntaxtextarea.parser.AbstractParser;
+import org.fife.ui.rsyntaxtextarea.parser.DefaultParseResult;
+import org.fife.ui.rsyntaxtextarea.parser.DefaultParserNotice;
+import org.fife.ui.rsyntaxtextarea.parser.ParseResult;
 import org.fife.ui.rtextarea.RTextScrollPane;
 
 import pg3b.ui.Config;
@@ -74,11 +75,12 @@ public class ScriptEditor extends EditorPanel<Script> {
 	private int lastCaretPosition;
 	private HashMap<File, Integer> fileToPosition = new HashMap();
 	private TimerTask compileTask;
+	private Object highlightTag;
 
 	private RSyntaxTextArea codeText;
 	private RTextScrollPane codeScroll;
-	private RSyntaxTextAreaHighlighter highlighter;
 	private SquiggleUnderlineHighlightPainter errorPainter = new SquiggleUnderlineHighlightPainter(Color.red);
+	private AutoCompletion autoCompletion;
 	private JButton executeButton, recordButton;
 	private JLabel errorLabel;
 
@@ -117,7 +119,7 @@ public class ScriptEditor extends EditorPanel<Script> {
 		provider.addCompletion(new ShorthandCompletion(provider, "LSX", "pg3b.set(\"leftStickX\", getPayload())"));
 		provider.addCompletion(new ShorthandCompletion(provider, "LSY", "pg3b.set(\"leftStickY\", getPayload())"));
 		provider.addCompletion(new ShorthandCompletion(provider, "LSXY", "pg3b.set(\"leftStick\", 1, 1)"));
-		AutoCompletion autoCompletion = new AutoCompletion(provider);
+		autoCompletion = new AutoCompletion(provider);
 		autoCompletion.setListCellRenderer(new CellRenderer());
 		autoCompletion.setShowDescWindow(true);
 		autoCompletion.setParameterAssistanceEnabled(true);
@@ -187,40 +189,32 @@ public class ScriptEditor extends EditorPanel<Script> {
 			}
 		});
 
-		codeText.getDocument().addDocumentListener(new DocumentListener() {
-			public void removeUpdate (DocumentEvent event) {
-				changedUpdate(event);
-			}
-
-			public void insertUpdate (DocumentEvent event) {
-				changedUpdate(event);
-			}
-
-			public void changedUpdate (DocumentEvent event) {
-				if (compileTask != null) compileTask.cancel();
-
-				UI.timer.schedule(compileTask = new TimerTask() {
-					public void run () {
-						EventQueue.invokeLater(new Runnable() {
-							public void run () {
-								Caret caret = codeText.getCaret();
-								int dot = caret.getDot();
-								int mark = caret.getMark();
-								highlighter.removeAllHighlights();
-								if (getSelectedItem() == null) return;
-								try {
-									Pnuts.parse(codeText.getText());
-									errorLabel.setText("");
-								} catch (ParseException ex) {
-									if (DEBUG) debug("Error during script compilation.", ex);
-									highlightError(ex.getMessage(), ex.getErrorLine(), ex.getErrorColumn() - 1);
-								}
-								caret.setDot(mark);
-								caret.moveDot(dot);
-							}
-						});
+		codeText.addParser(new AbstractParser() {
+			public ParseResult parse (RSyntaxDocument doc, String style) {
+				if (highlightTag != null) {
+					codeText.getHighlighter().removeHighlight(highlightTag);
+					highlightTag = null;
+				}
+				DefaultParseResult result = new DefaultParseResult(this);
+				result.setParsedLines(0, codeText.getLineCount() - 1);
+				if (getSelectedItem() == null) return result;
+				try {
+					Pnuts.parse(codeText.getText());
+					errorLabel.setText("");
+				} catch (ParseException ex) {
+					if (DEBUG) debug("Error during script compilation.", ex);
+					try {
+						String message = ex.getMessage();
+						int line = ex.getErrorLine() - 1;
+						int offset = codeText.getLineStartOffset(line) + ex.getErrorColumn() - 1;
+						int length = codeText.getLineEndOffset(line) - offset;
+						result.addNotice(new DefaultParserNotice(this, message, line, offset, length));
+						displayErrorMessage(message);
+					} catch (BadLocationException ex2) {
+						throw new RuntimeException(ex2);
 					}
-				}, 1000);
+				}
+				return result;
 			}
 		});
 
@@ -249,7 +243,14 @@ public class ScriptEditor extends EditorPanel<Script> {
 								message = ex.getMessage();
 							EventQueue.invokeLater(new Runnable() {
 								public void run () {
-									highlightError(message, ex.getLine(), ex.getColumn());
+									try {
+										int line = ex.getLine();
+										int start = codeText.getLineStartOffset(line - 1) + ex.getColumn();
+										int end = codeText.getLineEndOffset(line - 1);
+										highlightTag = codeText.getHighlighter().addHighlight(start, end, errorPainter);
+									} catch (BadLocationException ignored) {
+									}
+									displayErrorMessage(message);
 								}
 							});
 						}
@@ -266,16 +267,10 @@ public class ScriptEditor extends EditorPanel<Script> {
 		});
 	}
 
-	private void highlightError (String message, int line, int column) {
+	private void displayErrorMessage (String message) {
 		errorLabel.setForeground(Color.red);
 		errorLabel.setText(message);
 		errorLabel.setToolTipText(message);
-		try {
-			int start = codeText.getLineStartOffset(line - 1) + column;
-			int end = codeText.getLineEndOffset(line - 1);
-			highlighter.addHighlight(start, end, errorPainter);
-		} catch (BadLocationException ignored) {
-		}
 	}
 
 	private void setFontSize (float size) {
@@ -341,8 +336,6 @@ public class ScriptEditor extends EditorPanel<Script> {
 			codeText.setCaretColor(Color.black);
 			codeText.setBackground(Color.white);
 			codeText.setSelectionColor(new Color(0xb8ddff));
-			highlighter = new RSyntaxTextAreaHighlighter();
-			codeText.setHighlighter(highlighter);
 			{
 				codeScroll = new RTextScrollPane(codeText);
 				getContentPanel().add(
