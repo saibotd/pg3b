@@ -37,6 +37,7 @@ import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.JToggleButton;
@@ -47,6 +48,7 @@ import javax.swing.UIManager.LookAndFeelInfo;
 
 import pg3b.Axis;
 import pg3b.AxisCalibration;
+import pg3b.ControllerType;
 import pg3b.Diagnostics;
 import pg3b.PG3B;
 import pg3b.Target;
@@ -75,7 +77,7 @@ public class PG3BUI extends JFrame {
 
 	private JMenuItem pg3bConnectMenuItem, controllerConnectMenuItem, exitMenuItem;
 	private JCheckBoxMenuItem showControllerMenuItem;
-	private JMenuItem roundTripMenuItem, clearMenuItem, calibrateMenuItem;
+	private JMenuItem roundTripMenuItem, clearMenuItem, calibrateMenuItem, setControllerTypeMenuItem;
 
 	private XboxControllerPanel controllerPanel;
 	private JToggleButton captureButton;
@@ -112,6 +114,7 @@ public class PG3BUI extends JFrame {
 		roundTripMenuItem.setEnabled(false);
 		clearMenuItem.setEnabled(false);
 		calibrateMenuItem.setEnabled(false);
+		setControllerTypeMenuItem.setEnabled(false);
 
 		controllerPanel.setVisible(settings.showController);
 		showControllerMenuItem.setSelected(settings.showController);
@@ -163,8 +166,8 @@ public class PG3BUI extends JFrame {
 				configTab.getConfigEditor().setPG3B(pg3b);
 
 				roundTripMenuItem.setEnabled(pg3b != null && controller != null);
-				clearMenuItem.setEnabled(roundTripMenuItem.isEnabled());
 				calibrateMenuItem.setEnabled(roundTripMenuItem.isEnabled());
+				setControllerTypeMenuItem.setEnabled(pg3b != null);
 			}
 		});
 
@@ -187,7 +190,6 @@ public class PG3BUI extends JFrame {
 				statusBar.setController(controller);
 
 				roundTripMenuItem.setEnabled(controller != null && pg3b != null);
-				clearMenuItem.setEnabled(roundTripMenuItem.isEnabled());
 				calibrateMenuItem.setEnabled(roundTripMenuItem.isEnabled());
 			}
 		});
@@ -304,6 +306,7 @@ public class PG3BUI extends JFrame {
 						controllerPanel.setStatus(null);
 						final Map<Target, Boolean> status = Diagnostics.roundTrip(pg3b, controller, this);
 						controllerPanel.setStatus(status);
+						clearMenuItem.setEnabled(true);
 						EventQueue.invokeLater(new Runnable() {
 							public void run () {
 								if (status.values().contains(Boolean.FALSE))
@@ -320,6 +323,7 @@ public class PG3BUI extends JFrame {
 		clearMenuItem.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
 				controllerPanel.setStatus(null);
+				clearMenuItem.setEnabled(false);
 			}
 		});
 
@@ -336,18 +340,21 @@ public class PG3BUI extends JFrame {
 						for (AxisCalibration calibration : results)
 							if (INFO) info(calibration.getAxis() + " chart:\n" + calibration.getChartURL());
 
+						for (AxisCalibration calibration : results)
+							pg3b.setCalibrationTable(calibration.getAxis(), calibration.getTable());
+
 						EventQueue.invokeLater(new Runnable() {
 							public void run () {
-								if (results.size() != Axis.values().length)
-									statusBar.setMessage("Calibration failed.");
-								else
-									statusBar.setMessage("Calibration successful.");
+								if (results.size() == Axis.values().length) statusBar.setMessage("Calibration successful.");
 							}
 						});
 					}
 
 					public void complete () {
-						if (failed() || results.size() != Axis.values().length) return;
+						if (failed() || results.size() != Axis.values().length) {
+							statusBar.setMessage("Calibration failed.");
+							return;
+						}
 						CalibrationResultsFrame frame = new CalibrationResultsFrame(results);
 						frame.setLocationRelativeTo(PG3BUI.this);
 						frame.setVisible(true);
@@ -356,8 +363,23 @@ public class PG3BUI extends JFrame {
 			}
 		});
 
+		setControllerTypeMenuItem.addActionListener(new ActionListener() {
+			public void actionPerformed (ActionEvent event) {
+				int result = JOptionPane.showOptionDialog(PG3BUI.this, "Select the type of controller to which the PG3B is wired.",
+					"Set PG3B Controller Type", JOptionPane.OK_OPTION, JOptionPane.PLAIN_MESSAGE, null, new Object[] {"Wired",
+						"Wireless"}, "Wired");
+				if (result == JOptionPane.CLOSED_OPTION) return;
+				try {
+					pg3b.setControllerType(result == 0 ? ControllerType.wired : ControllerType.wireless);
+				} catch (IOException ex) {
+					if (Log.ERROR) error("Error setting PG3B controller type.", ex);
+				}
+			}
+		});
+
 		addWindowFocusListener(new WindowFocusListener() {
 			public void windowLostFocus (WindowEvent event) {
+				// Prevent buttons from being stuck down when the app loses focus.
 				Mouse.instance.reset();
 				Keyboard.instance.reset();
 			}
@@ -456,6 +478,18 @@ public class PG3BUI extends JFrame {
 				}
 			}
 			{
+				JMenu menu = new JMenu("Setup");
+				menuBar.add(menu);
+				{
+					setControllerTypeMenuItem = new JMenuItem("Set PG3B Controller Type...");
+					menu.add(setControllerTypeMenuItem);
+				}
+				{
+					calibrateMenuItem = new JMenuItem("Axes Calibration...");
+					menu.add(calibrateMenuItem);
+				}
+			}
+			{
 				JMenu menu = new JMenu("Diagnostics");
 				menuBar.add(menu);
 				{
@@ -465,11 +499,6 @@ public class PG3BUI extends JFrame {
 				{
 					clearMenuItem = new JMenuItem("Clear");
 					menu.add(clearMenuItem);
-				}
-				menu.addSeparator();
-				{
-					calibrateMenuItem = new JMenuItem("Axes Calibration...");
-					menu.add(calibrateMenuItem);
 				}
 			}
 		}

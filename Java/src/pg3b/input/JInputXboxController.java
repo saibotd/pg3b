@@ -177,7 +177,7 @@ public class JInputXboxController extends XboxController {
 	}
 
 	public int getPort () {
-		return controller.getPortNumber();
+		return controller.getPortNumber() + 1;
 	}
 
 	public String getName () {

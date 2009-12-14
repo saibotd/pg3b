@@ -235,6 +235,10 @@ public class XboxControllerPanel extends JPanel {
 					} else {
 						Button stickButton = Button.valueOf(overImageName);
 						buttonClicked(stickButton, true);
+						try {
+							Thread.sleep(32);
+						} catch (InterruptedException ex) {
+						}
 						buttonClicked(stickButton, false);
 					}
 				}

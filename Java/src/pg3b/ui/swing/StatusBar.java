@@ -106,7 +106,7 @@ public class StatusBar extends JPanel {
 
 	public void setController (final XboxController controller) {
 		controllerLabel.setIcon(controller == null ? redImage : greenImage);
-		controllerLabel.setText(controller == null ? "Controller" : "Controller: " + (controller.getPort() + 1));
+		controllerLabel.setText(controller == null ? "Controller" : "Controller: " + controller.getPort());
 		if (lastController != null && controller == null)
 			setMessage("Controller disconnected.");
 		else if (controller != null) {

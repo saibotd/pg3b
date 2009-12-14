@@ -82,7 +82,7 @@ public class Diagnostics {
 			pg3b.set(axis, 0);
 		}
 
-		int[] calibrationTable = new int[256];
+		byte[] calibrationTable = new byte[256];
 		int minusOneIndex = findClosestIndex(actualValues, -1);
 		int zeroIndex = findClosestIndex(actualValues, 0);
 		int plusOneIndex = findClosestIndex(actualValues, 1);
@@ -91,11 +91,11 @@ public class Diagnostics {
 			int match = zeroIndex;
 			for (int index = minusOneIndex; index <= plusOneIndex; index++)
 				if (Math.abs(actualValues[index] - deflection) < Math.abs(actualValues[match] - deflection)) match = index;
-			calibrationTable[wiper] = match;
+			calibrationTable[wiper] = (byte)match;
 		}
-		calibrationTable[0] = minusOneIndex;
-		calibrationTable[127] = zeroIndex;
-		calibrationTable[255] = plusOneIndex;
+		calibrationTable[0] = (byte)minusOneIndex;
+		calibrationTable[127] = (byte)zeroIndex;
+		calibrationTable[255] = (byte)plusOneIndex;
 
 		return new AxisCalibration(axis, calibrationTable, actualValues);
 	}
@@ -135,7 +135,7 @@ public class Diagnostics {
 		HashMap<Target, Boolean> status = new HashMap();
 
 		for (Button button : Button.values()) {
-			if (button == Button.start || button == Button.guide) continue;
+			if (button == Button.guide) continue;
 			loader.setMessage("Testing " + button + "...");
 			loader.throwCancelled();
 			try {

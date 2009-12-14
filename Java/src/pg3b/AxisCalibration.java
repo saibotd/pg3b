@@ -9,10 +9,10 @@ import java.net.URL;
  */
 public class AxisCalibration {
 	private final Axis axis;
-	private final int[] calibrationTable;
+	private final byte[] calibrationTable;
 	private final float[] actualValues;
 
-	public AxisCalibration (Axis axis, int[] calibrationTable, float[] actualValues) {
+	public AxisCalibration (Axis axis, byte[] calibrationTable, float[] actualValues) {
 		this.axis = axis;
 		this.calibrationTable = calibrationTable;
 		this.actualValues = actualValues;
@@ -20,6 +20,10 @@ public class AxisCalibration {
 
 	public Axis getAxis () {
 		return axis;
+	}
+
+	public byte[] getTable () {
+		return calibrationTable;
 	}
 
 	/**
@@ -31,7 +35,8 @@ public class AxisCalibration {
 		for (int wiper = 0; wiper <= 255; wiper += 2) {
 			raw.append((int)(actualValues[wiper] * 100 + 100) / 2);
 			raw.append(",");
-			calibrated.append((int)(actualValues[calibrationTable[wiper]] * 100 + 100) / 2);
+			int index = calibrationTable[wiper] & 0xFF;
+			calibrated.append((int)(actualValues[index] * 100 + 100) / 2);
 			calibrated.append(",");
 		}
 		raw.setLength(raw.length() - 1);

@@ -1,6 +1,8 @@
 
 package pg3b.ui;
 
+import static com.esotericsoftware.minlog.Log.*;
+
 import java.util.List;
 
 import pg3b.ui.swing.PG3BUI;
@@ -35,6 +37,7 @@ public class ScriptAction implements Action {
 		if (script == null) return;
 		Pnuts pnuts = script.getPnuts();
 		if (pnuts == null) return;
+		if (TRACE) trace("Executing script: " + script.getName());
 		pnuts.run(getContext(config, trigger, payload));
 	}
 

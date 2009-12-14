@@ -96,6 +96,9 @@ public class ScriptEditor extends EditorPanel<Script> {
 		} catch (IOException ex) {
 			if (Log.WARN) warn("Error loading autocompletion.", ex);
 		}
+		provider.addCompletion(new ShorthandCompletion(provider, "S", "pg3b.set(\"start\", getPayload())"));
+		provider.addCompletion(new ShorthandCompletion(provider, "G", "pg3b.set(\"guide\", getPayload())"));
+		provider.addCompletion(new ShorthandCompletion(provider, "BK", "pg3b.set(\"back\", getPayload())"));
 		provider.addCompletion(new ShorthandCompletion(provider, "A", "pg3b.set(\"a\", getPayload())"));
 		provider.addCompletion(new ShorthandCompletion(provider, "B", "pg3b.set(\"b\", getPayload())"));
 		provider.addCompletion(new ShorthandCompletion(provider, "X", "pg3b.set(\"x\", getPayload())"));

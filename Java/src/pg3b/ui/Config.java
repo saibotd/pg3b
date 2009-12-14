@@ -43,9 +43,11 @@ public class Config extends Editable {
 		if (active) {
 			if (pollerThread != null) return;
 			pollerThread = new PollerThread();
+			if (INFO) info("Activated config: " + getName());
 		} else {
 			if (pollerThread != null) pollerThread.running = false;
 			pollerThread = null;
+			if (INFO) info("Deactivated config: " + getName());
 		}
 	}
 
@@ -101,7 +103,7 @@ public class Config extends Editable {
 					Thread.yield();
 				}
 			} catch (Exception ex) {
-				if (ERROR) error("Error polling triggers.", ex);
+				if (ERROR) error("Error checking config triggers.", ex);
 				hasError = true;
 			} finally {
 				EventQueue.invokeLater(new Runnable() {
