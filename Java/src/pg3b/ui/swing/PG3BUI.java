@@ -341,7 +341,7 @@ public class PG3BUI extends JFrame {
 							if (INFO) info(calibration.getAxis() + " chart:\n" + calibration.getChartURL());
 
 						for (AxisCalibration calibration : results)
-							pg3b.setCalibrationTable(calibration.getAxis(), calibration.getTable());
+							pg3b.getConfig().setCalibrationTable(calibration.getAxis(), calibration.getTable());
 
 						EventQueue.invokeLater(new Runnable() {
 							public void run () {
@@ -370,7 +370,7 @@ public class PG3BUI extends JFrame {
 						"Wireless"}, "Wired");
 				if (result == JOptionPane.CLOSED_OPTION) return;
 				try {
-					pg3b.setControllerType(result == 0 ? ControllerType.wired : ControllerType.wireless);
+					pg3b.getConfig().setControllerType(result == 0 ? ControllerType.wired : ControllerType.wireless);
 				} catch (IOException ex) {
 					if (Log.ERROR) error("Error setting PG3B controller type.", ex);
 				}

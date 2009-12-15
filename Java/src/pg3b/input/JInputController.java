@@ -143,7 +143,7 @@ public class JInputController implements InputDevice {
 		public boolean isValid () {
 			return getComponent() != null;
 		}
-		
+
 		public String toString () {
 			if (component == null) {
 				getComponent();
