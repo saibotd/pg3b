@@ -20,6 +20,9 @@ public class PG3BConfig {
 
 	static private final int PAGE_BITS = 5;
 	static private final int PAGE_SIZE = (1 << PAGE_BITS);
+	static private final byte CONFIG_PAGE = 0;
+	static private final int CALIBRATION_PAGES = 8;
+	static private final int CALIBRATION_SIZE = CALIBRATION_PAGES * PAGE_SIZE;
 
 	static private final int[] crcTable = {
 	// x^8 + x^2 + x^1 + x^0
@@ -58,13 +61,29 @@ public class PG3BConfig {
 	};
 
 	private final PG3B pg3b;
-	private byte[] data = new byte[9];
+	private byte[] data;
 
 	public PG3BConfig (PG3B pg3b) throws IOException {
 		this.pg3b = pg3b;
-		System.arraycopy(MAGIC_NUMBER.getBytes("ASCII"), 0, data, INDEX_MAGIC, MAGIC_NUMBER.length());
-		data[INDEX_SIZE] = (byte)data.length;
-		data[INDEX_CRC] = calculateCRC(data, INDEX_CRC + 1, data[INDEX_SIZE] - 1);
+
+		try {
+			data = readPage(CONFIG_PAGE);
+			String magicNumber = new String(data, INDEX_MAGIC, MAGIC_NUMBER.length(), Charset.forName("ASCII"));
+			if (!magicNumber.equals(MAGIC_NUMBER)) throw new IOException("Invalid magic number for config page: " + magicNumber);
+			byte crc = calculateCRC(data, INDEX_CRC + 1, data[INDEX_SIZE] - 1);
+			if (crc != data[INDEX_CRC]) {
+				throw new IOException("CRC check failed, page: 0, expected: " + Integer.toHexString(crc & 0xff) + ", actual: "
+					+ Integer.toHexString(data[INDEX_CRC] & 0xff));
+			}
+		} catch (IOException ex) {
+			if (WARN) warn("Invalid config, creating new config.", ex);
+			// BOZO - Should we ever be resetting the config to defaults through software?
+			data = new byte[32];
+			System.arraycopy(MAGIC_NUMBER.getBytes("ASCII"), 0, data, INDEX_MAGIC, MAGIC_NUMBER.length());
+			data[INDEX_SIZE] = (byte)data.length;
+			data[INDEX_CRC] = calculateCRC(data, INDEX_CRC + 1, data[INDEX_SIZE] - 1);
+			save();
+		}
 	}
 
 	/**
@@ -125,19 +144,17 @@ public class PG3BConfig {
 		data[INDEX_VERSION] = version;
 	}
 
-	public byte getModel () {
-		return data[INDEX_MODEL];
+	public ControllerType getControllerType () {
+		ControllerType[] types = ControllerType.values();
+		for (int i = 0; i < types.length; i++) {
+			ControllerType type = types[i];
+			if (type.code == data[INDEX_MODEL]) return type;
+		}
+		return null;
 	}
 
-	public void setModel (byte model) {
-		data[INDEX_MODEL] = model;
-	}
-
-	public void setControllerType (ControllerType type) throws IOException {
-		pg3b.command(Command.setIsWireless, type == ControllerType.wired ? 1 : 0);
-		// BOZO - Need to change config?
-		setModel((byte)(type == ControllerType.wired ? 1 : 0));
-		save();
+	public void setControllerType (ControllerType type) {
+		data[INDEX_MODEL] = type.code;
 	}
 
 	public boolean isCalibrated (Axis axis) {
@@ -153,41 +170,34 @@ public class PG3BConfig {
 			data[INDEX_CALIBRATION] &= ~flag;
 	}
 
-	/**
-	 * Sets the calibration table for the specified axis.
-	 */
 	public void setCalibrationTable (Axis axis, byte[] table) throws IOException {
+		if (axis == null) throw new IllegalArgumentException("axis cannot be null.");
+		if (table == null) throw new IllegalArgumentException("table cannot be null.");
+		if (table.length != CALIBRATION_SIZE)
+			throw new IllegalArgumentException("table must be " + CALIBRATION_SIZE + " bytes: " + table.length);
+
 		byte[] pageData = new byte[PAGE_SIZE];
-		int pagesPerRecord = table.length / PAGE_SIZE;
-		int firstPage = axis.ordinal() * pagesPerRecord + 1;
-		for (int pageCount = 0; pageCount < table.length / PAGE_SIZE; pageCount++) {
-			for (int pageOffset = 0; pageOffset < PAGE_SIZE; pageOffset++)
-				pageData[pageOffset] = table[pageCount * PAGE_SIZE + pageOffset];
-			writePage((byte)(firstPage + pageCount), pageData);
+		int firstPage = axis.ordinal() * CALIBRATION_PAGES + 1;
+		for (int i = 0; i < CALIBRATION_PAGES; i++) {
+			System.arraycopy(table, i * PAGE_SIZE, pageData, 0, PAGE_SIZE);
+			writePage((byte)(firstPage + i), pageData);
 		}
-
-		setCalibrated(axis, true);
-		save();
 	}
 
-	public void setCalibrationEnabled (boolean enabled) throws IOException {
-		pg3b.command(Command.setCalibrationEnabled, enabled ? 1 : 0);
-	}
+	public byte[] getCalibrationTable (Axis axis) throws IOException {
+		if (axis == null) throw new IllegalArgumentException("axis cannot be null.");
 
-	public void load () throws IOException {
-		byte[] data = readPage((byte)0);
-		String magicNumber = new String(data, INDEX_MAGIC, MAGIC_NUMBER.length(), Charset.forName("ASCII"));
-		if (!magicNumber.equals(MAGIC_NUMBER)) throw new IOException("Invalid magic number for config page: " + magicNumber);
-		byte crc = calculateCRC(data, INDEX_CRC + 1, data[INDEX_SIZE] - 1);
-		if (crc != data[INDEX_CRC]) {
-			throw new IOException("CRC check failed, page: 0, expected: " + Integer.toHexString(crc & 0xff) + ", actual: "
-				+ Integer.toHexString(data[INDEX_CRC] & 0xff));
+		byte[] table = new byte[CALIBRATION_SIZE];
+		int firstPage = axis.ordinal() * CALIBRATION_PAGES + 1;
+		for (int i = 0; i < CALIBRATION_PAGES; i++) {
+			byte[] pageData = readPage((byte)(firstPage + i));
+			System.arraycopy(pageData, 0, table, i * PAGE_SIZE, PAGE_SIZE);
 		}
-		this.data = data;
+		return table;
 	}
 
 	public void save () throws IOException {
-		writePage((byte)0, data);
+		writePage(CONFIG_PAGE, data);
 		if (DEBUG) debug("Saved config.");
 	}
 }

@@ -38,6 +38,31 @@ public class PG3B {
 	}
 
 	static private final char[] hex = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
+	static private final int[] charToDigit = new int[102];
+	static {
+		charToDigit['0'] = 0;
+		charToDigit['1'] = 1;
+		charToDigit['2'] = 2;
+		charToDigit['3'] = 3;
+		charToDigit['4'] = 4;
+		charToDigit['5'] = 5;
+		charToDigit['6'] = 6;
+		charToDigit['7'] = 7;
+		charToDigit['8'] = 8;
+		charToDigit['9'] = 9;
+		charToDigit['A'] = 10;
+		charToDigit['B'] = 11;
+		charToDigit['C'] = 12;
+		charToDigit['D'] = 13;
+		charToDigit['E'] = 14;
+		charToDigit['F'] = 15;
+		charToDigit['a'] = 10;
+		charToDigit['b'] = 11;
+		charToDigit['c'] = 12;
+		charToDigit['d'] = 13;
+		charToDigit['e'] = 14;
+		charToDigit['f'] = 15;
+	}
 
 	private final String port;
 	private final SerialPort serialPort;
@@ -92,19 +117,13 @@ public class PG3B {
 			// For receiving... 7, 8: OK.
 
 			config = new PG3BConfig(this);
-			try {
-				config.load();
-			} catch (IOException ex) {
-				if (WARN) warn("Invalid config, creating new config.", ex);
-				config.save();
-			}
 		} catch (Exception ex) {
 			close();
 			throw new IOException("Error opening connection on port: " + port, ex);
 		}
 	}
 
-	private synchronized String primitive (int length) throws IOException {
+	private synchronized byte[] primitive (int length) throws IOException {
 		output.write(buffer, 0, length);
 		output.flush();
 		if (TRACE) trace("pg3b", "Sent: " + new String(buffer, 0, length - 1));
@@ -116,7 +135,7 @@ public class PG3B {
 			String response = input.readLine();
 			if (response == null) throw new IOException("Connection was closed.");
 			if (TRACE) trace("pg3b", "Rcvd: " + response);
-			if (response.startsWith(responsePrefix)) return response;
+			if (response.startsWith(responsePrefix)) return hexStringToBytes(response, 10);
 		}
 	}
 
@@ -137,8 +156,7 @@ public class PG3B {
 		}
 		buffer[c++] = '\r';
 		sequenceNumber++;
-		String response = primitive(c);
-		return hexStringToBytes(response, 10);
+		return primitive(c);
 	}
 
 	synchronized byte[] command (Command command, int commandArgument) throws IOException {
@@ -158,8 +176,7 @@ public class PG3B {
 		buffer[12] = hex[b % 16];
 		buffer[13] = '\r';
 		sequenceNumber++;
-		String response = primitive(14);
-		return hexStringToBytes(response, 10);
+		return primitive(14);
 	}
 
 	private byte[] hexStringToBytes (String s, int start) {
@@ -168,7 +185,7 @@ public class PG3B {
 		if (byteCount == 0) return null;
 		byte[] bytes = new byte[byteCount];
 		for (int i = start, ii = 0; i < length; i += 2, ii++)
-			bytes[ii] = (byte)((Character.digit(s.charAt(i), 16) << 4) + Character.digit(s.charAt(i + 1), 16));
+			bytes[ii] = (byte)((charToDigit[s.charAt(i)] << 4) + charToDigit[s.charAt(i)]);
 		return bytes;
 	}
 
@@ -356,6 +373,13 @@ public class PG3B {
 	 */
 	public float get (String target) {
 		return get(getTarget(target));
+	}
+
+	/**
+	 * When disabled, the axis calibration tables in the PG3B's config are ignored.
+	 */
+	public void setCalibrationEnabled (boolean enabled) throws IOException {
+		command(Command.setCalibrationEnabled, enabled ? 1 : 0);
 	}
 
 	/**
