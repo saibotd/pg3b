@@ -35,11 +35,11 @@ public class PG3BAction implements Action {
 	}
 
 	public boolean isValid () {
-		return PG3BUI.instance.getPg3b() != null;
+		return PG3BUI.instance.getPG3B() != null;
 	}
 
 	public void execute (Config config, Trigger trigger, Object payload) {
-		PG3B pg3b = PG3BUI.instance.getPg3b();
+		PG3B pg3b = PG3BUI.instance.getPG3B();
 		if (pg3b == null) return;
 		float state = payload instanceof Float ? (Float)payload : 1;
 		try {

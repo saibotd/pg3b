@@ -108,8 +108,7 @@ public class Config extends Editable {
 			} finally {
 				EventQueue.invokeLater(new Runnable() {
 					public void run () {
-						JToggleButton captureButton = PG3BUI.instance.getCaptureButton();
-						if (captureButton.isSelected()) captureButton.doClick();
+						PG3BUI.instance.setCapture(false);
 						if (hasError) PG3BUI.instance.getStatusBar().setMessage("Error during config processing.");
 					}
 				});

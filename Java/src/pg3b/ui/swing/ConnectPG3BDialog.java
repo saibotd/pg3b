@@ -71,7 +71,7 @@ public class ConnectPG3BDialog extends JDialog {
 						setMessage("Opening PG3B...");
 						PG3B pg3b = new PG3B((String)portList.getSelectedValue());
 						pg3b.reset();
-						owner.setPg3b(pg3b);
+						owner.setPG3B(pg3b);
 					}
 
 					public void complete () {

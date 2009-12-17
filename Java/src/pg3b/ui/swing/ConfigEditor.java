@@ -60,9 +60,8 @@ public class ConfigEditor extends EditorPanel<Config> {
 
 	protected void updateFieldsFromItem (Config config) {
 		triggersTableModel.setRowCount(0);
-		JToggleButton captureButton = owner.getCaptureButton();
 		if (config == null) {
-			if (captureButton.isSelected()) captureButton.doClick();
+			owner.setCapture(false);
 		} else {
 			for (Trigger trigger : config.getTriggers())
 				triggersTableModel.addRow(new Object[] {trigger, trigger.getAction(), trigger.getDescription()});
@@ -73,7 +72,7 @@ public class ConfigEditor extends EditorPanel<Config> {
 				Settings.save();
 			}
 		}
-		captureButton.setEnabled(config != null);
+		owner.getCaptureButton().setEnabled(config != null);
 	}
 
 	protected void clearItemSpecificState () {

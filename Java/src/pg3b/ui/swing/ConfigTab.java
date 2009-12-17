@@ -26,17 +26,16 @@ public class ConfigTab extends JPanel {
 	public void showConfigEditor () {
 		JToggleButton captureButton = owner.getCaptureButton();
 		captureButton.setEnabled(true);
-		if (wasCaptureButtonDown != null && wasCaptureButtonDown) captureButton.doClick();
+		if (wasCaptureButtonDown != null && wasCaptureButtonDown) owner.setCapture(true);
 		wasCaptureButtonDown = null;
 
 		cardLayout.show(this, "config");
 	}
 
 	public void showInputTriggerPanel (Config config, InputTrigger input) {
-		JToggleButton captureButton = owner.getCaptureButton();
-		wasCaptureButtonDown = captureButton.isSelected();
-		if (wasCaptureButtonDown) captureButton.doClick();
-		captureButton.setEnabled(false);
+		wasCaptureButtonDown = owner.getCaptureButton().isSelected();
+		owner.setCapture(false);
+		 owner.getCaptureButton().setEnabled(false);
 
 		inputTriggerPanel.setTrigger(config, input);
 		cardLayout.show(this, "inputTrigger");

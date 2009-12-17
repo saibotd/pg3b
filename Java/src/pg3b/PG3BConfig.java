@@ -76,8 +76,8 @@ public class PG3BConfig {
 					+ Integer.toHexString(data[INDEX_CRC] & 0xff));
 			}
 		} catch (IOException ex) {
-			if (WARN) warn("Invalid config, creating new config.", ex);
-			// BOZO - Should we ever be resetting the config to defaults through software?
+			// The device really shouldn't ever return an invalid config page.
+			if (WARN) warn("Invalid config, resetting config to defaults.", ex);
 			data = new byte[32];
 			System.arraycopy(MAGIC_NUMBER.getBytes("ASCII"), 0, data, INDEX_MAGIC, MAGIC_NUMBER.length());
 			data[INDEX_SIZE] = (byte)data.length;

@@ -51,6 +51,7 @@ import pg3b.AxisCalibration;
 import pg3b.ControllerType;
 import pg3b.Diagnostics;
 import pg3b.PG3B;
+import pg3b.PG3BConfig;
 import pg3b.Target;
 import pg3b.input.Input;
 import pg3b.input.Keyboard;
@@ -130,9 +131,9 @@ public class PG3BUI extends JFrame {
 							public void load () throws Exception {
 								setMessage("Opening PG3B...");
 								try {
-									setPg3b(new PG3B(settings.pg3bPort));
+									setPG3B(new PG3B(settings.pg3bPort));
 								} catch (IOException ex) {
-									setPg3b(null);
+									setPG3B(null);
 									if (DEBUG) debug("Unable to reconnect to PG3B.", ex);
 								}
 							}
@@ -153,7 +154,7 @@ public class PG3BUI extends JFrame {
 		}.start();
 	}
 
-	public void setPg3b (PG3B newPg3b) {
+	public void setPG3B (PG3B newPg3b) {
 		if (pg3b != null) pg3b.close();
 
 		pg3b = newPg3b;
@@ -175,7 +176,7 @@ public class PG3BUI extends JFrame {
 		Settings.save();
 	}
 
-	public PG3B getPg3b () {
+	public PG3B getPG3B () {
 		return pg3b;
 	}
 
@@ -211,10 +212,6 @@ public class PG3BUI extends JFrame {
 		return configTab;
 	}
 
-	public JToggleButton getCaptureButton () {
-		return captureButton;
-	}
-
 	public ScriptEditor getScriptEditor () {
 		return scriptEditor;
 	}
@@ -223,10 +220,14 @@ public class PG3BUI extends JFrame {
 		return statusBar;
 	}
 
+	public JToggleButton getCaptureButton () {
+		return captureButton;
+	}
+
 	private void initializeEvents () {
 		pg3bConnectMenuItem.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
-				setPg3b(null);
+				setPG3B(null);
 				new ConnectPG3BDialog(PG3BUI.this).setVisible(true);
 			}
 		});
@@ -264,7 +265,7 @@ public class PG3BUI extends JFrame {
 
 		captureButton.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
-				capture(captureButton.isSelected() ? configTab.getConfigEditor().getSelectedItem() : null);
+				setCapture(captureButton.isSelected());
 			}
 		});
 		statusBar.setConfigClickedListener(new Runnable() {
@@ -286,13 +287,7 @@ public class PG3BUI extends JFrame {
 		KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(new KeyEventDispatcher() {
 			public boolean dispatchKeyEvent (KeyEvent event) {
 				if (disableKeyboard) {
-					if (event.isControlDown() && event.getKeyCode() == KeyEvent.VK_F4) {
-						EventQueue.invokeLater(new Runnable() {
-							public void run () {
-								captureButton.doClick();
-							}
-						});
-					}
+					if (event.isControlDown() && event.getKeyCode() == KeyEvent.VK_F4) setCapture(false);
 					event.consume();
 				}
 				return false;
@@ -302,19 +297,20 @@ public class PG3BUI extends JFrame {
 		roundTripMenuItem.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
 				new LoaderDialog("Round trip diagnostic") {
+					private Map<Target, Boolean> status;
+
 					public void load () throws Exception {
 						controllerPanel.setStatus(null);
-						final Map<Target, Boolean> status = Diagnostics.roundTrip(pg3b, controller, this);
+						status = Diagnostics.roundTrip(pg3b, controller, this);
 						controllerPanel.setStatus(status);
 						clearMenuItem.setEnabled(true);
-						EventQueue.invokeLater(new Runnable() {
-							public void run () {
-								if (status.values().contains(Boolean.FALSE))
-									statusBar.setMessage("Round trip failed.");
-								else
-									statusBar.setMessage("Round trip successful.");
-							}
-						});
+					}
+
+					public void complete () {
+						if (status.values().contains(Boolean.FALSE))
+							statusBar.setMessage("Round trip unsuccessful.");
+						else
+							statusBar.setMessage("Round trip successful.");
 					}
 				}.start("RoundTripTest");
 			}
@@ -340,21 +336,20 @@ public class PG3BUI extends JFrame {
 						for (AxisCalibration calibration : results)
 							if (INFO) info(calibration.getAxis() + " chart:\n" + calibration.getChartURL());
 
-						for (AxisCalibration calibration : results)
-							pg3b.getConfig().setCalibrationTable(calibration.getAxis(), calibration.getTable());
-
-						EventQueue.invokeLater(new Runnable() {
-							public void run () {
-								if (results.size() == Axis.values().length) statusBar.setMessage("Calibration successful.");
-							}
-						});
+						PG3BConfig config = pg3b.getConfig();
+						for (AxisCalibration calibration : results) {
+							config.setCalibrationTable(calibration.getAxis(), calibration.getTable());
+							config.setCalibrated(calibration.getAxis(), true);
+						}
+						config.save();
 					}
 
 					public void complete () {
 						if (failed() || results.size() != Axis.values().length) {
-							statusBar.setMessage("Calibration failed.");
+							statusBar.setMessage("Calibration unsuccessful.");
 							return;
 						}
+						statusBar.setMessage("Calibration successful.");
 						CalibrationResultsFrame frame = new CalibrationResultsFrame(results);
 						frame.setLocationRelativeTo(PG3BUI.this);
 						frame.setVisible(true);
@@ -389,25 +384,30 @@ public class PG3BUI extends JFrame {
 		});
 	}
 
-	private void capture (Config config) {
+	public void setCapture (boolean enabled) {
+		captureButton.setSelected(enabled);
+		if (enabled && activeConfig != null) return;
+		if (!enabled && activeConfig == null) return;
+
+		if (activeConfig != null) activeConfig.setActive(false);
+
 		try {
 			if (pg3b != null) pg3b.reset();
 		} catch (IOException ex) {
 			if (WARN) warn("Unable to reset PG3B.", ex);
 		}
 
-		if (activeConfig != null) activeConfig.setActive(false);
-		activeConfig = config;
-		statusBar.setConfig(config);
+		activeConfig = enabled ? configTab.getConfigEditor().getSelectedItem() : null;
+		statusBar.setConfig(activeConfig);
 
-		if (config == null) {
+		if (activeConfig == null) {
 			getGlassPane().setVisible(false);
 			disableKeyboard = false;
 			Mouse.instance.release();
 			return;
 		}
 
-		config.setActive(true);
+		activeConfig.setActive(true);
 
 		// Disable mouse and/or keyboard.
 		for (Trigger trigger : activeConfig.getTriggers()) {

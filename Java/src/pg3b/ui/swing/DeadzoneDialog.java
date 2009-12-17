@@ -15,17 +15,17 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.JSpinner;
+import javax.swing.SpinnerNumberModel;
 
 public class DeadzoneDialog extends JFrame {
-	private JPanel panel;
-	private JPanel panel2;
-	private JPanel xAxisPanel;
-	private JLabel iconLabel;
-	private JLabel jLabel1;
-	private JLabel headerLabel;
+	private JRadioButton circleRadio, squareRadio;
+	private JSpinner xSpinner, ySpinner;
+	private JPanel xAxisPanel, yAxisPanel;
+	private JLabel titleLabel, messageLabel, iconLabel;
 	private JButton cancelButton;
-	private JPanel jPanel1;
-	private JPanel panel3;
+	private CardLayout cardLayout;
 
 	public DeadzoneDialog () {
 		super("Deadzone");
@@ -35,30 +35,25 @@ public class DeadzoneDialog extends JFrame {
 
 	private void initializeLayout () {
 		setSize(new Dimension(566, 376));
-		GridBagLayout thisLayout = new GridBagLayout();
-		getContentPane().setLayout(thisLayout);
+		getContentPane().setLayout(new GridBagLayout());
 		{
-			panel = new JPanel();
-			GridBagLayout panelLayout = new GridBagLayout();
+			JPanel panel = new JPanel(new GridBagLayout());
 			getContentPane().add(
 				panel,
 				new GridBagConstraints(0, 0, 1, 1, 1.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0,
 					0), 0, 0));
-			panel.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new java.awt.Color(0, 0, 0)));
+			panel.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0, 0, 0)));
 			panel.setBackground(Color.white);
-			panel.setLayout(panelLayout);
 			{
-				headerLabel = new JLabel();
-				panel.add(headerLabel, new GridBagConstraints(0, 1, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
-					new Insets(0, 6, 6, 0), 0, 0));
-				headerLabel.setText("Wizard step text.");
+				messageLabel = new JLabel("Wizard step text.");
+				panel.add(messageLabel, new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, GridBagConstraints.WEST,
+					GridBagConstraints.NONE, new Insets(0, 6, 6, 0), 0, 0));
 			}
 			{
-				jLabel1 = new JLabel();
-				panel.add(jLabel1, new GridBagConstraints(0, 0, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
+				titleLabel = new JLabel("Step Title");
+				panel.add(titleLabel, new GridBagConstraints(0, 0, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
 					new Insets(6, 6, 6, 0), 0, 0));
-				jLabel1.setText("Step Title");
-				jLabel1.setFont(jLabel1.getFont().deriveFont(Font.BOLD));
+				titleLabel.setFont(titleLabel.getFont().deriveFont(Font.BOLD));
 			}
 			{
 				iconLabel = new JLabel("icon");
@@ -67,38 +62,78 @@ public class DeadzoneDialog extends JFrame {
 			}
 		}
 		{
-			panel2 = new JPanel();
-			CardLayout panel2Layout = new CardLayout();
-			panel2.setLayout(panel2Layout);
+			cardLayout = new CardLayout();
+			JPanel panel = new JPanel(cardLayout);
 			getContentPane().add(
-				panel2,
+				panel,
 				new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0,
 					0), 0, 0));
 			{
-				xAxisPanel = new JPanel();
-				panel2.add(xAxisPanel, "jPanel2");
+				JPanel shapePanel = new JPanel(new GridBagLayout());
+				panel.add(shapePanel, "shape");
+				{
+					JLabel label = new JLabel("Deadzone shape:");
+					shapePanel.add(label, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER,
+						GridBagConstraints.NONE, new Insets(6, 6, 6, 6), 0, 0));
+				}
+				{
+					circleRadio = new JRadioButton("Circle");
+					shapePanel.add(circleRadio, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER,
+						GridBagConstraints.NONE, new Insets(6, 0, 6, 6), 0, 0));
+				}
+				{
+					squareRadio = new JRadioButton("Square");
+					shapePanel.add(squareRadio, new GridBagConstraints(2, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER,
+						GridBagConstraints.NONE, new Insets(6, 0, 6, 6), 0, 0));
+				}
+			}
+			{
+				xAxisPanel = new JPanel(new GridBagLayout());
+				panel.add(xAxisPanel, "xaxis");
+				{
+					JLabel label = new JLabel("X deadzone:");
+					xAxisPanel.add(label, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.EAST,
+						GridBagConstraints.NONE, new Insets(6, 6, 6, 0), 0, 0));
+				}
+				{
+					xSpinner = new JSpinner();
+					xAxisPanel.add(xSpinner, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
+						GridBagConstraints.NONE, new Insets(6, 6, 6, 6), 0, 0));
+					SpinnerNumberModel model = new SpinnerNumberModel(0, 0, 255, 1);
+					xSpinner.setModel(model);
+				}
+			}
+			{
+				yAxisPanel = new JPanel(new GridBagLayout());
+				panel.add(yAxisPanel, "yaxis");
+				{
+					JLabel label = new JLabel("X deadzone:");
+					yAxisPanel.add(label, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.EAST,
+						GridBagConstraints.NONE, new Insets(6, 6, 6, 0), 0, 0));
+				}
+				{
+					ySpinner = new JSpinner();
+					yAxisPanel.add(ySpinner, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
+						GridBagConstraints.NONE, new Insets(6, 6, 6, 6), 0, 0));
+					SpinnerNumberModel model = new SpinnerNumberModel(0, 0, 255, 1);
+					xSpinner.setModel(model);
+				}
 			}
 		}
 		{
-			panel3 = new JPanel();
-			GridBagLayout panel3Layout = new GridBagLayout();
+			JPanel panel = new JPanel(new GridBagLayout());
 			getContentPane().add(
-				panel3,
+				panel,
 				new GridBagConstraints(0, 2, 1, 1, 1.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0,
 					0), 0, 0));
-			panel3.setLayout(panel3Layout);
-			panel3.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, new java.awt.Color(0, 0, 0)));
+			panel.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, new Color(0, 0, 0)));
 			{
-				jPanel1 = new JPanel();
-				FlowLayout jPanel1Layout = new FlowLayout();
-				jPanel1Layout.setVgap(6);
-				jPanel1Layout.setHgap(6);
-				jPanel1.setLayout(jPanel1Layout);
-				panel3.add(jPanel1, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
-					new Insets(0, 0, 0, 0), 0, 0));
+				JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 6, 6));
+				panel.add(buttonPanel, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER,
+					GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
 				{
 					cancelButton = new JButton();
-					jPanel1.add(cancelButton);
+					buttonPanel.add(cancelButton);
 					cancelButton.setText("Cancel");
 				}
 			}
