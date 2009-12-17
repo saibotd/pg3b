@@ -40,7 +40,8 @@
 #ifndef __SYSTEM_H__
 #define __SYSTEM_H__
  
-#define EEPROM_CALIBRATION_SIZE     256
+#define EEPROM_CALIBRATION_SIZE     (1<<EEPROM_CALIBRATION_BITS)
+#define EEPROM_CALIBRATION_BITS     8
 #define EEPROM_PAGE_BITS            5
 #define EEPROM_PAGE_SIZE            (1<<EEPROM_PAGE_BITS)
 #define EEPROM_MAGIC_SIZE           4
@@ -62,6 +63,8 @@ extern void SYS_EnableLogging( uint8_t value );
 extern void SYS_ReadPage( uint8_t page );
 extern void SYS_WritePage( uint8_t page, uint8_t *buffer );
 extern uint8_t SYS_IsLoggingEnabled( void );
+extern uint8_t SYS_CalibratedValue( uint8_t xboxTarget, uint8_t rawValue );
+extern uint8_t SYS_ControllerModel( void );
 extern uint8_t SYS_LogByte( uint8_t prefix, uint8_t data );
 extern uint16_t SYS_LogWord( uint8_t prefix, uint16_t data );
 

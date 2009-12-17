@@ -38,7 +38,6 @@
 #include <avr/io.h>
 #include <avr/pgmspace.h>
 #include "EventAction.h"
-#include "Calibration.h"
 #include "XBoxDriver.h"
 #include "SerialPeripheral.h"
 #include "System.h"
@@ -48,7 +47,7 @@
  * Local Variables
  ********************************************************************************
  */
-static uint8_t calibrated = 0;
+static uint8_t isCalibrated = 0;
 static uint8_t isWireless = 0;
 
 // Mapping from the button enumeration to physical hardware 
@@ -105,6 +104,9 @@ void XB_Init( void )
     // Enable Output
     DDRD |= ( _BV(PD0) | _BV(PD1) | _BV(PD2) | _BV(PD3) | _BV(PD4) | _BV(PD5) | _BV(PD6) | _BV(PD7) );
     DDRC |= ( _BV(PC0) | _BV(PC1) | _BV(PC2) | _BV(PC3) | _BV(PC4) | _BV(PC5) | _BV(PC6) | _BV(PC7) );
+
+    // Get Controller Type
+    isWireless = SYS_ControllerModel( ) > WiredCommonLineV1;
 
     // All buttons released
     XB_ResetButtons( );
@@ -195,33 +197,15 @@ void XB_ControlAction( uint16_t event, uint16_t action )
  * XB_CalibrateWiper
  ********************************************************************************
  */
-static uint8_t XB_CalibrateWiper( uint8_t target, uint8_t value )
+static uint8_t XB_CalibrateWiper( uint8_t target, uint8_t rawValue )
 {
     if( isWireless && ( target == LeftTrigger || target == RightTrigger ) )
-        value = ~value;
+        rawValue = ~rawValue;
 
-    if( calibrated == 0 )
-    {
-        return value;
-    }
+    if( isCalibrated == 0 )
+        return rawValue;
 
-    switch( target )
-    {
-        case LeftTrigger:
-            return pgm_read_byte( &analog_LT[ value ] );
-        case RightTrigger:
-            return pgm_read_byte( &analog_RT[ value ] );
-        case RightStickX:
-            return pgm_read_byte( &analog_RSX[ value ] );
-        case RightStickY:
-            return pgm_read_byte( &analog_RSY[ value ] );
-        case LeftStickX:
-            return pgm_read_byte( &analog_LSX[ value ] );
-        case LeftStickY:
-            return pgm_read_byte( &analog_LSY[ value ] );
-    }
-
-    return value;
+    return SYS_CalibratedValue( target, rawValue );
 }
 
 /*
@@ -265,7 +249,7 @@ static void XB_ResetControls( void )
  */
 void XB_EnableCalibration( uint8_t state )
 {
-    calibrated = state > 0;
+    isCalibrated = state > 0;
 }
 
 /*

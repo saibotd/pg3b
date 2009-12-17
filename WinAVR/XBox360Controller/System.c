@@ -113,6 +113,29 @@ void SYS_Init( void )
 
 /*
  ****************************************************************************************************
+ * SYS_ControllerModel
+ ****************************************************************************************************
+ */
+uint8_t SYS_ControllerModel( void )
+{
+    return config.model;
+}
+
+/*
+ ****************************************************************************************************
+ * SYS_CalibratedValue
+ ****************************************************************************************************
+ */
+uint8_t SYS_CalibratedValue( uint8_t xboxTarget, uint8_t rawValue )
+{
+    if( config.calibration & ( 1 << xboxTarget ) )
+        return eeprom_read_byte( (void *)( ( xboxTarget << EEPROM_CALIBRATION_BITS ) + rawValue ) );
+
+    return rawValue;
+}
+
+/*
+ ****************************************************************************************************
  * SYS_LogByte
  ****************************************************************************************************
  */
@@ -179,7 +202,7 @@ void SYS_ReadPage( uint8_t page )
  */
 void SYS_WritePage( uint8_t page, uint8_t *buffer )
 {
-    static char error[] = "CRC FAILED";
+//  static char error[] = "CRC FAILED";
     uint8_t crc8 = 0xff;
     
     for( uint16_t address = (uint16_t)page << 5; address < ( (uint16_t)page << 5 ) + EEPROM_PAGE_SIZE; address++, buffer += 2 )
@@ -188,8 +211,8 @@ void SYS_WritePage( uint8_t page, uint8_t *buffer )
         crc8 = pgm_read_byte( &crctable[crc8 ^ byte] );
         eeprom_write_byte( (void *)address, byte );
     }
-//    if( crc8 - HexToUInt8( buffer ) > 0 )
-//        usb_serial_write( (void *)error, sizeof( error ) - 1 );
+//  if( crc8 - HexToUInt8( buffer ) > 0 )
+//      usb_serial_write( (void *)error, sizeof( error ) - 1 );
 }
 
 /*
