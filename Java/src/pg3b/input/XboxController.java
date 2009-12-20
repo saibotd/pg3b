@@ -110,7 +110,7 @@ public abstract class XboxController implements InputDevice {
 	 * than Xbox 360 controllers.
 	 */
 	static public List<XboxController> getAll () {
-		if (false && System.getProperty("os.name").toLowerCase().contains("windows")) {
+		if (System.getProperty("os.name").toLowerCase().contains("windows")) {
 			ArrayList<XboxController> list = new ArrayList();
 			for (XInputXboxController controller : XInputXboxController.getXInputControllers())
 				list.add(controller);
