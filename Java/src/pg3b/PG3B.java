@@ -38,7 +38,7 @@ public class PG3B {
 	}
 
 	static private final char[] hex = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
-	static private final int[] charToDigit = new int[102];
+	static private final int[] charToDigit = new int[103];
 	static {
 		charToDigit['0'] = 0;
 		charToDigit['1'] = 1;
@@ -185,7 +185,7 @@ public class PG3B {
 		if (byteCount == 0) return null;
 		byte[] bytes = new byte[byteCount];
 		for (int i = start, ii = 0; i < length; i += 2, ii++)
-			bytes[ii] = (byte)((charToDigit[s.charAt(i)] << 4) + charToDigit[s.charAt(i)]);
+			bytes[ii] = (byte)((charToDigit[s.charAt(i)] << 4) + charToDigit[s.charAt(i + 1)]);
 		return bytes;
 	}
 
@@ -385,7 +385,7 @@ public class PG3B {
 	/**
 	 * Returns the configuration for this PG3B.
 	 */
-	public PG3BConfig getConfig () throws IOException {
+	public PG3BConfig getConfig () {
 		return config;
 	}
 

@@ -26,7 +26,6 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowFocusListener;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 
 import javax.swing.BorderFactory;
@@ -46,8 +45,6 @@ import javax.swing.ToolTipManager;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 
-import pg3b.Axis;
-import pg3b.AxisCalibration;
 import pg3b.ControllerType;
 import pg3b.Diagnostics;
 import pg3b.PG3B;
@@ -325,47 +322,20 @@ public class PG3BUI extends JFrame {
 
 		calibrateMenuItem.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
-				new LoaderDialog("Axes Calibration") {
-					List<AxisCalibration> results;
-
-					public void load () throws Exception {
-						CalibrationResultsFrame.close();
-
-						results = Diagnostics.calibrate(pg3b, controller, this);
-
-						for (AxisCalibration calibration : results)
-							if (INFO) info(calibration.getAxis() + " chart:\n" + calibration.getChartURL());
-
-						PG3BConfig config = pg3b.getConfig();
-						for (AxisCalibration calibration : results) {
-							config.setCalibrationTable(calibration.getAxis(), calibration.getTable());
-							config.setCalibrated(calibration.getAxis(), true);
-						}
-						config.save();
-					}
-
-					public void complete () {
-						if (failed() || results.size() != Axis.values().length) {
-							statusBar.setMessage("Calibration unsuccessful.");
-							return;
-						}
-						statusBar.setMessage("Calibration successful.");
-						CalibrationResultsFrame frame = new CalibrationResultsFrame(results);
-						frame.setLocationRelativeTo(PG3BUI.this);
-						frame.setVisible(true);
-					}
-				}.start("Calibration");
+				new CalibrationDialog(PG3BUI.this, pg3b, controller);
 			}
 		});
 
 		setControllerTypeMenuItem.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
-				int result = JOptionPane.showOptionDialog(PG3BUI.this, "Select the type of controller to which the PG3B is wired.",
-					"Set PG3B Controller Type", JOptionPane.OK_OPTION, JOptionPane.PLAIN_MESSAGE, null, new Object[] {"Wired",
-						"Wireless"}, "Wired");
+				PG3BConfig config = pg3b.getConfig();
+				int result = JOptionPane.showOptionDialog(PG3BUI.this, "Select the type of controller to which the PG3B is wired:",
+					"PG3B Controller Type", JOptionPane.OK_OPTION, JOptionPane.PLAIN_MESSAGE, null, ControllerType.values(), config
+						.getControllerType());
 				if (result == JOptionPane.CLOSED_OPTION) return;
 				try {
-					pg3b.getConfig().setControllerType(result == 0 ? ControllerType.wired : ControllerType.wireless);
+					config.setControllerType(ControllerType.values()[result]);
+					config.save();
 				} catch (IOException ex) {
 					if (Log.ERROR) error("Error setting PG3B controller type.", ex);
 				}
@@ -431,7 +401,6 @@ public class PG3BUI extends JFrame {
 	}
 
 	void exit () {
-		CalibrationResultsFrame.close();
 		if (pg3b != null) pg3b.close();
 		dispose();
 		System.exit(0);
@@ -481,7 +450,7 @@ public class PG3BUI extends JFrame {
 				JMenu menu = new JMenu("Setup");
 				menuBar.add(menu);
 				{
-					setControllerTypeMenuItem = new JMenuItem("Set PG3B Controller Type...");
+					setControllerTypeMenuItem = new JMenuItem("PG3B Controller Type...");
 					menu.add(setControllerTypeMenuItem);
 				}
 				{

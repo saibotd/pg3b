@@ -180,22 +180,21 @@ public class Mouse implements InputDevice {
 			if ("x".equals(axis)) {
 				if (!trigger.checkModifiers()) return null;
 				float state = instance.currentDeltaX;
-				if (state == lastState) return null;
+				if (state == 0 && lastState == 0) return null;
 				lastState = state;
 				return state;
 			}
 			if ("y".equals(axis)) {
 				if (!trigger.checkModifiers()) return null;
 				float state = instance.currentDeltaY;
-				if (state == lastState) return null;
+				if (state == 0 && lastState == 0) return null;
 				lastState = state;
 				return state;
 			}
 			if (mouseWheel) {
 				if (!trigger.checkModifiers()) return null;
-				if (lastState == instance.lastMouseWheel) return null;
-				lastState = instance.lastMouseWheel;
-				return lastState;
+				if (instance.lastMouseWheel == 0) return null;
+				return (float)instance.lastMouseWheel;
 			}
 			return null;
 		}

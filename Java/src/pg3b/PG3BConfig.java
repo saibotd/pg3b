@@ -81,7 +81,6 @@ public class PG3BConfig {
 			data = new byte[32];
 			System.arraycopy(MAGIC_NUMBER.getBytes("ASCII"), 0, data, INDEX_MAGIC, MAGIC_NUMBER.length());
 			data[INDEX_SIZE] = (byte)data.length;
-			data[INDEX_CRC] = calculateCRC(data, INDEX_CRC + 1, data[INDEX_SIZE] - 1);
 			save();
 		}
 	}
@@ -197,6 +196,7 @@ public class PG3BConfig {
 	}
 
 	public void save () throws IOException {
+		data[INDEX_CRC] = calculateCRC(data, INDEX_CRC + 1, data[INDEX_SIZE] - 1);
 		writePage(CONFIG_PAGE, data);
 		if (DEBUG) debug("Saved config.");
 	}

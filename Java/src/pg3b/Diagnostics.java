@@ -4,9 +4,7 @@ package pg3b;
 import static com.esotericsoftware.minlog.Log.*;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.omg.CORBA.TIMEOUT;
@@ -27,46 +25,24 @@ public class Diagnostics {
 	static public int TIMEOUT = 250;
 
 	/**
-	 * Calibrates all PG3B axes.
+	 * Reads all the values for a specific PG3B axis.
 	 */
-	static public List<AxisCalibration> calibrate (final PG3B pg3b, final XboxController controller, Loader loader) {
-		ArrayList<AxisCalibration> results = new ArrayList();
-		int i = 0;
-		Axis[] values = Axis.values();
-		for (Axis axis : values) {
-			loader.setMessage("Calibrating " + axis + "...");
-			loader.throwCancelled();
-			try {
-				AxisCalibration calibration = calibrate(pg3b, controller, axis);
-				if (calibration == null) {
-					loader.cancel();
-					loader.throwCancelled();
-				}
-				results.add(calibration);
-			} catch (IOException ex) {
-				if (Log.ERROR) error("Error calibrating axis: " + axis, ex);
-			}
-			loader.setPercentageComplete(++i / (float)values.length);
-		}
-		return results;
-	}
-
-	/**
-	 * Calibrates a specific PG3B axis.
-	 */
-	static public AxisCalibration calibrate (PG3B pg3b, XboxController controller, Axis axis) throws IOException {
+	static public float[] getRawValues (Axis axis, PG3B pg3b, XboxController controller) throws IOException {
 		if (axis == null) throw new IllegalArgumentException("axis cannot be null.");
+		if (pg3b == null) throw new IllegalArgumentException("pg3b cannot be null.");
 		if (controller == null) throw new IllegalArgumentException("controller cannot be null.");
 
-		boolean isTrigger = axis == Axis.leftTrigger || axis == Axis.rightTrigger;
-		if (isTrigger) {
-			// The triggers are mapped to the same Z axis by the (crappy) MS driver and interfere with each other if not zero.
-			pg3b.set(Axis.leftTrigger, 0);
-			pg3b.set(Axis.rightTrigger, 0);
-		}
+		pg3b.setCalibrationEnabled(false);
 
-		float[] actualValues = new float[256];
 		try {
+			boolean isTrigger = axis == Axis.leftTrigger || axis == Axis.rightTrigger;
+			if (isTrigger) {
+				// The triggers are mapped to the same Z axis if DirectInput is being used and interfere with each other if not zero.
+				pg3b.set(Axis.leftTrigger, 0);
+				pg3b.set(Axis.rightTrigger, 0);
+			}
+
+			float[] actualValues = new float[256];
 			for (int wiper = 0; wiper <= 255; wiper++) {
 				float deflection = isTrigger ? wiper / 255f : wiper / 255f * 2 - 1;
 				pg3b.set(axis, deflection);
@@ -77,36 +53,49 @@ public class Diagnostics {
 					return null;
 				}
 				actualValues[wiper] = controller.get(axis);
+				if (axis == Axis.leftTrigger)
+					System.out.println(wiper + ": set " + deflection + " == actual " + actualValues[wiper]);
 			}
+			return actualValues;
 		} finally {
 			pg3b.set(axis, 0);
+			pg3b.setCalibrationEnabled(true);
 		}
+	}
+
+	/**
+	 * Returns the calibration table for the axis using the specified raw values.
+	 */
+	static public byte[] getCalibrationTable (Axis axis, float[] rawValues) {
+		if (axis == null) throw new IllegalArgumentException("axis cannot be null.");
+
+		boolean isTrigger = axis == Axis.leftTrigger || axis == Axis.rightTrigger;
 
 		byte[] calibrationTable = new byte[256];
-		int minusOneIndex = findClosestIndex(actualValues, -1);
-		int zeroIndex = findClosestIndex(actualValues, 0);
-		int plusOneIndex = findClosestIndex(actualValues, 1);
+		int minusOneIndex = findClosestIndex(rawValues, -1);
+		int zeroIndex = findClosestIndex(rawValues, 0);
+		int plusOneIndex = findClosestIndex(rawValues, 1);
 		for (int wiper = 0; wiper <= 255; wiper++) {
 			float deflection = isTrigger ? wiper / 255f : wiper / 255f * 2 - 1;
 			int match = zeroIndex;
 			for (int index = minusOneIndex; index <= plusOneIndex; index++)
-				if (Math.abs(actualValues[index] - deflection) < Math.abs(actualValues[match] - deflection)) match = index;
+				if (Math.abs(rawValues[index] - deflection) < Math.abs(rawValues[match] - deflection)) match = index;
 			calibrationTable[wiper] = (byte)match;
 		}
 		calibrationTable[0] = (byte)minusOneIndex;
 		calibrationTable[127] = (byte)zeroIndex;
 		calibrationTable[255] = (byte)plusOneIndex;
 
-		return new AxisCalibration(axis, calibrationTable, actualValues);
+		return calibrationTable;
 	}
 
-	static private int findClosestIndex (float[] actualValues, int target) {
+	static private int findClosestIndex (float[] rawValues, int target) {
 		// If target is negative, finds index of the last number closest to the target.
 		// Otherwise, finds index of the first number closest to the target.
 		int closestIndex = -1;
 		float closestToZero = Float.MAX_VALUE;
-		for (int i = 0; i < actualValues.length; i++) {
-			float absValue = Math.abs(actualValues[i] - target);
+		for (int i = 0; i < rawValues.length; i++) {
+			float absValue = Math.abs(rawValues[i] - target);
 			boolean isLess = target < 0 ? absValue <= closestToZero : absValue < closestToZero;
 			if (isLess) {
 				closestToZero = absValue;
@@ -116,8 +105,8 @@ public class Diagnostics {
 		if (target == 0) {
 			// If looking for zero, handle the closest value to zero appearing multiple times in a row.
 			int zeroCount = 0;
-			for (int i = closestIndex + 1; i < actualValues.length; i++) {
-				float absValue = Math.abs(actualValues[i]);
+			for (int i = closestIndex + 1; i < rawValues.length; i++) {
+				float absValue = Math.abs(rawValues[i]);
 				if (absValue == closestToZero)
 					zeroCount++;
 				else

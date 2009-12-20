@@ -89,7 +89,10 @@ public class InputTrigger extends Trigger {
 
 	public Object check () {
 		if (input == null) return null;
-		return input.getState(this);
+		Float state = input.getState(this);
+		if (state != null)
+			System.out.println(state);
+		return state;
 	}
 
 	public String toString () {

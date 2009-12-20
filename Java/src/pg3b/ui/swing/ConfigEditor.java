@@ -4,6 +4,7 @@ package pg3b.ui.swing;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
@@ -18,7 +19,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
-import javax.swing.JToggleButton;
 import javax.swing.ListSelectionModel;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
@@ -41,6 +41,10 @@ public class ConfigEditor extends EditorPanel<Config> {
 	private JTable triggersTable;
 	private DefaultTableModel triggersTableModel;
 	private JButton newTriggerButton, deleteTriggerButton, editTriggerButton;
+
+	private JButton deadzonesButton;
+
+	private PG3B pg3b;
 
 	public ConfigEditor (PG3BUI owner) {
 		super(owner, Config.class, new File("config"), ".config");
@@ -128,6 +132,12 @@ public class ConfigEditor extends EditorPanel<Config> {
 				editTriggerButton.doClick();
 			}
 		});
+
+		deadzonesButton.addActionListener(new ActionListener() {
+			public void actionPerformed (ActionEvent event) {
+				new DeadzoneDialog(owner, pg3b).setVisible(true);
+			}
+		});
 	}
 
 	private void initializeLayout () {
@@ -167,37 +177,53 @@ public class ConfigEditor extends EditorPanel<Config> {
 				});
 				triggersTable.setRowHeight(triggersTable.getRowHeight() + 9);
 				TableColumnModel columnModel = triggersTable.getColumnModel();
-				columnModel.getColumn(0).setPreferredWidth(450);
-				columnModel.getColumn(1).setPreferredWidth(310);
-				columnModel.getColumn(2).setPreferredWidth(240);
+				columnModel.getColumn(0).setPreferredWidth(340);
+				columnModel.getColumn(1).setPreferredWidth(340);
+				columnModel.getColumn(2).setPreferredWidth(320);
 			}
 		}
 		{
-			JPanel panel = new JPanel(new GridLayout(1, 1, 6, 6));
+			JPanel panel = new JPanel(new GridBagLayout());
 			getContentPanel().add(
 				panel,
-				new GridBagConstraints(0, 1, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE,
-					new Insets(6, 6, 6, 0), 0, 0));
+				new GridBagConstraints(0, 1, 1, 1, 1.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(6, 0, 6,
+					0), 0, 0));
 			{
-				deleteTriggerButton = new JButton("Delete");
-				panel.add(deleteTriggerButton);
+				deadzonesButton = new JButton("Deadzones");
+				panel.add(deadzonesButton, new GridBagConstraints(0, 0, 1, 1, 1.0, 0.0, GridBagConstraints.WEST,
+					GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
 			}
 			{
-				editTriggerButton = new JButton("Edit");
-				panel.add(editTriggerButton);
-				editTriggerButton.setEnabled(false);
-			}
-			{
-				newTriggerButton = new JButton("New");
-				panel.add(newTriggerButton);
+				JPanel rightPanel = new JPanel(new GridLayout(1, 1, 6, 6));
+				panel.add(rightPanel, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE,
+					new Insets(0, 0, 0, 0), 0, 0));
+				{
+					deleteTriggerButton = new JButton("Delete");
+					rightPanel.add(deleteTriggerButton);
+				}
+				{
+					editTriggerButton = new JButton("Edit");
+					rightPanel.add(editTriggerButton);
+					editTriggerButton.setEnabled(false);
+				}
+				{
+					newTriggerButton = new JButton("New");
+					rightPanel.add(newTriggerButton);
+				}
 			}
 		}
 
-		UI.enableWhenModelHasSelection(getSelectionModel(), triggersTable, newTriggerButton);
+		UI.enableWhenModelHasSelection(getSelectionModel(), new Runnable() {
+			public void run () {
+				deadzonesButton.setEnabled(pg3b != null && deadzonesButton.isEnabled());
+			}
+		}, triggersTable, newTriggerButton, deadzonesButton);
 		UI.enableWhenModelHasSelection(triggersTable.getSelectionModel(), deleteTriggerButton);
 	}
 
 	public void setPG3B (PG3B pg3b) {
+		this.pg3b = pg3b;
 		triggersTable.repaint();
+		deadzonesButton.setEnabled(pg3b != null && getSelectedItem() != null);
 	}
 }

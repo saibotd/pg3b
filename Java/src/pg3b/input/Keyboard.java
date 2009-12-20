@@ -112,6 +112,7 @@ public class Keyboard implements InputDevice {
 			float state = instance.isPressed(keyCode) ? 1 : 0;
 			if (state != 0 && !trigger.checkModifiers()) return null;
 			if (state == lastState) return null;
+			lastState = state;
 			return state;
 		}
 

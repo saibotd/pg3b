@@ -18,13 +18,20 @@ public class UI {
 	static public final boolean isWindows = System.getProperty("os.name").toLowerCase().contains("windows");
 
 	static public void enableWhenModelHasSelection (final ListSelectionModel selectionModel, final Component... components) {
+		enableWhenModelHasSelection(selectionModel, null, components);
+	}
+
+	static public void enableWhenModelHasSelection (final ListSelectionModel selectionModel, final Runnable runnable,
+		final Component... components) {
 		selectionModel.addListSelectionListener(new ListSelectionListener() {
 			public void valueChanged (ListSelectionEvent event) {
 				if (event.getValueIsAdjusting()) return;
 				setEnabled(selectionModel.getMinSelectionIndex() != -1, components);
+				if (runnable != null) runnable.run();
 			}
 		});
 		setEnabled(selectionModel.getMinSelectionIndex() != -1, components);
+		if (runnable != null) runnable.run();
 	}
 
 	static public void errorDialog (Component parent, String title, String message) {

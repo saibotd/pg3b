@@ -6,11 +6,17 @@ package pg3b;
  * various types of controllers.
  */
 public enum ControllerType {
-	wired(0), wireless(1);
+	wired(0, "Wired"), wireless(1, "Wireless");
 
 	byte code;
+	private final String friendlyName;
 
-	private ControllerType (int code) {
+	private ControllerType (int code, String friendlyName) {
+		this.friendlyName = friendlyName;
 		this.code = (byte)code;
+	}
+
+	public String toString () {
+		return friendlyName;
 	}
 }

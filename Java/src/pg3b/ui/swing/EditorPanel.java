@@ -297,7 +297,7 @@ public class EditorPanel<T extends Editable> extends JPanel {
 			scroll.setMaximumSize(new Dimension(150, 3));
 			scroll.setPreferredSize(new Dimension(150, 3));
 			add(scroll, new GridBagConstraints(0, 0, 1, 1, 0.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(
-				6, 6, 0, 6), 0, 0));
+				6, 6, 0, 12), 0, 0));
 			{
 				list = new JList();
 				scroll.setViewportView(list);
@@ -309,7 +309,7 @@ public class EditorPanel<T extends Editable> extends JPanel {
 		{
 			JPanel panel = new JPanel(new GridLayout(1, 1, 6, 6));
 			add(panel, new GridBagConstraints(0, 1, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(6,
-				6, 6, 6), 0, 0));
+				6, 6, 12), 0, 0));
 			{
 				deleteButton = new JButton("Delete");
 				panel.add(deleteButton);

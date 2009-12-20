@@ -1,6 +1,7 @@
 
 package pg3b.util;
 
+import java.awt.EventQueue;
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -22,13 +23,18 @@ public class TextComponentOutputStream extends OutputStream {
 		char c = (char)b;
 		buffer.append(c);
 		if (c != '\n') return;
-		Document document = textComponent.getDocument();
-		try {
-			document.insertString(document.getEndPosition().getOffset(), buffer.toString(), null);
-		} catch (BadLocationException ignored) {
-		}
-		if (scrollToBottom) textComponent.setCaretPosition(document.getLength());
+		final String value = buffer.toString();
 		buffer.setLength(0);
+		EventQueue.invokeLater(new Runnable() {
+			public void run () {
+				Document document = textComponent.getDocument();
+				try {
+					document.insertString(document.getEndPosition().getOffset(), value, null);
+				} catch (BadLocationException ignored) {
+				}
+				if (scrollToBottom) textComponent.setCaretPosition(document.getLength());
+			}
+		});
 	}
 
 	public void setScrollToBottom (boolean scrollToBottom) {
