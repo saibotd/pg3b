@@ -57,8 +57,6 @@ public class Diagnostics {
 					return null;
 				}
 				actualValues[wiper] = controller.get(axis);
-				if (axis == Axis.leftTrigger)
-					System.out.println(wiper + ": set " + deflection + " == actual " + actualValues[wiper]);
 			}
 			return actualValues;
 		} finally {
@@ -176,7 +174,7 @@ public class Diagnostics {
 			long startTime = System.currentTimeMillis();
 			while (controller.get(button) != pressed) {
 				if (System.currentTimeMillis() - startTime > TIMEOUT) {
-					if (WARN) warn("Timed out setting button: " + button);
+					if (WARN) warn("Round trip timed out: " + button + " (actual: " + !pressed + ", needed: " + pressed + ")");
 					return false;
 				}
 				Thread.yield();
@@ -199,7 +197,7 @@ public class Diagnostics {
 				float actualValue = controller.get(axis);
 				if (Math.abs(actualValue - value) < 0.05f) break;
 				if (System.currentTimeMillis() - startTime > TIMEOUT) {
-					if (WARN) warn("Timed out setting axis: " + axis + " (actual value: " + actualValue + ", needed: " + value + ")");
+					if (WARN) warn("Round trip timed out: " + axis + " (actual: " + actualValue + ", needed: " + value + ")");
 					return false;
 				}
 				Thread.yield();

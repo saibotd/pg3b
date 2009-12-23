@@ -76,6 +76,7 @@ public class PG3B {
 	private final float[] axisStates = new float[Axis.values().length];
 	private final char[] buffer = new char[256];
 	private final Deadzone[] deadzones = new Deadzone[Stick.values().length];
+	private boolean debug;
 
 	/**
 	 * Creates a new PG3B with a timeout of 300.
@@ -118,6 +119,9 @@ public class PG3B {
 			// For sending... 7: command code, 8: space, 9+: command arguments
 			// For receiving... 7, 8: OK
 
+			setDebugEnabled(false);
+			setCalibrationEnabled(true);
+
 			config = new PG3BConfig(this);
 		} catch (Exception ex) {
 			close();
@@ -128,7 +132,7 @@ public class PG3B {
 	private synchronized byte[] primitive (int length) throws IOException {
 		output.write(buffer, 0, length);
 		output.flush();
-		if (TRACE) trace("pg3b", "Sent: " + new String(buffer, 0, length - 1));
+		if (TRACE) trace("Sent: " + new String(buffer, 0, length - 1));
 
 		buffer[7] = 'O';
 		buffer[8] = 'K';
@@ -136,8 +140,27 @@ public class PG3B {
 		while (true) {
 			String response = input.readLine();
 			if (response == null) throw new IOException("Connection was closed.");
-			if (TRACE) trace("pg3b", "Rcvd: " + response);
-			if (response.startsWith(responsePrefix)) return hexStringToBytes(response, 10);
+			if (response.startsWith(responsePrefix)) {
+				if (debug) {
+					response = response.substring(9);
+					while (true) {
+						char c = response.length() == 0 ? '\n' : response.charAt(0);
+						if (c == '\n') {
+							if (TRACE) trace("Received: " + responsePrefix);
+							return new byte[0];
+						}
+						if (c == ' ') {
+							if (TRACE) trace("Received: " + responsePrefix + response);
+							return hexStringToBytes(response, 1);
+						}
+						if (TRACE) trace("Debug: " + response);
+						response = input.readLine();
+						if (response == null) throw new IOException("Connection was closed.");
+					}
+				}
+				if (TRACE) trace("Received: " + response);
+				return hexStringToBytes(response, 10);
+			}
 		}
 	}
 
@@ -161,7 +184,7 @@ public class PG3B {
 		return primitive(c);
 	}
 
-	synchronized byte[] command (Command command, int commandArgument) throws IOException {
+	synchronized byte[] commandWord (Command command, int commandArgument) throws IOException {
 		int b = (sequenceNumber >> 8) & 0xFF;
 		buffer[2] = hex[b / 16];
 		buffer[3] = hex[b % 16];
@@ -179,6 +202,23 @@ public class PG3B {
 		buffer[13] = '\r';
 		sequenceNumber++;
 		return primitive(14);
+	}
+
+	synchronized byte[] commandByte (Command command, int commandArgument) throws IOException {
+		int b = (sequenceNumber >> 8) & 0xFF;
+		buffer[2] = hex[b / 16];
+		buffer[3] = hex[b % 16];
+		b = sequenceNumber & 0xFF;
+		buffer[4] = hex[b / 16];
+		buffer[5] = hex[b % 16];
+		buffer[7] = command.code;
+		buffer[8] = ' ';
+		b = commandArgument & 0xFF;
+		buffer[9] = hex[b / 16];
+		buffer[10] = hex[b % 16];
+		buffer[11] = '\r';
+		sequenceNumber++;
+		return primitive(12);
 	}
 
 	private byte[] hexStringToBytes (String s, int start) {
@@ -205,7 +245,7 @@ public class PG3B {
 	 */
 	public boolean isConnected () {
 		try {
-			command(Command.setDebugMessagesEnabled, 0);
+			commandByte(Command.setDebugMessagesEnabled, debug ? 1 : 0);
 			return true;
 		} catch (IOException ignored) {
 			return false;
@@ -223,10 +263,10 @@ public class PG3B {
 		short actionKey = getActionKey(Device.xbox, (short)state);
 		short actionCode = getActionCode(actionKey, (short)button.ordinal());
 		synchronized (this) {
-			command(Command.action, actionCode);
+			commandWord(Command.action, actionCode);
 			buttonStates[button.ordinal()] = pressed;
 		}
-		if (DEBUG) debug("pg3b", "Button " + button + ": " + pressed);
+		if (DEBUG) debug(button + ": " + pressed);
 
 		Listener[] listeners = this.listeners.toArray();
 		for (int i = 0, n = listeners.length; i < n; i++)
@@ -287,10 +327,10 @@ public class PG3B {
 		short actionKey = getActionKey(Device.xbox, (short)axis.ordinal());
 		short actionCode = getActionCode(actionKey, (short)wiperValue);
 		synchronized (this) {
-			command(Command.action, actionCode);
+			commandWord(Command.action, actionCode);
 			axisStates[axis.ordinal()] = originalState;
 		}
-		if (DEBUG) debug("pg3b", "Axis " + axis + ": " + state);
+		if (DEBUG) debug(axis + ": " + state);
 
 		Listener[] listeners = this.listeners.toArray();
 		for (int i = 0, n = listeners.length; i < n; i++)
@@ -412,7 +452,15 @@ public class PG3B {
 	 * When disabled, the axis calibration tables in the PG3B's config are ignored.
 	 */
 	public void setCalibrationEnabled (boolean enabled) throws IOException {
-		command(Command.setCalibrationEnabled, enabled ? 1 : 0);
+		commandByte(Command.setCalibrationEnabled, enabled ? 1 : 0);
+	}
+
+	/**
+	 * When true, the PG3B will send back extra debug messages that are logged at the TRACE level.
+	 */
+	public void setDebugEnabled (boolean enabled) throws IOException {
+		debug = enabled;
+		commandByte(Command.setDebugMessagesEnabled, enabled ? 1 : 0);
 	}
 
 	/**
@@ -456,12 +504,12 @@ public class PG3B {
 	 */
 	public void addListener (Listener listener) {
 		listeners.addListener(listener);
-		if (TRACE) trace("pg3b", "PG3B listener added: " + listener.getClass().getName());
+		if (TRACE) trace("PG3B listener added: " + listener.getClass().getName());
 	}
 
 	public void removeListener (Listener listener) {
 		listeners.removeListener(listener);
-		if (TRACE) trace("pg3b", "PG3B listener removed: " + listener.getClass().getName());
+		if (TRACE) trace("PG3B listener removed: " + listener.getClass().getName());
 	}
 
 	/**

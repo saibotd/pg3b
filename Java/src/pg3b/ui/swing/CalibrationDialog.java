@@ -7,7 +7,6 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
@@ -47,9 +46,14 @@ import pg3b.util.UI;
 import com.esotericsoftware.minlog.Log;
 
 public class CalibrationDialog extends JDialog {
+	static private List<AxisCalibration> calibrations = new ArrayList();
+	static {
+		for (Axis axis : Axis.values())
+			calibrations.add(new AxisCalibration(axis));
+	}
+
 	private final PG3B pg3b;
 	private final XboxController controller;
-	private List<AxisCalibration> calibrations = new ArrayList();
 
 	private JTable table;
 	private JLabel imageLabel;
@@ -71,7 +75,7 @@ public class CalibrationDialog extends JDialog {
 		pack();
 		setLocationRelativeTo(owner);
 
-		readRawValues();
+		if (calibrations.get(calibrations.size() - 1).rawValues == null) readRawValues();
 
 		setVisible(true);
 	}
@@ -85,9 +89,8 @@ public class CalibrationDialog extends JDialog {
 			PG3BConfig config = pg3b.getConfig();
 			for (Axis axis : Axis.values()) {
 				boolean isCalibrated = config.isCalibrated(axis);
-				AxisCalibration calibration = new AxisCalibration(axis);
+				AxisCalibration calibration = calibrations.get(axis.ordinal());
 				if (isCalibrated) calibration.calibrationTable = config.getCalibrationTable(axis);
-				calibrations.add(calibration);
 				tableModel.addRow(new Object[] {axis, isCalibrated ? "Yes" : "No"});
 			}
 		} catch (IOException ex) {
@@ -109,8 +112,8 @@ public class CalibrationDialog extends JDialog {
 					Axis axis = calibration.axis;
 					setMessage("Reading " + axis + "...");
 					calibration.rawValues = Diagnostics.getRawValues(axis, pg3b, controller);
-					setPercentageComplete(i / (float)count);
-					if (INFO) info(calibration.axis + " chart:\n" + calibration.getChartURL());
+					setPercentageComplete(++i / (float)count);
+					if (INFO) info(axis + " chart:\n" + calibration.getChartURL());
 				}
 			}
 
@@ -165,7 +168,7 @@ public class CalibrationDialog extends JDialog {
 							config.setCalibrationTable(axis, calibration.calibrationTable);
 							config.setCalibrated(axis, true);
 							setPercentageComplete(++i / (float)count);
-							if (INFO) info(calibration.axis + " chart:\n" + calibration.getChartURL());
+							if (INFO) info(axis + " chart:\n" + calibration.getChartURL());
 						}
 						config.save();
 

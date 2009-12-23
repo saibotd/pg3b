@@ -6,6 +6,7 @@ import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.GridLayout;
 import java.awt.LayoutManager;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -72,7 +73,7 @@ public class DeadzoneTest extends JFrame {
 			}
 		});
 
-		JPanel deadzonePanel = new JPanel();
+		JPanel deadzonePanel = new JPanel(new GridLayout());
 		getContentPane().add(deadzonePanel, BorderLayout.WEST);
 
 		final JSlider deadzoneSliderX = new JSlider(JSlider.VERTICAL, 0, 100, 33);
@@ -104,7 +105,7 @@ public class DeadzoneTest extends JFrame {
 		});
 
 		final JComboBox combo = new JComboBox();
-		combo.setModel(new DefaultComboBoxModel(new Object[] {"round", "round (crappy)", "square"}));
+		combo.setModel(new DefaultComboBoxModel(new Object[] {"round", "square"}));
 		getContentPane().add(combo, BorderLayout.NORTH);
 		combo.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
@@ -112,9 +113,8 @@ public class DeadzoneTest extends JFrame {
 			}
 		});
 
-		centerPanel.add(new DeadzonePanel(new Deadzone.Square()), "square");
-
 		centerPanel.add(new DeadzonePanel(new Deadzone.Round()), "round");
+		centerPanel.add(new DeadzonePanel(new Deadzone.Square()), "square");
 
 		cardLayout.show(centerPanel, (String)combo.getSelectedItem());
 		pack();

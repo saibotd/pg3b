@@ -29,7 +29,7 @@ public class TextComponentOutputStream extends OutputStream {
 			public void run () {
 				Document document = textComponent.getDocument();
 				try {
-					document.insertString(document.getEndPosition().getOffset(), value, null);
+					document.insertString(document.getLength(), value, null);
 				} catch (BadLocationException ignored) {
 				}
 				if (scrollToBottom) textComponent.setCaretPosition(document.getLength());

@@ -10,7 +10,6 @@ enum Command {
 	setCalibrationEnabled('C'), //
 	setDebugMessagesEnabled('D'), //
 	setFrequency('F'), //
-	setIsWireless('G'), // Deprecated.
 	setResolution('R'), //
 	setScaling('S'), //
 	initializeProfile('P'), //

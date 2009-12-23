@@ -60,12 +60,12 @@ public abstract class XboxController implements InputDevice {
 	 */
 	public void addListener (Listener listener) {
 		listeners.addListener(listener);
-		if (TRACE) trace("pg3b", "XboxController listener added: " + listener.getClass().getName());
+		if (TRACE) trace("XboxController listener added: " + listener.getClass().getName());
 	}
 
 	public void removeListener (Listener listener) {
 		listeners.removeListener(listener);
-		if (TRACE) trace("pg3b", "XboxController listener removed: " + listener.getClass().getName());
+		if (TRACE) trace("XboxController listener removed: " + listener.getClass().getName());
 	}
 
 	protected void notifyListeners (Button button, boolean pressed) {

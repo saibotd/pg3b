@@ -90,7 +90,7 @@ public class ScriptEditor extends EditorPanel<Script> {
 		initializeLayout();
 		initializeEvents();
 
-		setFontSize(10f);
+		setFontSize(12f);
 
 		DefaultCompletionProvider provider = new DefaultCompletionProvider();
 		try {

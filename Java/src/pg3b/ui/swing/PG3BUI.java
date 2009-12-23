@@ -74,7 +74,7 @@ public class PG3BUI extends JFrame {
 	private Config activeConfig;
 
 	private JMenuItem pg3bConnectMenuItem, controllerConnectMenuItem, exitMenuItem;
-	private JCheckBoxMenuItem showControllerMenuItem;
+	private JCheckBoxMenuItem showControllerMenuItem, debugEnabledMenuItem, calibrationEnabledMenuItem;
 	private JMenuItem roundTripMenuItem, clearMenuItem, calibrateMenuItem, setControllerTypeMenuItem;
 
 	private XboxControllerPanel controllerPanel;
@@ -342,6 +342,26 @@ public class PG3BUI extends JFrame {
 			}
 		});
 
+		debugEnabledMenuItem.addActionListener(new ActionListener() {
+			public void actionPerformed (ActionEvent event) {
+				try {
+					pg3b.setDebugEnabled(debugEnabledMenuItem.isSelected());
+				} catch (IOException ex) {
+					if (Log.ERROR) error("Error setting PG3B calibration.", ex);
+				}
+			}
+		});
+
+		calibrationEnabledMenuItem.addActionListener(new ActionListener() {
+			public void actionPerformed (ActionEvent event) {
+				try {
+					pg3b.setCalibrationEnabled(calibrationEnabledMenuItem.isSelected());
+				} catch (IOException ex) {
+					if (Log.ERROR) error("Error setting PG3B calibration.", ex);
+				}
+			}
+		});
+
 		addWindowFocusListener(new WindowFocusListener() {
 			public void windowLostFocus (WindowEvent event) {
 				// Prevent buttons from being stuck down when the app loses focus.
@@ -468,6 +488,16 @@ public class PG3BUI extends JFrame {
 				{
 					clearMenuItem = new JMenuItem("Clear");
 					menu.add(clearMenuItem);
+				}
+				menu.addSeparator();
+				{
+					debugEnabledMenuItem = new JCheckBoxMenuItem("Debug");
+					menu.add(debugEnabledMenuItem);
+				}
+				{
+					calibrationEnabledMenuItem = new JCheckBoxMenuItem("Calibration");
+					menu.add(calibrationEnabledMenuItem);
+					calibrationEnabledMenuItem.setSelected(true);
 				}
 			}
 		}
