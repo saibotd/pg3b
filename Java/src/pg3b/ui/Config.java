@@ -9,8 +9,9 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
-import javax.swing.JToggleButton;
-
+import pg3b.Deadzone;
+import pg3b.PG3B;
+import pg3b.Stick;
 import pg3b.ui.swing.PG3BUI;
 
 /**
@@ -19,6 +20,7 @@ import pg3b.ui.swing.PG3BUI;
 public class Config extends Editable {
 	private List<Trigger> triggers = new ArrayList();
 	private transient PollerThread pollerThread;
+	private Deadzone leftDeadzone, rightDeadzone;
 
 	public Config () {
 	}
@@ -33,6 +35,22 @@ public class Config extends Editable {
 
 	public void setTriggers (List<Trigger> triggers) {
 		this.triggers = triggers;
+	}
+
+	public Deadzone getLeftDeadzone () {
+		return leftDeadzone;
+	}
+
+	public void setLeftDeadzone (Deadzone leftDeadzone) {
+		this.leftDeadzone = leftDeadzone;
+	}
+
+	public Deadzone getRightDeadzone () {
+		return rightDeadzone;
+	}
+
+	public void setRightDeadzone (Deadzone rightDeadzone) {
+		this.rightDeadzone = rightDeadzone;
 	}
 
 	/**
@@ -81,6 +99,11 @@ public class Config extends Editable {
 
 		public void run () {
 			try {
+				PG3B pg3b = PG3BUI.instance.getPG3B();
+				if (pg3b != null) {
+					pg3b.setDeadzone(Stick.left, leftDeadzone);
+					pg3b.setDeadzone(Stick.right, rightDeadzone);
+				}
 				// Multiple triggers may use the same poller. Obtain a distinct list of pollers to avoid polling the same one twice.
 				HashSet<Poller> pollers = new HashSet();
 				for (Trigger trigger : getTriggers())

@@ -1,12 +1,14 @@
 
 package pg3b.ui.swing;
 
+import java.awt.AWTEvent;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.Arrays;
@@ -256,6 +258,7 @@ public class XboxControllerPanel extends JPanel {
 		};
 		addMouseMotionListener(mouseListener);
 		addMouseListener(mouseListener);
+		enableEvents(AWTEvent.MOUSE_WHEEL_EVENT_MASK);
 	}
 
 	void triggerDragged (Axis axis, float value) {

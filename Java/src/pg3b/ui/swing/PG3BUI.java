@@ -46,7 +46,6 @@ import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 
 import pg3b.ControllerType;
-import pg3b.Diagnostics;
 import pg3b.PG3B;
 import pg3b.PG3BConfig;
 import pg3b.Target;
@@ -56,6 +55,7 @@ import pg3b.input.Mouse;
 import pg3b.input.XboxController;
 import pg3b.input.XboxController.Listener;
 import pg3b.ui.Config;
+import pg3b.ui.Diagnostics;
 import pg3b.ui.InputTrigger;
 import pg3b.ui.Settings;
 import pg3b.ui.Trigger;
@@ -512,6 +512,10 @@ public class PG3BUI extends JFrame {
 		}
 		{
 			JPanel glassPane = new JPanel(new GridBagLayout()) {
+				{
+					enableEvents(AWTEvent.MOUSE_WHEEL_EVENT_MASK);
+				}
+
 				public void paintComponent (Graphics g) {
 					g.setColor(new Color(0, 0, 0, 70));
 					g.fillRect(0, 0, getWidth(), getHeight());

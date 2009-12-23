@@ -15,6 +15,8 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,11 +37,10 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumnModel;
 
 import pg3b.Axis;
-import pg3b.AxisCalibration;
-import pg3b.Diagnostics;
 import pg3b.PG3B;
 import pg3b.PG3BConfig;
 import pg3b.input.XboxController;
+import pg3b.ui.Diagnostics;
 import pg3b.util.LoaderDialog;
 import pg3b.util.UI;
 
@@ -56,7 +57,7 @@ public class CalibrationDialog extends JDialog {
 	private DefaultTableModel tableModel;
 	private JButton refreshButton;
 
-	public CalibrationDialog (Frame owner, PG3B pg3b, XboxController controller) {
+	public CalibrationDialog (PG3BUI owner, PG3B pg3b, XboxController controller) {
 		super(owner, "Axes Calibration", true);
 
 		this.pg3b = pg3b;
@@ -85,7 +86,7 @@ public class CalibrationDialog extends JDialog {
 			for (Axis axis : Axis.values()) {
 				boolean isCalibrated = config.isCalibrated(axis);
 				AxisCalibration calibration = new AxisCalibration(axis);
-				if (isCalibrated) calibration.setCalibrationTable(config.getCalibrationTable(axis));
+				if (isCalibrated) calibration.calibrationTable = config.getCalibrationTable(axis);
 				calibrations.add(calibration);
 				tableModel.addRow(new Object[] {axis, isCalibrated ? "Yes" : "No"});
 			}
@@ -105,11 +106,11 @@ public class CalibrationDialog extends JDialog {
 				int i = 0, count = Axis.values().length;
 				for (AxisCalibration calibration : calibrations) {
 					throwCancelled();
-					Axis axis = calibration.getAxis();
+					Axis axis = calibration.axis;
 					setMessage("Reading " + axis + "...");
-					calibration.setRawValues(Diagnostics.getRawValues(axis, pg3b, controller));
+					calibration.rawValues = Diagnostics.getRawValues(axis, pg3b, controller);
 					setPercentageComplete(i / (float)count);
-					if (INFO) info(calibration.getAxis() + " chart:\n" + calibration.getChartURL());
+					if (INFO) info(calibration.axis + " chart:\n" + calibration.getChartURL());
 				}
 			}
 
@@ -158,13 +159,13 @@ public class CalibrationDialog extends JDialog {
 						PG3BConfig config = pg3b.getConfig();
 						int i = 0, count = Axis.values().length;
 						for (AxisCalibration calibration : calibrations) {
-							Axis axis = calibration.getAxis();
+							Axis axis = calibration.axis;
 							setMessage("Calibrating " + axis + "...");
-							calibration.setCalibrationTable(Diagnostics.getCalibrationTable(axis, calibration.getRawValues()));
-							config.setCalibrationTable(axis, calibration.getCalibrationTable());
+							calibration.calibrationTable = Diagnostics.getCalibrationTable(axis, calibration.rawValues);
+							config.setCalibrationTable(axis, calibration.calibrationTable);
 							config.setCalibrated(axis, true);
 							setPercentageComplete(++i / (float)count);
-							if (INFO) info(calibration.getAxis() + " chart:\n" + calibration.getChartURL());
+							if (INFO) info(calibration.axis + " chart:\n" + calibration.getChartURL());
 						}
 						config.save();
 
@@ -284,6 +285,55 @@ public class CalibrationDialog extends JDialog {
 					rightPanel.add(closeButton);
 				}
 			}
+		}
+	}
+
+	static private class AxisCalibration {
+		public final Axis axis;
+		public byte[] calibrationTable;
+		public float[] rawValues;
+
+		public AxisCalibration (Axis axis) {
+			this.axis = axis;
+		}
+
+		/**
+		 * Returns a URL to a chart image that shows the actual and calibrated axis values.
+		 */
+		public URL getChartURL () {
+			try {
+				if (rawValues == null) {
+					return new URL("http://chart.apis.google.com/chart?chs=640x320&chf=bg,s,ffffff|c,s,ffffff&chxt=x,y&"
+						+ "chxl=0:|0|63|127|191|255|1:|-1|0|1&cht=lc&chdl=Raw|Calibrated&chco=ff0000,0000ff&chdlp=b&chd=t:|");
+				}
+				StringBuilder raw = new StringBuilder(1024);
+				StringBuilder calibrated = new StringBuilder(1024);
+				for (int wiper = 0; wiper <= 255; wiper += 2) {
+					raw.append((int)(rawValues[wiper] * 100 + 100) / 2);
+					raw.append(",");
+					if (calibrationTable != null) {
+						int index = calibrationTable[wiper] & 0xFF;
+						calibrated.append((int)(rawValues[index] * 100 + 100) / 2);
+						calibrated.append(",");
+					}
+				}
+				raw.setLength(raw.length() - 1);
+				if (calibrationTable == null) {
+					return new URL("http://chart.apis.google.com/chart?chs=640x320&chf=bg,s,ffffff|c,s,ffffff&chxt=x,y&"
+						+ "chxl=0:|0|63|127|191|255|1:|-1|0|1&cht=lc&chdl=Raw|Calibrated&chco=ff0000,0000ff&chdlp=b&chd=t:" + raw);
+				} else {
+					calibrated.setLength(calibrated.length() - 1);
+					return new URL("http://chart.apis.google.com/chart?chs=640x320&chf=bg,s,ffffff|c,s,ffffff&chxt=x,y&"
+						+ "chxl=0:|0|63|127|191|255|1:|-1|0|1&cht=lc&chdl=Raw|Calibrated&chco=ff0000,0000ff&chdlp=b&chd=t:" + raw + "|"
+						+ calibrated);
+				}
+			} catch (MalformedURLException ex) {
+				throw new RuntimeException(ex);
+			}
+		}
+
+		public String toString () {
+			return axis.toString();
 		}
 	}
 }

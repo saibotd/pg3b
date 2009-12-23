@@ -1,6 +1,7 @@
 
 package pg3b.ui.swing;
 
+import java.awt.AWTEvent;
 import java.awt.Color;
 import java.awt.EventQueue;
 import java.awt.Font;
@@ -40,19 +41,31 @@ public class StatusBar extends JPanel {
 		setLayout(new GridBagLayout());
 		setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, new Color(0, 0, 0)));
 		{
-			pg3bLabel = new JLabel("PG3B");
+			pg3bLabel = new JLabel("PG3B") {
+				{
+					enableEvents(AWTEvent.MOUSE_WHEEL_EVENT_MASK);
+				}
+			};
 			add(pg3bLabel, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
 				new Insets(3, 6, 3, 0), 0, 0));
 			pg3bLabel.setIcon(redImage);
 		}
 		{
-			controllerLabel = new JLabel("Controller");
+			controllerLabel = new JLabel("Controller") {
+				{
+					enableEvents(AWTEvent.MOUSE_WHEEL_EVENT_MASK);
+				}
+			};
 			add(controllerLabel, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
 				new Insets(3, 6, 3, 0), 0, 0));
 			controllerLabel.setIcon(redImage);
 		}
 		{
-			configLabel = new JLabel("Config");
+			configLabel = new JLabel("Config") {
+				{
+					enableEvents(AWTEvent.MOUSE_WHEEL_EVENT_MASK);
+				}
+			};
 			add(configLabel, new GridBagConstraints(2, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
 				new Insets(3, 6, 3, 0), 0, 0));
 			configLabel.setIcon(redImage);

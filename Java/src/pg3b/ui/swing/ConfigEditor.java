@@ -135,7 +135,7 @@ public class ConfigEditor extends EditorPanel<Config> {
 
 		deadzonesButton.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
-				new DeadzoneDialog(owner, pg3b).setVisible(true);
+				new DeadzoneDialog(owner, pg3b, getSelectedItem()).setVisible(true);
 			}
 		});
 	}

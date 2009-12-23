@@ -12,6 +12,7 @@ import net.sourceforge.yamlbeans.YamlConfig;
 import net.sourceforge.yamlbeans.YamlReader;
 import net.sourceforge.yamlbeans.YamlWriter;
 import net.sourceforge.yamlbeans.scalar.ScalarSerializer;
+import pg3b.Deadzone;
 import pg3b.PG3B;
 import pg3b.Target;
 import pg3b.ui.swing.EditorPanel;
@@ -40,6 +41,8 @@ public class Editable implements Cloneable {
 		yamlConfig.setClassTag("input", InputTrigger.class);
 		yamlConfig.setClassTag("PG3B", PG3BAction.class);
 		yamlConfig.setClassTag("script", ScriptAction.class);
+		yamlConfig.setClassTag("round", Deadzone.Round.class);
+		yamlConfig.setClassTag("square", Deadzone.Square.class);
 	}
 
 	protected transient File file;

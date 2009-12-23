@@ -1,5 +1,5 @@
 
-package pg3b;
+package pg3b.ui;
 
 import static com.esotericsoftware.minlog.Log.*;
 
@@ -9,6 +9,10 @@ import java.util.Map;
 
 import org.omg.CORBA.TIMEOUT;
 
+import pg3b.Axis;
+import pg3b.Button;
+import pg3b.PG3B;
+import pg3b.Target;
 import pg3b.input.XboxController;
 import pg3b.util.Loader;
 

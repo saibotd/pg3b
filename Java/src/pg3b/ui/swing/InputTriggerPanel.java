@@ -1,6 +1,7 @@
 
 package pg3b.ui.swing;
 
+import java.awt.AWTEvent;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -275,17 +276,17 @@ public class InputTriggerPanel extends JPanel {
 
 		ActionListener updateTriggerText = new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
-				setTriggerText(trigger);
 				anyCheckBox.setSelected(false);
 				noneCheckBox.setSelected(false);
 				if (!ctrlCheckBox.isSelected() && !altCheckBox.isSelected() && !shiftCheckBox.isSelected())
 					anyCheckBox.setSelected(true);
+				setTriggerText(trigger);
 			}
 		};
 		ctrlCheckBox.addActionListener(updateTriggerText);
 		altCheckBox.addActionListener(updateTriggerText);
 		shiftCheckBox.addActionListener(updateTriggerText);
-
+		
 		anyCheckBox.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
 				noneCheckBox.setSelected(false);
@@ -293,6 +294,7 @@ public class InputTriggerPanel extends JPanel {
 				altCheckBox.setSelected(false);
 				shiftCheckBox.setSelected(false);
 				if (!anyCheckBox.isSelected()) noneCheckBox.setSelected(true);
+				setTriggerText(trigger);
 			}
 		});
 
@@ -303,6 +305,7 @@ public class InputTriggerPanel extends JPanel {
 				altCheckBox.setSelected(false);
 				shiftCheckBox.setSelected(false);
 				if (!noneCheckBox.isSelected()) anyCheckBox.setSelected(true);
+				setTriggerText(trigger);
 			}
 		});
 	}
@@ -380,7 +383,11 @@ public class InputTriggerPanel extends JPanel {
 			}
 		}
 		{
-			triggerLabel = new JLabel();
+			triggerLabel = new JLabel() {
+				{
+					enableEvents(AWTEvent.MOUSE_WHEEL_EVENT_MASK);
+				}
+			};
 			titlePanel.add(triggerLabel, new GridBagConstraints(2, 1, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER,
 				GridBagConstraints.HORIZONTAL, new Insets(0, 6, 6, 6), 0, 0));
 			triggerLabel.setOpaque(true);

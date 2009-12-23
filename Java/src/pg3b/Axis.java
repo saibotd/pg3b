@@ -21,6 +21,25 @@ public enum Axis implements Target {
 		this.alias = alias;
 	}
 
+	/**
+	 * Returns the stick this axis belongs to, or null if this axis is a trigger.
+	 */
+	public Stick getStick () {
+		switch (this) {
+		case leftStickX:
+		case leftStickY:
+			return Stick.left;
+		case rightStickX:
+		case rightStickY:
+			return Stick.right;
+		case leftTrigger:
+		case rightTrigger:
+			return null;
+		default:
+			throw new RuntimeException("Missing stick entry: " + this);
+		}
+	}
+
 	public String getAlias () {
 		return alias;
 	}

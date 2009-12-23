@@ -3,6 +3,7 @@ package pg3b.ui;
 
 import pg3b.input.Input;
 import pg3b.input.Keyboard;
+import pg3b.input.Mouse;
 
 /**
  * A trigger that executes its action based on the state of a JInput controller (keyboard, mouse, joystick, etc, essentially any
@@ -90,9 +91,13 @@ public class InputTrigger extends Trigger {
 	public Object check () {
 		if (input == null) return null;
 		Float state = input.getState(this);
-		if (state != null)
+		if (state == null) return null;
+		float value = state;
+		if (getInput() instanceof Mouse.MouseInput) {
 			System.out.println(state);
-		return state;
+			value = Math.min(1, state / 10);
+		}
+		return value;
 	}
 
 	public String toString () {

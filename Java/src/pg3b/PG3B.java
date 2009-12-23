@@ -37,6 +37,7 @@ public class PG3B {
 		}
 	}
 
+	static private final float EPSILON = 0.0001f;
 	static private final char[] hex = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
 	static private final int[] charToDigit = new int[103];
 	static {
@@ -74,6 +75,7 @@ public class PG3B {
 	private final boolean[] buttonStates = new boolean[Button.values().length];
 	private final float[] axisStates = new float[Axis.values().length];
 	private final char[] buffer = new char[256];
+	private final Deadzone[] deadzones = new Deadzone[Stick.values().length];
 
 	/**
 	 * Creates a new PG3B with a timeout of 300.
@@ -111,10 +113,10 @@ public class PG3B {
 
 			buffer[0] = 'X';
 			buffer[1] = ' ';
-			// 2, 3, 4, 5: sequence number.
+			// 2, 3, 4, 5: sequence number
 			buffer[6] = ' ';
-			// For sending... 7: command code, 8: space, 9+: command arguments.
-			// For receiving... 7, 8: OK.
+			// For sending... 7: command code, 8: space, 9+: command arguments
+			// For receiving... 7, 8: OK
 
 			config = new PG3BConfig(this);
 		} catch (Exception ex) {
@@ -237,10 +239,41 @@ public class PG3B {
 	 */
 	public void set (Axis axis, float state) throws IOException {
 		if (axis == null) throw new IllegalArgumentException("axis cannot be null.");
-		if (state < -1)
-			state = -1;
-		else if (state > 1) {
-			state = 1;
+		float originalState = state;
+		if (state <= -1)
+			originalState = state = -1;
+		else if (state >= 1)
+			originalState = state = 1;
+		else {
+			Stick stick = axis.getStick();
+			if (stick != null) {
+				Deadzone deadzone = deadzones[stick.ordinal()];
+				if (deadzone != null) {
+					Axis axisX = stick.getAxisX();
+					float x, y;
+					if (axis == axisX) {
+						x = state;
+						y = axisStates[stick.getAxisY().ordinal()];
+					} else {
+						x = axisStates[axisX.ordinal()];
+						y = state;
+					}
+					float[] deflection = deadzone.toDeflection(x, y);
+					if (axis == axisX) {
+						state = deflection[0];
+						if (deflection[1] != y) {
+							// BOZO - Set y.
+							System.out.println("set y!");
+						}
+					} else {
+						state = deflection[1];
+						if (deflection[0] != x) {
+							// BOZO - Set x.
+							System.out.println("set x!");
+						}
+					}
+				}
+			}
 		}
 
 		float wiperValue;
@@ -255,7 +288,7 @@ public class PG3B {
 		short actionCode = getActionCode(actionKey, (short)wiperValue);
 		synchronized (this) {
 			command(Command.action, actionCode);
-			axisStates[axis.ordinal()] = state;
+			axisStates[axis.ordinal()] = originalState;
 		}
 		if (DEBUG) debug("pg3b", "Axis " + axis + ": " + state);
 
@@ -394,6 +427,11 @@ public class PG3B {
 	 */
 	public String getPort () {
 		return port;
+	}
+
+	public void setDeadzone (Stick stick, Deadzone deadzone) {
+		if (stick == null) throw new IllegalArgumentException("stick cannot be null.");
+		deadzones[stick.ordinal()] = deadzone;
 	}
 
 	/**

@@ -193,8 +193,10 @@ public class Mouse implements InputDevice {
 			}
 			if (mouseWheel) {
 				if (!trigger.checkModifiers()) return null;
-				if (instance.lastMouseWheel == 0) return null;
-				return (float)instance.lastMouseWheel;
+				float state = (float)instance.lastMouseWheel;
+				if (state == 0) return null;
+				instance.lastMouseWheel = 0;
+				return state;
 			}
 			return null;
 		}

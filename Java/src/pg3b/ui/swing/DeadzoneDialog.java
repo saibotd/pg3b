@@ -19,37 +19,40 @@ import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.JTextArea;
 import javax.swing.SpinnerNumberModel;
-import javax.swing.UIManager;
-import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import pg3b.Axis;
+import pg3b.Deadzone;
 import pg3b.PG3B;
+import pg3b.Stick;
+import pg3b.ui.Config;
 
 public class DeadzoneDialog extends JDialog {
-	private PG3B pg3b;
+	private final PG3B pg3b;
+	private final Config config;
 
 	private JComboBox leftShapeCombo, rightShapeCombo;
 	private JSpinner leftXSpinner, leftYSpinner, rightXSpinner, rightYSpinner;
 	private JButton saveButton;
 	private JPanel leftStickPanel, rightStickPanel;
 
-	public DeadzoneDialog (Frame owner, PG3B pg3b) {
+	public DeadzoneDialog (PG3BUI owner, PG3B pg3b, Config config) {
 		super(owner, "Deadzones", true);
 
 		this.pg3b = pg3b;
+		this.config = config;
 
 		initializeLayout();
 		initializeEvents();
 
 		setLocationRelativeTo(owner);
+
 	}
 
 	private void initializeEvents () {
@@ -76,15 +79,22 @@ public class DeadzoneDialog extends JDialog {
 
 		saveButton.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
-				// BOZO - Save deadzones.
+				Deadzone leftDeadzone = leftShapeCombo.getSelectedIndex() == 0 ? new Deadzone.Square() : new Deadzone.Round();
+				leftDeadzone.setSizeX((Integer)leftXSpinner.getValue() / 255f);
+				leftDeadzone.setSizeY((Integer)leftYSpinner.getValue() / 255f);
+				config.setLeftDeadzone(leftDeadzone);
+				Deadzone rightDeadzone = rightShapeCombo.getSelectedIndex() == 0 ? new Deadzone.Square() : new Deadzone.Round();
+				rightDeadzone.setSizeX((Integer)rightXSpinner.getValue() / 255f);
+				rightDeadzone.setSizeY((Integer)rightYSpinner.getValue() / 255f);
+				config.setRightDeadzone(rightDeadzone);
 				dispose();
 			}
 		});
 	}
 
 	private void setAxis (Axis axis, JSpinner spinner) {
-		JPanel panel = (spinner == leftXSpinner || spinner == leftYSpinner) ? leftStickPanel : rightStickPanel;
-		String title = (spinner == leftXSpinner || spinner == leftYSpinner) ? "Left Stick" : "Right Stick";
+		JPanel panel = axis.getStick() == Stick.left ? leftStickPanel : rightStickPanel;
+		String title = axis.getStick() == Stick.left ? "Left Stick" : "Right Stick";
 		try {
 			pg3b.set(axis, (Integer)spinner.getValue() / 255f);
 			panel.setBorder(BorderFactory.createTitledBorder(title));
@@ -137,7 +147,7 @@ public class DeadzoneDialog extends JDialog {
 					leftShapeCombo = new JComboBox();
 					leftStickPanel.add(leftShapeCombo, new GridBagConstraints(1, 3, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
 						GridBagConstraints.NONE, new Insets(0, 6, 6, 6), 0, 0));
-					leftShapeCombo.setModel(new DefaultComboBoxModel(new String[] {"Round", "Square"}));
+					leftShapeCombo.setModel(new DefaultComboBoxModel(new Object[] {"Square", "Round"}));
 				}
 				{
 					JLabel label = new JLabel("X axis:");
@@ -176,7 +186,7 @@ public class DeadzoneDialog extends JDialog {
 					rightShapeCombo = new JComboBox();
 					rightStickPanel.add(rightShapeCombo, new GridBagConstraints(1, 3, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
 						GridBagConstraints.NONE, new Insets(0, 6, 6, 6), 0, 0));
-					rightShapeCombo.setModel(new DefaultComboBoxModel(new String[] {"Round", "Square"}));
+					rightShapeCombo.setModel(new DefaultComboBoxModel(new Object[] {"Square", "Round"}));
 				}
 				{
 					JLabel label = new JLabel("X axis:");
