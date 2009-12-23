@@ -66,7 +66,6 @@ public class ScriptAction implements Action {
 		pkg.set("getAction".intern(), new Functions.getAction());
 		pkg.set("getTrigger".intern(), new Functions.getTrigger());
 		pkg.set("getConfig".intern(), new Functions.getConfig());
-		pkg.set("pg3bui".intern(), PG3BUI.instance);
 		pkg.set("sleep".intern(), new Functions.sleep());
 		pkg.set("play".intern(), new Functions.play());
 		pkg.set("beep".intern(), new Functions.beep());

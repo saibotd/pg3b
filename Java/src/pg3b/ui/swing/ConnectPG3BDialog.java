@@ -66,7 +66,7 @@ public class ConnectPG3BDialog extends JDialog {
 	private void initializeEvents () {
 		connectButton.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
-				new LoaderDialog("Connecting to hardware") {
+				new LoaderDialog("Connecting to PG3B") {
 					public void load () throws Exception {
 						setMessage("Opening PG3B...");
 						PG3B pg3b = new PG3B((String)portList.getSelectedValue());

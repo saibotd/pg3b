@@ -148,14 +148,12 @@ public class JInputXboxController extends XboxController {
 			}
 
 			if (id instanceof Identifier.Axis) {
-				System.out.println(id); 
 				Axis axis = null;
 				if (id == Identifier.Axis.X) axis = Axis.leftStickX;
 				if (id == Identifier.Axis.Y) axis = Axis.leftStickY;
 				if (id == Identifier.Axis.RX) axis = Axis.rightStickX;
 				if (id == Identifier.Axis.RY) axis = Axis.rightStickY;
-				if (id == Identifier.Axis.Z) 
-					axis = value < 0 ? Axis.leftTrigger : Axis.rightTrigger;
+				if (id == Identifier.Axis.Z) axis = value < 0 ? Axis.leftTrigger : Axis.rightTrigger;
 				if (axis != null) {
 					notifyListeners(axis, value);
 					continue;

@@ -5,13 +5,11 @@ import static com.esotericsoftware.minlog.Log.*;
 
 import java.awt.FlowLayout;
 import java.awt.Font;
-import java.awt.FontFormatException;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.IOException;
 import java.io.PrintStream;
 
 import javax.swing.ButtonGroup;

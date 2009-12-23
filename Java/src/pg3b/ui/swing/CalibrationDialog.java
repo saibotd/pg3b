@@ -75,7 +75,10 @@ public class CalibrationDialog extends JDialog {
 		pack();
 		setLocationRelativeTo(owner);
 
-		if (calibrations.get(calibrations.size() - 1).rawValues == null) readRawValues();
+		if (calibrations.get(calibrations.size() - 1).rawValues == null)
+			readRawValues();
+		else
+			calibrateButton.setEnabled(true);
 
 		setVisible(true);
 	}
@@ -90,7 +93,10 @@ public class CalibrationDialog extends JDialog {
 			for (Axis axis : Axis.values()) {
 				boolean isCalibrated = config.isCalibrated(axis);
 				AxisCalibration calibration = calibrations.get(axis.ordinal());
-				if (isCalibrated) calibration.calibrationTable = config.getCalibrationTable(axis);
+				if (isCalibrated)
+					calibration.calibrationTable = config.getCalibrationTable(axis);
+				else
+					calibration.calibrationTable = null;
 				tableModel.addRow(new Object[] {axis, isCalibrated ? "Yes" : "No"});
 			}
 		} catch (IOException ex) {
@@ -113,7 +119,7 @@ public class CalibrationDialog extends JDialog {
 					setMessage("Reading " + axis + "...");
 					calibration.rawValues = Diagnostics.getRawValues(axis, pg3b, controller);
 					setPercentageComplete(++i / (float)count);
-					if (INFO) info(axis + " chart:\n" + calibration.getChartURL());
+					if (DEBUG) debug(axis + " chart:\n" + calibration.getChartURL());
 				}
 			}
 
@@ -168,9 +174,10 @@ public class CalibrationDialog extends JDialog {
 							config.setCalibrationTable(axis, calibration.calibrationTable);
 							config.setCalibrated(axis, true);
 							setPercentageComplete(++i / (float)count);
-							if (INFO) info(axis + " chart:\n" + calibration.getChartURL());
+							if (DEBUG) debug(axis + " chart:\n" + calibration.getChartURL());
 						}
 						config.save();
+						pg3b.reset();
 
 						populateTable();
 					}

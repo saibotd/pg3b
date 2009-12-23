@@ -45,9 +45,13 @@ import javax.swing.ToolTipManager;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 
+import pg3b.Axis;
+import pg3b.Button;
 import pg3b.ControllerType;
+import pg3b.Deadzone;
 import pg3b.PG3B;
 import pg3b.PG3BConfig;
+import pg3b.Stick;
 import pg3b.Target;
 import pg3b.input.Input;
 import pg3b.input.Keyboard;
@@ -102,6 +106,17 @@ public class PG3BUI extends JFrame {
 		if (instance != null) throw new IllegalStateException();
 		instance = this;
 
+		Package pkg = Package.getGlobalPackage();
+		pkg.set("pg3bui".intern(), this);
+		pkg.set("pg3b".intern(), null);
+		pkg.set("controller".intern(), null);
+		pkg.set("Axis".intern(), Axis.class);
+		pkg.set("Button".intern(), Button.class);
+		pkg.set("ControllerType".intern(), ControllerType.class);
+		pkg.set("Deadzone".intern(), Deadzone.class);
+		pkg.set("PG3B".intern(), PG3B.class);
+		pkg.set("Stick".intern(), Stick.class);
+
 		initializeLayout();
 		initializeEvents();
 
@@ -124,7 +139,7 @@ public class PG3BUI extends JFrame {
 				EventQueue.invokeLater(new Runnable() {
 					public void run () {
 						boolean reconnectPg3b = settings.pg3bPort != null && settings.pg3bPort.length() > 0;
-						if (reconnectPg3b) new LoaderDialog("Connecting to hardware") {
+						if (reconnectPg3b) new LoaderDialog("Connecting to PG3B") {
 							public void load () throws Exception {
 								setMessage("Opening PG3B...");
 								try {
@@ -180,6 +195,7 @@ public class PG3BUI extends JFrame {
 	public void setController (XboxController newController) {
 		if (controller != null) controller.removeListener(controllerListener);
 		controller = newController;
+		Package.getGlobalPackage().set("controller".intern(), controller);
 		if (controller != null) controller.addListener(controllerListener);
 
 		EventQueue.invokeLater(new Runnable() {
@@ -293,7 +309,7 @@ public class PG3BUI extends JFrame {
 
 		roundTripMenuItem.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
-				new LoaderDialog("Round trip diagnostic") {
+				new LoaderDialog("Round Trip") {
 					private Map<Target, Boolean> status;
 
 					public void load () throws Exception {
@@ -336,6 +352,7 @@ public class PG3BUI extends JFrame {
 				try {
 					config.setControllerType(ControllerType.values()[result]);
 					config.save();
+					pg3b.reset();
 				} catch (IOException ex) {
 					if (Log.ERROR) error("Error setting PG3B controller type.", ex);
 				}
@@ -356,6 +373,7 @@ public class PG3BUI extends JFrame {
 			public void actionPerformed (ActionEvent event) {
 				try {
 					pg3b.setCalibrationEnabled(calibrationEnabledMenuItem.isSelected());
+					pg3b.reset();
 				} catch (IOException ex) {
 					if (Log.ERROR) error("Error setting PG3B calibration.", ex);
 				}

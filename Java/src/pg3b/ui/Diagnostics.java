@@ -36,16 +36,12 @@ public class Diagnostics {
 		if (pg3b == null) throw new IllegalArgumentException("pg3b cannot be null.");
 		if (controller == null) throw new IllegalArgumentException("controller cannot be null.");
 
+		boolean calibrationEnabled = pg3b.isCalibrationEnabled();
 		pg3b.setCalibrationEnabled(false);
+		pg3b.reset();
 
 		try {
 			boolean isTrigger = axis == Axis.leftTrigger || axis == Axis.rightTrigger;
-			if (isTrigger) {
-				// The triggers are mapped to the same Z axis if DirectInput is being used and interfere with each other if not zero.
-				pg3b.set(Axis.leftTrigger, 0);
-				pg3b.set(Axis.rightTrigger, 0);
-			}
-
 			float[] actualValues = new float[256];
 			for (int wiper = 0; wiper <= 255; wiper++) {
 				float deflection = isTrigger ? wiper / 255f : wiper / 255f * 2 - 1;
@@ -61,7 +57,8 @@ public class Diagnostics {
 			return actualValues;
 		} finally {
 			pg3b.set(axis, 0);
-			pg3b.setCalibrationEnabled(true);
+			pg3b.setCalibrationEnabled(calibrationEnabled);
+			pg3b.reset();
 		}
 	}
 

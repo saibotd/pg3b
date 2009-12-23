@@ -286,7 +286,7 @@ public class InputTriggerPanel extends JPanel {
 		ctrlCheckBox.addActionListener(updateTriggerText);
 		altCheckBox.addActionListener(updateTriggerText);
 		shiftCheckBox.addActionListener(updateTriggerText);
-		
+
 		anyCheckBox.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
 				noneCheckBox.setSelected(false);

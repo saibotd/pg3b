@@ -5,10 +5,13 @@
 <!-- PG3B functions: -->
 
 <keyword name="pg3b" type="constant">
-	<desc>Provides access to the PG3B hardware.</desc>
+	<desc>Provides access to the connected PG3B hardware.</desc>
 </keyword>
 <keyword name="pg3bui" type="constant">
 	<desc>Provides access to the PG3B GUI.</desc>
+</keyword>
+<keyword name="controller" type="constant">
+	<desc>Provides access to the connected Xbox controller.</desc>
 </keyword>
 <keyword name="sleep" type="function" returnType="void">
 	<params>

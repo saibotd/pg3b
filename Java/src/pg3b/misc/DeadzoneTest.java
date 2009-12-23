@@ -7,7 +7,6 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.GridLayout;
-import java.awt.LayoutManager;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Hashtable;
@@ -22,8 +21,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import pg3b.Deadzone;
-import pg3b.Deadzone.Round;
-import pg3b.Deadzone.Square;
 
 public class DeadzoneTest extends JFrame {
 	float xState, yState;

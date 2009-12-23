@@ -35,7 +35,7 @@ public class ConfigTab extends JPanel {
 	public void showInputTriggerPanel (Config config, InputTrigger input) {
 		wasCaptureButtonDown = owner.getCaptureButton().isSelected();
 		owner.setCapture(false);
-		 owner.getCaptureButton().setEnabled(false);
+		owner.getCaptureButton().setEnabled(false);
 
 		inputTriggerPanel.setTrigger(config, input);
 		cardLayout.show(this, "inputTrigger");

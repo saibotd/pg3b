@@ -76,7 +76,7 @@ public class PG3B {
 	private final float[] axisStates = new float[Axis.values().length];
 	private final char[] buffer = new char[256];
 	private final Deadzone[] deadzones = new Deadzone[Stick.values().length];
-	private boolean debug;
+	private boolean debugEnabled, calibrationEnabled;
 
 	/**
 	 * Creates a new PG3B with a timeout of 300.
@@ -141,7 +141,7 @@ public class PG3B {
 			String response = input.readLine();
 			if (response == null) throw new IOException("Connection was closed.");
 			if (response.startsWith(responsePrefix)) {
-				if (debug) {
+				if (debugEnabled) {
 					response = response.substring(9);
 					while (true) {
 						char c = response.length() == 0 ? '\n' : response.charAt(0);
@@ -245,7 +245,7 @@ public class PG3B {
 	 */
 	public boolean isConnected () {
 		try {
-			commandByte(Command.setDebugMessagesEnabled, debug ? 1 : 0);
+			commandByte(Command.setDebugMessagesEnabled, debugEnabled ? 1 : 0);
 			return true;
 		} catch (IOException ignored) {
 			return false;
@@ -452,15 +452,24 @@ public class PG3B {
 	 * When disabled, the axis calibration tables in the PG3B's config are ignored.
 	 */
 	public void setCalibrationEnabled (boolean enabled) throws IOException {
+		calibrationEnabled = enabled;
 		commandByte(Command.setCalibrationEnabled, enabled ? 1 : 0);
+	}
+
+	public boolean isCalibrationEnabled () {
+		return calibrationEnabled;
 	}
 
 	/**
 	 * When true, the PG3B will send back extra debug messages that are logged at the TRACE level.
 	 */
 	public void setDebugEnabled (boolean enabled) throws IOException {
-		debug = enabled;
+		debugEnabled = enabled;
 		commandByte(Command.setDebugMessagesEnabled, enabled ? 1 : 0);
+	}
+
+	public boolean isDebugEnabled () {
+		return debugEnabled;
 	}
 
 	/**

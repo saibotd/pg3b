@@ -94,8 +94,8 @@ public class InputTrigger extends Trigger {
 		if (state == null) return null;
 		float value = state;
 		if (getInput() instanceof Mouse.MouseInput) {
-			System.out.println(state);
-			value = Math.min(1, state / 10);
+			// System.out.println(state);
+			// value = Math.min(1, state / 10);
 		}
 		return value;
 	}
