@@ -220,7 +220,8 @@ public class EditorPanel<T extends Editable> extends JPanel {
 					nameText.setText("");
 					descriptionText.setText("");
 				} else {
-					if (item.equals(selectedItem)) return;
+					// Update GUI even if items are equal but not the same, to load changes made directly to the selected item.
+					if (item == selectedItem) return;
 					boolean clearItemSpecificState = selectedItem == null || !selectedItem.getFile().equals(item.getFile());
 					if (clearItemSpecificState) clearItemSpecificState();
 					selectedItem = item;

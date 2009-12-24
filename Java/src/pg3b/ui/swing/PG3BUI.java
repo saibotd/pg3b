@@ -38,6 +38,7 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
@@ -78,17 +79,17 @@ public class PG3BUI extends JFrame {
 	private Config activeConfig;
 
 	private JMenuItem pg3bConnectMenuItem, controllerConnectMenuItem, exitMenuItem;
-	private JCheckBoxMenuItem showControllerMenuItem, debugEnabledMenuItem, calibrationEnabledMenuItem;
+	private JCheckBoxMenuItem showControllerMenuItem, showLogMenuItem, debugEnabledMenuItem, calibrationEnabledMenuItem;
 	private JMenuItem roundTripMenuItem, clearMenuItem, calibrateMenuItem, setControllerTypeMenuItem;
 
 	private XboxControllerPanel controllerPanel;
-	private JToggleButton captureButton;
 	private StatusBar statusBar;
 
 	private JTabbedPane tabs;
 	private ConfigTab configTab;
 	private ScriptEditor scriptEditor;
-	private LogTab logTab;
+	private LogPanel logPanel;
+	private JSplitPane splitPane;
 
 	private boolean disableKeyboard = false;
 
@@ -133,6 +134,8 @@ public class PG3BUI extends JFrame {
 
 		controllerPanel.setVisible(settings.showController);
 		showControllerMenuItem.setSelected(settings.showController);
+		showLog(settings.showLog);
+		showLogMenuItem.setSelected(settings.showLog);
 
 		statusBar.setMessage("");
 
@@ -237,10 +240,6 @@ public class PG3BUI extends JFrame {
 		return statusBar;
 	}
 
-	public JToggleButton getCaptureButton () {
-		return captureButton;
-	}
-
 	public JTabbedPane getTabs () {
 		return tabs;
 	}
@@ -278,20 +277,23 @@ public class PG3BUI extends JFrame {
 			}
 		});
 
+		showLogMenuItem.addActionListener(new ActionListener() {
+			public void actionPerformed (ActionEvent event) {
+				showLog(showLogMenuItem.isSelected());
+				settings.showLog = showLogMenuItem.isSelected();
+				Settings.save();
+			}
+		});
+
 		exitMenuItem.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
 				exit();
 			}
 		});
 
-		captureButton.addActionListener(new ActionListener() {
-			public void actionPerformed (ActionEvent event) {
-				setCapture(captureButton.isSelected());
-			}
-		});
 		statusBar.setConfigClickedListener(new Runnable() {
 			public void run () {
-				captureButton.doClick();
+				configTab.getConfigEditor().getCaptureButton().doClick();
 			}
 		});
 
@@ -401,7 +403,7 @@ public class PG3BUI extends JFrame {
 	}
 
 	public void setCapture (boolean enabled) {
-		captureButton.setSelected(enabled);
+		configTab.getConfigEditor().getCaptureButton().setSelected(enabled);
 		if (enabled && activeConfig != null) return;
 		if (!enabled && activeConfig == null) return;
 
@@ -452,6 +454,24 @@ public class PG3BUI extends JFrame {
 		System.exit(0);
 	}
 
+	private void showLog (boolean showLog) {
+		getContentPane().remove(splitPane);
+		getContentPane().remove(tabs);
+		Component component;
+		if (showLog) {
+			component = splitPane;
+			splitPane.setTopComponent(tabs);
+		} else {
+			component = tabs;
+		}
+		getContentPane().add(
+			component,
+			new GridBagConstraints(0, 2, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0),
+				0, 0));
+		splitPane.resetToPreferredSizes();
+		getContentPane().validate();
+	}
+
 	private void initializeLayout () {
 		UIManager.put("FileChooser.readOnly", Boolean.TRUE);
 		ToolTipManager.sharedInstance().setDismissDelay(Integer.MAX_VALUE);
@@ -468,7 +488,7 @@ public class PG3BUI extends JFrame {
 
 		setIconImage(new ImageIcon(getClass().getResource("/pg3b.png")).getImage());
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-		setSize(720, 800);
+		setSize(720, 814);
 		setLocationRelativeTo(null);
 
 		{
@@ -503,6 +523,10 @@ public class PG3BUI extends JFrame {
 					showControllerMenuItem = new JCheckBoxMenuItem("Show Controller");
 					menu.add(showControllerMenuItem);
 				}
+				{
+					showLogMenuItem = new JCheckBoxMenuItem("Show Log");
+					menu.add(showLogMenuItem);
+				}
 			}
 			{
 				JMenu menu = new JMenu("Diagnostics");
@@ -530,14 +554,6 @@ public class PG3BUI extends JFrame {
 
 		getContentPane().setLayout(new GridBagLayout());
 		{
-			captureButton = new JToggleButton("Capture");
-			captureButton.setEnabled(false);
-			getContentPane().add(
-				captureButton,
-				new GridBagConstraints(0, 1, 1, 1, 0.0, 0.0, GridBagConstraints.SOUTH, GridBagConstraints.NONE,
-					new Insets(6, 0, 0, 0), 0, 0));
-		}
-		{
 			controllerPanel = new XboxControllerPanel();
 			getContentPane().add(
 				controllerPanel,
@@ -552,18 +568,19 @@ public class PG3BUI extends JFrame {
 					0), 0, 0));
 		}
 		{
-			tabs = new JTabbedPane();
-			getContentPane().add(
-				tabs,
-				new GridBagConstraints(0, 2, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0,
-					0), 0, 0));
+			splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+			splitPane.setBorder(BorderFactory.createEmptyBorder());
 			{
-				logTab = new LogTab();
-				configTab = new ConfigTab(this);
-				tabs.addTab("Configuration", null, configTab, null);
-				scriptEditor = new ScriptEditor(this);
-				tabs.addTab("Scripts", null, scriptEditor, null);
-				tabs.addTab("Log", null, logTab, null);
+				splitPane.setTopComponent(tabs = new JTabbedPane());
+				{
+					configTab = new ConfigTab(this);
+					tabs.addTab("Configuration", null, configTab, null);
+					scriptEditor = new ScriptEditor(this);
+					tabs.addTab("Scripts", null, scriptEditor, null);
+				}
+			}
+			{
+				splitPane.setBottomComponent(logPanel = new LogPanel());
 			}
 		}
 		{

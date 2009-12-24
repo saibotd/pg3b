@@ -33,16 +33,18 @@ import pg3b.Stick;
 import pg3b.ui.Config;
 
 public class DeadzoneDialog extends JDialog {
+	private final PG3BUI owner;
 	private final PG3B pg3b;
 	private final Config config;
 
 	private JComboBox leftShapeCombo, rightShapeCombo;
 	private JSpinner leftXSpinner, leftYSpinner, rightXSpinner, rightYSpinner;
-	private JButton saveButton;
+	private JButton saveButton, cancelButton;
 	private JPanel leftStickPanel, rightStickPanel;
 
 	public DeadzoneDialog (PG3BUI owner, PG3B pg3b, Config config) {
 		super(owner, "Deadzones", true);
+		this.owner = owner;
 
 		this.pg3b = pg3b;
 		this.config = config;
@@ -52,6 +54,27 @@ public class DeadzoneDialog extends JDialog {
 
 		setLocationRelativeTo(owner);
 
+		try {
+			pg3b.reset();
+		} catch (IOException ignored) {
+		}
+
+		Deadzone leftDeadzone = config.getLeftDeadzone();
+		if (leftDeadzone != null) {
+			setValue(leftXSpinner, leftDeadzone.getSizeX());
+			setValue(leftYSpinner, leftDeadzone.getSizeY());
+			leftShapeCombo.setSelectedIndex(leftDeadzone instanceof Deadzone.Square ? 0 : 1);
+			setAxis(Axis.leftStickX, leftXSpinner);
+			setAxis(Axis.leftStickY, leftYSpinner);
+		}
+		Deadzone rightDeadzone = config.getRightDeadzone();
+		if (rightDeadzone != null) {
+			setValue(rightXSpinner, rightDeadzone.getSizeX());
+			setValue(rightYSpinner, rightDeadzone.getSizeY());
+			rightShapeCombo.setSelectedIndex(rightDeadzone instanceof Deadzone.Square ? 0 : 1);
+			setAxis(Axis.rightStickX, rightXSpinner);
+			setAxis(Axis.rightStickY, rightYSpinner);
+		}
 	}
 
 	private void initializeEvents () {
@@ -76,26 +99,51 @@ public class DeadzoneDialog extends JDialog {
 			}
 		});
 
-		saveButton.addActionListener(new ActionListener() {
+		cancelButton.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
-				Deadzone leftDeadzone = leftShapeCombo.getSelectedIndex() == 0 ? new Deadzone.Square() : new Deadzone.Round();
-				leftDeadzone.setSizeX((Integer)leftXSpinner.getValue() / 255f);
-				leftDeadzone.setSizeY((Integer)leftYSpinner.getValue() / 255f);
-				config.setLeftDeadzone(leftDeadzone);
-				Deadzone rightDeadzone = rightShapeCombo.getSelectedIndex() == 0 ? new Deadzone.Square() : new Deadzone.Round();
-				rightDeadzone.setSizeX((Integer)rightXSpinner.getValue() / 255f);
-				rightDeadzone.setSizeY((Integer)rightYSpinner.getValue() / 255f);
-				config.setRightDeadzone(rightDeadzone);
+				try {
+					pg3b.reset();
+				} catch (IOException ignored) {
+				}
 				dispose();
 			}
 		});
+
+		saveButton.addActionListener(new ActionListener() {
+			public void actionPerformed (ActionEvent event) {
+				Deadzone leftDeadzone = leftShapeCombo.getSelectedIndex() == 0 ? new Deadzone.Square() : new Deadzone.Round();
+				leftDeadzone.setSizeX(getDeflection(leftXSpinner));
+				leftDeadzone.setSizeY(getDeflection(leftYSpinner));
+				config.setLeftDeadzone(leftDeadzone);
+				Deadzone rightDeadzone = rightShapeCombo.getSelectedIndex() == 0 ? new Deadzone.Square() : new Deadzone.Round();
+				rightDeadzone.setSizeX(getDeflection(rightXSpinner));
+				rightDeadzone.setSizeY(getDeflection(rightYSpinner));
+				config.setRightDeadzone(rightDeadzone);
+				owner.getConfigTab().getConfigEditor().saveItem(true);
+				try {
+					pg3b.reset();
+				} catch (IOException ignored) {
+				}
+				dispose();
+			}
+		});
+	}
+
+	private float getDeflection (JSpinner spinner) {
+		int value = (Integer)spinner.getValue();
+		if (value == 0) return 0;
+		return (value + 128) / 256f * 2 - 1;
+	}
+
+	private void setValue (JSpinner spinner, float value) {
+		spinner.setValue((int)((value + 1) / 2 * 256f - 128));
 	}
 
 	private void setAxis (Axis axis, JSpinner spinner) {
 		JPanel panel = axis.getStick() == Stick.left ? leftStickPanel : rightStickPanel;
 		String title = axis.getStick() == Stick.left ? "Left Stick" : "Right Stick";
 		try {
-			pg3b.set(axis, (Integer)spinner.getValue() / 255f);
+			pg3b.set(axis, getDeflection(spinner));
 			panel.setBorder(BorderFactory.createTitledBorder(title));
 		} catch (IOException ex) {
 			if (DEBUG) debug("Error setting axis: " + axis, ex);
@@ -157,7 +205,7 @@ public class DeadzoneDialog extends JDialog {
 					leftXSpinner = new JSpinner();
 					leftStickPanel.add(leftXSpinner, new GridBagConstraints(1, 1, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
 						GridBagConstraints.NONE, new Insets(6, 6, 0, 6), 0, 0));
-					leftXSpinner.setModel(new SpinnerNumberModel(0, -255, 255, 1));
+					leftXSpinner.setModel(new SpinnerNumberModel(0, -128, 128, 1));
 				}
 				{
 					JLabel label = new JLabel("Y axis:");
@@ -168,7 +216,7 @@ public class DeadzoneDialog extends JDialog {
 					leftYSpinner = new JSpinner();
 					leftStickPanel.add(leftYSpinner, new GridBagConstraints(1, 2, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
 						GridBagConstraints.NONE, new Insets(6, 6, 4, 6), 0, 0));
-					leftYSpinner.setModel(new SpinnerNumberModel(0, -255, 255, 1));
+					leftYSpinner.setModel(new SpinnerNumberModel(0, -128, 128, 1));
 				}
 			}
 			{
@@ -196,7 +244,7 @@ public class DeadzoneDialog extends JDialog {
 					rightXSpinner = new JSpinner();
 					rightStickPanel.add(rightXSpinner, new GridBagConstraints(1, 1, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
 						GridBagConstraints.NONE, new Insets(6, 6, 0, 6), 0, 0));
-					rightXSpinner.setModel(new SpinnerNumberModel(0, -255, 255, 1));
+					rightXSpinner.setModel(new SpinnerNumberModel(0, -128, 128, 1));
 				}
 				{
 					JLabel label = new JLabel("Y axis:");
@@ -207,7 +255,7 @@ public class DeadzoneDialog extends JDialog {
 					rightYSpinner = new JSpinner();
 					rightStickPanel.add(rightYSpinner, new GridBagConstraints(1, 2, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
 						GridBagConstraints.NONE, new Insets(6, 6, 4, 6), 0, 0));
-					rightYSpinner.setModel(new SpinnerNumberModel(0, -255, 255, 1));
+					rightYSpinner.setModel(new SpinnerNumberModel(0, -128, 128, 1));
 				}
 			}
 		}
@@ -234,6 +282,11 @@ public class DeadzoneDialog extends JDialog {
 					saveButton = new JButton();
 					buttonPanel.add(saveButton);
 					saveButton.setText("Save");
+				}
+				{
+					cancelButton = new JButton();
+					buttonPanel.add(cancelButton);
+					cancelButton.setText("Cancel");
 				}
 			}
 		}

@@ -76,9 +76,9 @@ public class XboxControllerPanel extends JPanel {
 	};
 
 	public XboxControllerPanel () {
-		setMinimumSize(new Dimension(497, 337));
-		setMaximumSize(new Dimension(497, 337));
-		setPreferredSize(new Dimension(497, 337));
+		setMinimumSize(new Dimension(497, 328));
+		setMaximumSize(new Dimension(497, 328));
+		setPreferredSize(new Dimension(497, 328));
 		setOpaque(false);
 
 		Sound.register("click");
@@ -342,6 +342,7 @@ public class XboxControllerPanel extends JPanel {
 		}
 
 		g.setFont(g.getFont().deriveFont(10f));
+		g.translate(0, -10);
 
 		packedImages.get("controller").draw(g, 0, 0);
 

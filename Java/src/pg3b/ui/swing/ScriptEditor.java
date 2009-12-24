@@ -86,7 +86,7 @@ public class ScriptEditor extends EditorPanel<Script> {
 	private RTextScrollPane codeScroll;
 	private SquiggleUnderlineHighlightPainter errorPainter = new SquiggleUnderlineHighlightPainter(Color.red);
 	private AutoCompletion autoCompletion;
-	private JButton executeButton, recordButton;
+	private JButton executeButton;
 	private JLabel errorLabel;
 
 	public ScriptEditor (PG3BUI owner) {
@@ -210,12 +210,6 @@ public class ScriptEditor extends EditorPanel<Script> {
 	}
 
 	private void initializeEvents () {
-		recordButton.addActionListener(new ActionListener() {
-			public void actionPerformed (ActionEvent event) {
-				UI.errorDialog(ScriptEditor.this, "Error", "Not implemented yet.");
-			}
-		});
-
 		codeText.addCaretListener(new CaretListener() {
 			public void caretUpdate (CaretEvent event) {
 				if (codeText.getText().length() > 0) fileToPosition.put(getSelectedItem().getFile(), event.getDot());
@@ -397,22 +391,14 @@ public class ScriptEditor extends EditorPanel<Script> {
 					new Insets(0, 6, 6, 0), 0, 0));
 		}
 		{
-			JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 6, 6));
+			executeButton = new JButton("Execute");
 			getContentPanel().add(
-				panel,
+				executeButton,
 				new GridBagConstraints(1, 1, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE,
-					new Insets(0, 6, 0, 0), 0, 0));
-			{
-				recordButton = new JButton("Record");
-				// panel.add(recordButton);
-			}
-			{
-				executeButton = new JButton("Execute");
-				panel.add(executeButton);
-			}
+					new Insets(6, 6, 6, 0), 0, 0));
 		}
 
-		UI.enableWhenModelHasSelection(getSelectionModel(), codeText, recordButton, executeButton);
+		UI.enableWhenModelHasSelection(getSelectionModel(), codeText, executeButton);
 	}
 
 	static class CellRenderer extends CompletionCellRenderer {

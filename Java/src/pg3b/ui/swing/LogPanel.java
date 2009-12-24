@@ -26,7 +26,7 @@ import pg3b.util.TextComponentOutputStream;
 
 import com.esotericsoftware.minlog.Log;
 
-public class LogTab extends JPanel {
+public class LogPanel extends JPanel {
 	private JButton clearButton;
 	private JTextArea logText;
 	private JRadioButton traceRadio, debugRadio, infoRadio, warnRadio, errorRadio;
@@ -34,7 +34,7 @@ public class LogTab extends JPanel {
 	private JCheckBox alwaysScrollCheckBox;
 	private TextComponentOutputStream output;
 
-	public LogTab () {
+	public LogPanel () {
 		initializeLayout();
 		initializeEvents();
 
@@ -107,9 +107,24 @@ public class LogTab extends JPanel {
 	private void initializeLayout () {
 		setLayout(new GridBagLayout());
 		{
+			logScroll = new JScrollPane();
+			this.add(logScroll, new GridBagConstraints(0, 0, 2, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
+				new Insets(6, 6, 6, 6), 0, 0));
+			{
+				logText = new JTextArea();
+				logScroll.setViewportView(logText);
+				logText.setLineWrap(true);
+				try {
+					logText.setFont(Font.createFont(Font.TRUETYPE_FONT, getClass().getResourceAsStream("/VeraMono.ttf")).deriveFont(
+						12f));
+				} catch (Exception ignored) {
+				}
+			}
+		}
+		{
 			JPanel panel = new JPanel();
-			add(panel, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(
-				6, 6, 0, 0), 0, 0));
+			add(panel, new GridBagConstraints(0, 1, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(
+				0, 6, 6, 0), 0, 0));
 			panel.setLayout(new FlowLayout(FlowLayout.CENTER, 6, 0));
 			{
 				errorRadio = new JRadioButton("Error");
@@ -133,28 +148,9 @@ public class LogTab extends JPanel {
 			}
 		}
 		{
-			logScroll = new JScrollPane();
-			this.add(logScroll, new GridBagConstraints(0, 1, 2, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH,
-				new Insets(0, 6, 6, 6), 0, 0));
-			{
-				logText = new JTextArea();
-				logScroll.setViewportView(logText);
-				logText.setLineWrap(true);
-				try {
-					logText.setFont(Font.createFont(Font.TRUETYPE_FONT, getClass().getResourceAsStream("/VeraMono.ttf")).deriveFont(
-						12f));
-				} catch (Exception ignored) {
-				}
-			}
-		}
-		{
-			JPanel panel = new JPanel();
-			FlowLayout panelLayout = new FlowLayout();
-			panelLayout.setHgap(6);
-			panelLayout.setVgap(6);
-			panel.setLayout(panelLayout);
-			this.add(panel, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE,
-				new Insets(0, 0, 0, 0), 0, 0));
+			JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 6, 0));
+			this.add(panel, new GridBagConstraints(1, 1, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE,
+				new Insets(0, 0, 6, 0), 0, 0));
 			{
 				alwaysScrollCheckBox = new JCheckBox("Scroll to bottom");
 				panel.add(alwaysScrollCheckBox);

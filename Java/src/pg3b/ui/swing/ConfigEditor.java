@@ -29,6 +29,7 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.JToggleButton;
 import javax.swing.ListSelectionModel;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
@@ -56,8 +57,8 @@ public class ConfigEditor extends EditorPanel<Config> {
 	private JTable triggersTable;
 	private DefaultTableModel triggersTableModel;
 	private JButton newTriggerButton, deleteTriggerButton, editTriggerButton;
-
 	private JButton deadzonesButton;
+	private JToggleButton captureButton;
 
 	private PG3B pg3b;
 
@@ -91,11 +92,15 @@ public class ConfigEditor extends EditorPanel<Config> {
 				Settings.save();
 			}
 		}
-		owner.getCaptureButton().setEnabled(config != null);
+		captureButton.setEnabled(config != null);
 	}
 
 	protected void clearItemSpecificState () {
 		lastSelectedTriggerIndex = -1;
+	}
+
+	public JToggleButton getCaptureButton () {
+		return captureButton;
 	}
 
 	public void setSelectedTrigger (int index) {
@@ -159,6 +164,12 @@ public class ConfigEditor extends EditorPanel<Config> {
 	}
 
 	private void initializeEvents () {
+		captureButton.addActionListener(new ActionListener() {
+			public void actionPerformed (ActionEvent event) {
+				owner.setCapture(captureButton.isSelected());
+			}
+		});
+
 		newTriggerButton.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
 				Config config = getSelectedItem();
@@ -282,9 +293,20 @@ public class ConfigEditor extends EditorPanel<Config> {
 				new GridBagConstraints(0, 1, 1, 1, 1.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(6, 0, 6,
 					0), 0, 0));
 			{
-				deadzonesButton = new JButton("Deadzones");
-				panel.add(deadzonesButton, new GridBagConstraints(0, 0, 1, 1, 1.0, 0.0, GridBagConstraints.WEST,
-					GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+				JPanel leftPanel = new JPanel(new GridBagLayout());
+				panel.add(leftPanel, new GridBagConstraints(0, 0, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
+					new Insets(0, 0, 0, 0), 0, 0));
+				{
+					captureButton = new JToggleButton("Capture");
+					captureButton.setEnabled(false);
+					leftPanel.add(captureButton, new GridBagConstraints(-1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER,
+						GridBagConstraints.NONE, new Insets(0, 0, 0, 6), 0, 0));
+				}
+				{
+					deadzonesButton = new JButton("Deadzones");
+					leftPanel.add(deadzonesButton, new GridBagConstraints(-1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER,
+						GridBagConstraints.NONE, new Insets(0, 0, 0, 6), 0, 0));
+				}
 			}
 			{
 				JPanel rightPanel = new JPanel(new GridLayout(1, 1, 6, 6));

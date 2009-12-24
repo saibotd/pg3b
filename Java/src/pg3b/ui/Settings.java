@@ -16,7 +16,7 @@ import net.sourceforge.yamlbeans.YamlWriter;
  * Stores application wide settings for the PG3B UI.
  */
 public class Settings {
-	public boolean showController = true;
+	public boolean showController = true, showLog = false;
 	public String pg3bPort;
 	public int controllerPort;
 	public String controllerName;
