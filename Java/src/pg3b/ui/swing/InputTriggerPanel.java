@@ -34,7 +34,7 @@ import pg3b.Button;
 import pg3b.Target;
 import pg3b.input.Input;
 import pg3b.input.InputDevice;
-import pg3b.input.JInputController;
+import pg3b.input.JInputJoystick;
 import pg3b.input.Keyboard;
 import pg3b.input.Mouse;
 import pg3b.input.XboxController;
@@ -157,7 +157,7 @@ public class InputTriggerPanel extends JPanel {
 		devices.add(Keyboard.instance);
 		devices.add(Mouse.instance);
 		devices.addAll(XboxController.getAll());
-		devices.addAll(JInputController.getAll());
+		devices.addAll(JInputJoystick.getAll());
 		for (InputDevice device : devices)
 			device.resetLastInput();
 		monitorControllersTask = new TimerTask() {
@@ -270,7 +270,7 @@ public class InputTriggerPanel extends JPanel {
 
 				if (isNewTrigger) config.getTriggers().add(trigger);
 				owner.getConfigTab().getConfigEditor().saveItem(true);
-				owner.getConfigTab().getConfigEditor().setTriggerSelected(config.getTriggers().indexOf(trigger));
+				owner.getConfigTab().getConfigEditor().setSelectedTrigger(config.getTriggers().indexOf(trigger));
 			}
 		});
 

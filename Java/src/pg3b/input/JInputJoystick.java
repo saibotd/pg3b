@@ -16,10 +16,10 @@ import pg3b.ui.InputTrigger;
 /**
  * A JInput controller input device. This is used for all devices that are not keyboards, mice, or Xbox controllers.
  */
-public class JInputController implements InputDevice {
+public class JInputJoystick implements InputDevice {
 	private final Controller controller;
 
-	public JInputController (Controller controller) {
+	public JInputJoystick (Controller controller) {
 		this.controller = controller;
 	}
 
@@ -32,14 +32,14 @@ public class JInputController implements InputDevice {
 		return true;
 	}
 
-	public ControllerInput getLastInput () {
+	public JoystickInput getLastInput () {
 		if (!controller.poll()) return null;
 		EventQueue eventQueue = controller.getEventQueue();
 		Event event = new Event();
 		while (eventQueue.getNextEvent(event)) {
 			Component component = event.getComponent();
 			float value = event.getValue();
-			if (value != 0) return new ControllerInput(controller, component);
+			if (value != 0) return new JoystickInput(controller, component);
 		}
 		return null;
 	}
@@ -59,12 +59,12 @@ public class JInputController implements InputDevice {
 		return result;
 	}
 
-	static public List<JInputController> getAll () {
-		ArrayList<JInputController> list = new ArrayList();
+	static public List<JInputJoystick> getAll () {
+		ArrayList<JInputJoystick> list = new ArrayList();
 		for (Controller controller : ControllerEnvironment.getDefaultEnvironment().getControllers()) {
 			if (controller.getType() == Type.MOUSE) continue;
 			if (controller.getType() == Type.KEYBOARD) continue;
-			list.add(new JInputController(controller));
+			list.add(new JInputJoystick(controller));
 		}
 		return list;
 	}
@@ -73,25 +73,25 @@ public class JInputController implements InputDevice {
 		if (this == obj) return true;
 		if (obj == null) return false;
 		if (getClass() != obj.getClass()) return false;
-		JInputController other = (JInputController)obj;
+		JInputJoystick other = (JInputJoystick)obj;
 		if (controller == null) {
 			if (other.controller != null) return false;
 		} else if (!controller.equals(other.controller)) return false;
 		return true;
 	}
 
-	static public class ControllerInput implements Input {
+	static public class JoystickInput implements Input {
 		private String id;
 		private String type;
 		private String controllerName;
 		private transient Component component;
-		private transient JInputController device;
+		private transient JInputJoystick device;
 		private transient float lastState = Float.NaN;
 
-		public ControllerInput () {
+		public JoystickInput () {
 		}
 
-		public ControllerInput (Controller controller, Component component) {
+		public JoystickInput (Controller controller, Component component) {
 			id = component.getIdentifier().toString();
 			type = component.getIdentifier().getClass().getSimpleName().toLowerCase();
 			controllerName = controller.getName();
@@ -126,13 +126,13 @@ public class JInputController implements InputDevice {
 			return component;
 		}
 
-		public JInputController getInputDevice () {
+		public JInputJoystick getInputDevice () {
 			if (device != null) return device;
 			for (Controller controller : ControllerEnvironment.getDefaultEnvironment().getControllers()) {
 				if (!controller.getName().equals(controllerName)) continue;
 				for (Component component : controller.getComponents()) {
 					if (component.getIdentifier().toString().equals(id)) {
-						device = new JInputController(controller);
+						device = new JInputJoystick(controller);
 						return device;
 					}
 				}

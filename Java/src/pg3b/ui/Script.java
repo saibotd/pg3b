@@ -9,6 +9,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringReader;
+import java.io.Writer;
 
 import net.sourceforge.yamlbeans.YamlWriter;
 import pnuts.lang.ParseException;
@@ -55,10 +56,8 @@ public class Script extends Editable {
 		return pnuts;
 	}
 
-	public void save () throws IOException {
-		if (getFile() == null) throw new IllegalStateException("A file has not been set.");
-
-		FileWriter writer = new FileWriter(getFile());
+	public void save (Writer writer) throws IOException {
+		if (writer == null) throw new IllegalArgumentException("writer cannot be null.");
 		YamlWriter yamlWriter = new YamlWriter(writer, yamlConfig);
 		try {
 			yamlWriter.write(this);
@@ -72,7 +71,7 @@ public class Script extends Editable {
 
 	public void load (File file) throws IOException {
 		this.file = file;
-		BufferedReader reader = new BufferedReader(new FileReader(getFile()));
+		BufferedReader reader = new BufferedReader(new FileReader(file));
 		try {
 			StringBuilder buffer = new StringBuilder(4096);
 			while (true) {

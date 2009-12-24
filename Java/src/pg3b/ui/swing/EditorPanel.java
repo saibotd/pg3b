@@ -15,7 +15,10 @@ import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.InputEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
 
@@ -26,6 +29,7 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
@@ -124,6 +128,10 @@ public class EditorPanel<T extends Editable> extends JPanel {
 	protected void clearItemSpecificState () {
 	}
 
+	protected JPopupMenu getPopupMenu () {
+		return null;
+	}
+
 	public JPanel getContentPanel () {
 		return contentPanel;
 	}
@@ -186,6 +194,23 @@ public class EditorPanel<T extends Editable> extends JPanel {
 	}
 
 	private void initializeEvents () {
+		list.addMouseListener(new MouseAdapter() {
+			public void mousePressed (MouseEvent event) {
+				showPopup(event);
+			}
+
+			public void mouseReleased (MouseEvent event) {
+				showPopup(event);
+			}
+
+			private void showPopup (MouseEvent event) {
+				if (!event.isPopupTrigger() || getSelectedItem() == null) return;
+				JPopupMenu popupMenu = getPopupMenu();
+				if (popupMenu == null) return;
+				popupMenu.show(list, event.getX(), event.getY());
+			}
+		});
+
 		list.addListSelectionListener(new ListSelectionListener() {
 			public void valueChanged (ListSelectionEvent event) {
 				if (event.getValueIsAdjusting() || isListAdjusting) return;
@@ -274,7 +299,7 @@ public class EditorPanel<T extends Editable> extends JPanel {
 
 			if (!force && oldItem.equals(item)) return;
 			try {
-				item.save();
+				item.save(new FileWriter(item.getFile()));
 				monitor.scan(rootDir);
 				owner.getStatusBar().setMessage(type.getSimpleName() + " saved.");
 			} catch (IOException ex) {

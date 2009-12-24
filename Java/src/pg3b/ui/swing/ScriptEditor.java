@@ -31,7 +31,9 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JToolTip;
 import javax.swing.KeyStroke;
 import javax.swing.event.CaretEvent;
@@ -58,6 +60,7 @@ import org.fife.ui.rsyntaxtextarea.parser.DefaultParserNotice;
 import org.fife.ui.rsyntaxtextarea.parser.ParseResult;
 import org.fife.ui.rtextarea.RTextScrollPane;
 
+import pg3b.ui.Action;
 import pg3b.ui.Config;
 import pg3b.ui.Script;
 import pg3b.ui.ScriptAction;
@@ -90,7 +93,7 @@ public class ScriptEditor extends EditorPanel<Script> {
 		initializeLayout();
 		initializeEvents();
 
-		setFontSize(12f);
+		setFontSize(11f);
 
 		DefaultCompletionProvider provider = new DefaultCompletionProvider();
 		try {
@@ -111,8 +114,10 @@ public class ScriptEditor extends EditorPanel<Script> {
 		provider.addCompletion(new ShorthandCompletion(provider, "R", "pg3b.set(\"right\", getPayload())"));
 		provider.addCompletion(new ShorthandCompletion(provider, "RT", "pg3b.set(\"rightTrigger\", getPayload())"));
 		provider.addCompletion(new ShorthandCompletion(provider, "LT", "pg3b.set(\"leftTrigger\", getPayload())"));
-		provider.addCompletion(new ShorthandCompletion(provider, "RS", "pg3b.set(\"rightStick\", getPayload())"));
-		provider.addCompletion(new ShorthandCompletion(provider, "LS", "pg3b.set(\"leftStick\", getPayload())"));
+		provider.addCompletion(new ShorthandCompletion(provider, "RS", "pg3b.set(\"rightShoulder\", getPayload())"));
+		provider.addCompletion(new ShorthandCompletion(provider, "LS", "pg3b.set(\"leftShoulder\", getPayload())"));
+		provider.addCompletion(new ShorthandCompletion(provider, "RST", "pg3b.set(\"rightStick\", getPayload())"));
+		provider.addCompletion(new ShorthandCompletion(provider, "LST", "pg3b.set(\"leftStick\", getPayload())"));
 		provider.addCompletion(new ShorthandCompletion(provider, "RSX", "pg3b.set(\"rightStickX\", getPayload())"));
 		provider.addCompletion(new ShorthandCompletion(provider, "RSY", "pg3b.set(\"rightStickY\", getPayload())"));
 		provider.addCompletion(new ShorthandCompletion(provider, "RSXY", "pg3b.set(\"rightStick\", 1, 1)"));
@@ -170,6 +175,38 @@ public class ScriptEditor extends EditorPanel<Script> {
 		configEditor.setSelectedItem(selectedConfig);
 	}
 
+	protected JPopupMenu getPopupMenu () {
+		final Script script = getSelectedItem();
+		final ConfigEditor configEditor = owner.getConfigTab().getConfigEditor();
+		final HashMap<Config, Integer> configs = new HashMap();
+		outer: //
+		for (Config config : configEditor.getItems()) {
+			int i = 0;
+			for (Trigger trigger : config.getTriggers()) {
+				Action action = trigger.getAction();
+				if (action instanceof ScriptAction) {
+					if (((ScriptAction)action).getScript() == script) {
+						configs.put(config, i);
+						continue outer;
+					}
+				}
+				i++;
+			}
+		}
+		if (configs.isEmpty()) return null;
+		JPopupMenu popupMenu = new JPopupMenu();
+		for (final Config config : configs.keySet()) {
+			popupMenu.add(new JMenuItem("Goto " + config + "...")).addActionListener(new ActionListener() {
+				public void actionPerformed (ActionEvent event) {
+					configEditor.setSelectedItem(config);
+					configEditor.setSelectedTrigger(configs.get(config));
+					owner.getTabs().setSelectedComponent(owner.getConfigTab());
+				}
+			});
+		}
+		return popupMenu;
+	}
+
 	private void initializeEvents () {
 		recordButton.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
@@ -222,6 +259,10 @@ public class ScriptEditor extends EditorPanel<Script> {
 			public void actionPerformed (ActionEvent event) {
 				errorLabel.setForeground(Color.black);
 				errorLabel.setText("Executing script...");
+				if (highlightTag != null) {
+					codeText.getHighlighter().removeHighlight(highlightTag);
+					highlightTag = null;
+				}
 				new Thread("Execute") {
 					public void run () {
 						try {

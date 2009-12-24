@@ -47,7 +47,7 @@ public class ScriptAction implements Action {
 		return script.getPnuts() != null;
 	}
 
-	private Script getScript () {
+	public Script getScript () {
 		List<Script> scripts = PG3BUI.instance.getScriptEditor().getItems();
 		for (int i = 0, n = scripts.size(); i < n; i++) {
 			Script script = scripts.get(i);
@@ -62,20 +62,20 @@ public class ScriptAction implements Action {
 
 	static {
 		Package pkg = Package.getGlobalPackage();
-		pkg.set("getPayload".intern(), new Functions.getPayload());
-		pkg.set("getAction".intern(), new Functions.getAction());
-		pkg.set("getTrigger".intern(), new Functions.getTrigger());
-		pkg.set("getConfig".intern(), new Functions.getConfig());
-		pkg.set("sleep".intern(), new Functions.sleep());
-		pkg.set("play".intern(), new Functions.play());
-		pkg.set("beep".intern(), new Functions.beep());
-		pkg.set("get".intern(), new Functions.get());
-		pkg.set("set".intern(), new Functions.set());
-		pkg.set("toggle".intern(), new Functions.toggle());
-		pkg.set("print".intern(), new Functions.print());
-		pkg.set("isCtrlDown".intern(), new Functions.isCtrlDown());
-		pkg.set("isAltDown".intern(), new Functions.isAltDown());
-		pkg.set("isShiftDown".intern(), new Functions.isShiftDown());
+		pkg.set("getPayload".intern(), Functions.getPayload);
+		pkg.set("getAction".intern(), Functions.getAction);
+		pkg.set("getTrigger".intern(), Functions.getTrigger);
+		pkg.set("getConfig".intern(), Functions.getConfig);
+		pkg.set("sleep".intern(), Functions.sleep);
+		pkg.set("play".intern(), Functions.play);
+		pkg.set("beep".intern(), Functions.beep);
+		pkg.set("get".intern(), Functions.get);
+		pkg.set("set".intern(), Functions.set);
+		pkg.set("toggle".intern(), Functions.toggle);
+		pkg.set("print".intern(), Functions.print);
+		pkg.set("isCtrlDown".intern(), Functions.isCtrlDown);
+		pkg.set("isAltDown".intern(), Functions.isAltDown);
+		pkg.set("isShiftDown".intern(), Functions.isShiftDown);
 	}
 
 	/**

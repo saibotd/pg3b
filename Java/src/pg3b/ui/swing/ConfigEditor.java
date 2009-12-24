@@ -1,6 +1,8 @@
 
 package pg3b.ui.swing;
 
+import static com.esotericsoftware.minlog.Log.*;
+
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.GridBagConstraints;
@@ -11,12 +13,20 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
@@ -31,9 +41,14 @@ import pg3b.PG3B;
 import pg3b.ui.Action;
 import pg3b.ui.Config;
 import pg3b.ui.InputTrigger;
+import pg3b.ui.Script;
+import pg3b.ui.ScriptAction;
 import pg3b.ui.Settings;
 import pg3b.ui.Trigger;
+import pg3b.util.FileChooser;
 import pg3b.util.UI;
+
+import com.esotericsoftware.minlog.Log;
 
 public class ConfigEditor extends EditorPanel<Config> {
 	private int lastSelectedTriggerIndex;
@@ -69,7 +84,7 @@ public class ConfigEditor extends EditorPanel<Config> {
 		} else {
 			for (Trigger trigger : config.getTriggers())
 				triggersTableModel.addRow(new Object[] {trigger, trigger.getAction(), trigger.getDescription()});
-			setTriggerSelected(lastSelectedTriggerIndex);
+			setSelectedTrigger(lastSelectedTriggerIndex);
 
 			if (!config.getName().equals(settings.selectedConfig)) {
 				settings.selectedConfig = config.getName();
@@ -83,7 +98,7 @@ public class ConfigEditor extends EditorPanel<Config> {
 		lastSelectedTriggerIndex = -1;
 	}
 
-	public void setTriggerSelected (int index) {
+	public void setSelectedTrigger (int index) {
 		if (index == -1) {
 			triggersTable.clearSelection();
 			return;
@@ -91,6 +106,56 @@ public class ConfigEditor extends EditorPanel<Config> {
 		if (index >= triggersTable.getRowCount()) return;
 		triggersTable.setRowSelectionInterval(index, index);
 		UI.scrollRowToVisisble(triggersTable, index);
+	}
+
+	protected JPopupMenu getPopupMenu () {
+		final Config config = getSelectedItem();
+		JPopupMenu popupMenu = new JPopupMenu();
+		popupMenu.add(new JMenuItem("Export...")).addActionListener(new ActionListener() {
+			public void actionPerformed (ActionEvent event) {
+				FileChooser fileChooser = FileChooser.get(owner, "export", ".");
+				if (!fileChooser.show("Export Config", true)) return;
+				ZipOutputStream output = null;
+				try {
+					output = new ZipOutputStream(new FileOutputStream(fileChooser.getSelectedFile()));
+
+					output.putNextEntry(new ZipEntry("config/" + config.getName() + ".config"));
+					ByteArrayOutputStream bytes = new ByteArrayOutputStream(512);
+					config.save(new OutputStreamWriter(bytes));
+					output.write(bytes.toByteArray());
+					bytes.reset();
+
+					StringBuilder buffer = new StringBuilder(256);
+					for (Trigger trigger : config.getTriggers()) {
+						Action action = trigger.getAction();
+						if (!(action instanceof ScriptAction)) continue;
+						Script script = ((ScriptAction)action).getScript();
+						if (script == null) {
+							buffer.append(((ScriptAction)action).getScriptName());
+							buffer.append('\n');
+							continue;
+						}
+						output.putNextEntry(new ZipEntry("scripts/" + script.getName() + ".script"));
+						script.save(new OutputStreamWriter(bytes));
+						output.write(bytes.toByteArray());
+						bytes.reset();
+					}
+
+					if (buffer.length() > 0) {
+						UI.errorDialog(ConfigEditor.this, "Export Config",
+							"The export completed with warnings.\nThe following scripts could not be found:\n" + buffer);
+					}
+				} catch (IOException ex) {
+					if (Log.ERROR) error("Error exporting config.", ex);
+				} finally {
+					try {
+						if (output != null) output.close();
+					} catch (IOException ignored) {
+					}
+				}
+			}
+		});
+		return popupMenu;
 	}
 
 	private void initializeEvents () {
@@ -130,6 +195,34 @@ public class ConfigEditor extends EditorPanel<Config> {
 			public void mouseClicked (MouseEvent event) {
 				if (event.getClickCount() != 2) return;
 				editTriggerButton.doClick();
+			}
+
+			public void mousePressed (MouseEvent event) {
+				showPopup(event);
+			}
+
+			public void mouseReleased (MouseEvent event) {
+				showPopup(event);
+			}
+
+			private void showPopup (MouseEvent event) {
+				if (!event.isPopupTrigger()) return;
+				int selectedRow = triggersTable.getSelectedRow();
+				if (selectedRow == -1) return;
+				Config config = getSelectedItem();
+				Action action = config.getTriggers().get(triggersTable.getSelectedRow()).getAction();
+				if (!(action instanceof ScriptAction)) return;
+				final Script script = ((ScriptAction)action).getScript();
+				if (script == null) return;
+
+				JPopupMenu popupMenu = new JPopupMenu();
+				popupMenu.add(new JMenuItem("Goto Script...")).addActionListener(new ActionListener() {
+					public void actionPerformed (ActionEvent event) {
+						owner.getScriptEditor().setSelectedItem(script);
+						owner.getTabs().setSelectedComponent(owner.getScriptEditor());
+					}
+				});
+				popupMenu.show(triggersTable, event.getX(), event.getY());
 			}
 		});
 

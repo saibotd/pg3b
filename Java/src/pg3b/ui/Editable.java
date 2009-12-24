@@ -6,6 +6,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
+import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 
 import net.sourceforge.yamlbeans.YamlConfig;
@@ -15,6 +16,9 @@ import net.sourceforge.yamlbeans.scalar.ScalarSerializer;
 import pg3b.Deadzone;
 import pg3b.PG3B;
 import pg3b.Target;
+import pg3b.input.JInputJoystick;
+import pg3b.input.Keyboard;
+import pg3b.input.Mouse;
 import pg3b.ui.swing.EditorPanel;
 
 /**
@@ -25,6 +29,10 @@ public class Editable implements Cloneable {
 	static {
 		yamlConfig.setPrivateFields(true);
 		yamlConfig.setBeanProperties(false);
+		yamlConfig.writeConfig.setAutoAnchor(false);
+		yamlConfig.writeConfig.setWriteRootTags(false);
+		// yamlConfig.writeConfig.setWriteDefaultValues(true);
+
 		yamlConfig.setScalarSerializer(Target.class, new ScalarSerializer<Target>() {
 			public Target read (String value) {
 				return PG3B.getTarget(value);
@@ -34,13 +42,13 @@ public class Editable implements Cloneable {
 				return target.toString();
 			}
 		});
-		yamlConfig.writeConfig.setAutoAnchor(false);
-		yamlConfig.writeConfig.setWriteRootTags(false);
-		// yamlConfig.writeConfig.setWriteDefaultValues(true);
 
 		yamlConfig.setClassTag("input", InputTrigger.class);
 		yamlConfig.setClassTag("PG3B", PG3BAction.class);
 		yamlConfig.setClassTag("script", ScriptAction.class);
+		yamlConfig.setClassTag("mouse", Mouse.MouseInput.class);
+		yamlConfig.setClassTag("keyboard", Keyboard.KeyboardInput.class);
+		yamlConfig.setClassTag("joystick", JInputJoystick.JoystickInput.class);
 		yamlConfig.setClassTag("round", Deadzone.Round.class);
 		yamlConfig.setClassTag("square", Deadzone.Square.class);
 	}
@@ -76,28 +84,28 @@ public class Editable implements Cloneable {
 		this.description = description;
 	}
 
-	public void save () throws IOException {
-		if (file == null) throw new IllegalStateException("A file has not been set.");
-		YamlWriter writer = new YamlWriter(new FileWriter(file), yamlConfig);
+	public void save (Writer writer) throws IOException {
+		if (writer == null) throw new IllegalArgumentException("writer cannot be null.");
+		YamlWriter yamlWriter = new YamlWriter(writer, yamlConfig);
 		try {
-			writer.write(this);
+			yamlWriter.write(this);
 		} finally {
-			writer.close();
+			yamlWriter.close();
 		}
 	}
 
 	public void load (File file) throws IOException {
 		this.file = file;
-		YamlReader reader = getYamlReader(new FileReader(file));
+		YamlReader yamlReader = getYamlReader(new FileReader(file));
 		try {
-			reader.read(getClass());
+			yamlReader.read(getClass());
 		} catch (Exception ex) {
 			IOException ioEx = new IOException();
 			ioEx.initCause(ex);
 			throw ioEx;
 		} finally {
 			try {
-				if (reader != null) reader.close();
+				if (yamlReader != null) yamlReader.close();
 			} catch (IOException ignored) {
 			}
 		}

@@ -3,6 +3,7 @@ package pg3b.util;
 
 import static com.esotericsoftware.minlog.Log.*;
 
+import java.awt.MouseInfo;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
@@ -74,7 +75,7 @@ public abstract class DirectoryMonitor<T> {
 				continue;
 			}
 			Item item = new Item();
-			item.file = file;
+			item.file = file.getAbsoluteFile();
 			item.lastModified = file.lastModified();
 
 			int ignoredIndex = ignoredItems.indexOf(item);

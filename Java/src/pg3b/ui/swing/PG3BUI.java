@@ -25,6 +25,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowFocusListener;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
@@ -63,6 +64,7 @@ import pg3b.ui.Diagnostics;
 import pg3b.ui.InputTrigger;
 import pg3b.ui.Settings;
 import pg3b.ui.Trigger;
+import pg3b.util.FileChooser;
 import pg3b.util.LoaderDialog;
 import pnuts.lang.Package;
 
@@ -128,6 +130,8 @@ public class PG3BUI extends JFrame {
 		clearMenuItem.setEnabled(false);
 		calibrateMenuItem.setEnabled(false);
 		setControllerTypeMenuItem.setEnabled(false);
+		debugEnabledMenuItem.setEnabled(false);
+		calibrationEnabledMenuItem.setEnabled(false);
 
 		controllerPanel.setVisible(settings.showController);
 		showControllerMenuItem.setSelected(settings.showController);
@@ -181,6 +185,8 @@ public class PG3BUI extends JFrame {
 				roundTripMenuItem.setEnabled(pg3b != null && controller != null);
 				calibrateMenuItem.setEnabled(roundTripMenuItem.isEnabled());
 				setControllerTypeMenuItem.setEnabled(pg3b != null);
+				debugEnabledMenuItem.setEnabled(pg3b != null);
+				calibrationEnabledMenuItem.setEnabled(pg3b != null);
 			}
 		});
 
@@ -235,6 +241,10 @@ public class PG3BUI extends JFrame {
 
 	public JToggleButton getCaptureButton () {
 		return captureButton;
+	}
+
+	public JTabbedPane getTabs () {
+		return tabs;
 	}
 
 	private void initializeEvents () {
@@ -467,13 +477,25 @@ public class PG3BUI extends JFrame {
 			JMenuBar menuBar = new JMenuBar();
 			setJMenuBar(menuBar);
 			{
-				JMenu menu = new JMenu("File");
+				JMenu menu = new JMenu("PG3B");
 				menuBar.add(menu);
 				{
 					pg3bConnectMenuItem = menu.add(new JMenuItem("Connect to PG3B..."));
 					controllerConnectMenuItem = menu.add(new JMenuItem("Connect to Controller..."));
-					menu.addSeparator();
-					exitMenuItem = menu.add(new JMenuItem("Exit"));
+				}
+				menu.addSeparator();
+				{
+					setControllerTypeMenuItem = new JMenuItem("PG3B Controller Type...");
+					menu.add(setControllerTypeMenuItem);
+				}
+				{
+					calibrateMenuItem = new JMenuItem("Axes Calibration...");
+					menu.add(calibrateMenuItem);
+				}
+				menu.addSeparator();
+				{
+					exitMenuItem = new JMenuItem("Exit");
+					menu.add(exitMenuItem);
 				}
 			}
 			{
@@ -482,18 +504,6 @@ public class PG3BUI extends JFrame {
 				{
 					showControllerMenuItem = new JCheckBoxMenuItem("Show Controller");
 					menu.add(showControllerMenuItem);
-				}
-			}
-			{
-				JMenu menu = new JMenu("Setup");
-				menuBar.add(menu);
-				{
-					setControllerTypeMenuItem = new JMenuItem("PG3B Controller Type...");
-					menu.add(setControllerTypeMenuItem);
-				}
-				{
-					calibrateMenuItem = new JMenuItem("Axes Calibration...");
-					menu.add(calibrateMenuItem);
 				}
 			}
 			{
