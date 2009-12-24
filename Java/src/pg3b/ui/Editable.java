@@ -60,7 +60,7 @@ public class Editable implements Cloneable {
 	}
 
 	public Editable (File file) {
-		this.file = file;
+		this.file = file.getAbsoluteFile();
 	}
 
 	public File getFile () {
@@ -95,7 +95,7 @@ public class Editable implements Cloneable {
 	}
 
 	public void load (File file) throws IOException {
-		this.file = file;
+		this.file = file.getAbsoluteFile();
 		YamlReader yamlReader = getYamlReader(new FileReader(file));
 		try {
 			yamlReader.read(getClass());

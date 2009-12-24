@@ -18,6 +18,8 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
@@ -214,12 +216,6 @@ public class ScriptEditor extends EditorPanel<Script> {
 			}
 		});
 
-		codeText.addFocusListener(new FocusAdapter() {
-			public void focusLost (FocusEvent event) {
-				saveItem(false);
-			}
-		});
-
 		codeText.addCaretListener(new CaretListener() {
 			public void caretUpdate (CaretEvent event) {
 				if (codeText.getText().length() > 0) fileToPosition.put(getSelectedItem().getFile(), event.getDot());
@@ -237,7 +233,6 @@ public class ScriptEditor extends EditorPanel<Script> {
 				if (getSelectedItem() == null) return result;
 				try {
 					Pnuts.parse(codeText.getText());
-					errorLabel.setText("");
 				} catch (ParseException ex) {
 					if (DEBUG) debug("Error during script compilation.", ex);
 					try {
@@ -255,57 +250,62 @@ public class ScriptEditor extends EditorPanel<Script> {
 			}
 		});
 
-		executeButton.addActionListener(new ActionListener() {
-			public void actionPerformed (ActionEvent event) {
-				errorLabel.setForeground(Color.black);
-				errorLabel.setText("Executing script...");
-				if (highlightTag != null) {
-					codeText.getHighlighter().removeHighlight(highlightTag);
-					highlightTag = null;
-				}
-				new Thread("Execute") {
-					public void run () {
-						try {
-							Config config = owner.getConfigTab().getConfigEditor().getSelectedItem();
-							Context context = new ScriptAction("<temp>").getContext(config, null, 1);
-							Pnuts.load(new StringReader(codeText.getText()), context);
-							EventQueue.invokeLater(new Runnable() {
-								public void run () {
-									errorLabel.setForeground(Color.black);
-									errorLabel.setText("Script completed successfully.");
-								}
-							});
-						} catch (final PnutsException ex) {
-							if (DEBUG) debug("Error during script execution.", ex);
-							final String message;
-							if (ex.getThrowable() != null)
-								message = ex.getThrowable().getClass().getSimpleName() + ": " + ex.getThrowable().getMessage();
-							else
-								message = ex.getMessage();
-							EventQueue.invokeLater(new Runnable() {
-								public void run () {
-									try {
-										int line = ex.getLine();
-										int start = codeText.getLineStartOffset(line - 1) + ex.getColumn();
-										int end = codeText.getLineEndOffset(line - 1);
-										highlightTag = codeText.getHighlighter().addHighlight(start, end, errorPainter);
-									} catch (BadLocationException ignored) {
-									}
-									displayErrorMessage(message);
-								}
-							});
-						}
-					}
-				}.start();
+		executeButton.addMouseListener(new MouseAdapter() {
+			public void mousePressed (MouseEvent event) {
+				execute();
 			}
 		});
 
 		codeText.getInputMap(WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.CTRL_MASK), "execute");
 		codeText.getActionMap().put("execute", new AbstractAction() {
 			public void actionPerformed (ActionEvent event) {
-				executeButton.doClick();
+				execute();
 			}
 		});
+	}
+
+	private void execute () {
+		errorLabel.setForeground(Color.black);
+		errorLabel.setText("Executing script...");
+		if (highlightTag != null) {
+			codeText.getHighlighter().removeHighlight(highlightTag);
+			highlightTag = null;
+		}
+		new Thread("Execute") {
+			public void run () {
+				try {
+					Config config = owner.getConfigTab().getConfigEditor().getSelectedItem();
+					Context context = new ScriptAction("<temp>").getContext(config, null, 1);
+					Pnuts.load(new StringReader(codeText.getText()), context);
+					EventQueue.invokeLater(new Runnable() {
+						public void run () {
+							errorLabel.setForeground(Color.black);
+							errorLabel.setText("Script completed successfully.");
+						}
+					});
+				} catch (final PnutsException ex) {
+					if (DEBUG) debug("Error during script execution.", ex);
+					final String message;
+					if (ex.getThrowable() != null)
+						message = ex.getThrowable().getClass().getSimpleName() + ": " + ex.getThrowable().getMessage();
+					else
+						message = ex.getMessage();
+					EventQueue.invokeLater(new Runnable() {
+						public void run () {
+							try {
+								int line = ex.getLine();
+								int start = codeText.getLineStartOffset(line - 1) + ex.getColumn();
+								int end = codeText.getLineEndOffset(line - 1);
+								highlightTag = codeText.getHighlighter().addHighlight(start, end, errorPainter);
+							} catch (BadLocationException ignored) {
+							}
+							displayErrorMessage(message);
+						}
+					});
+				}
+			}
+		}.start();
+		codeText.requestFocus();
 	}
 
 	private void displayErrorMessage (String message) {

@@ -25,7 +25,6 @@ import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowFocusListener;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
@@ -64,7 +63,6 @@ import pg3b.ui.Diagnostics;
 import pg3b.ui.InputTrigger;
 import pg3b.ui.Settings;
 import pg3b.ui.Trigger;
-import pg3b.util.FileChooser;
 import pg3b.util.LoaderDialog;
 import pnuts.lang.Package;
 

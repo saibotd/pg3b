@@ -86,7 +86,7 @@ public abstract class DirectoryMonitor<T> {
 
 			if (!items.add(item)) continue;
 			try {
-				item.object = load(file);
+				item.object = load(file.getAbsoluteFile());
 				updated = true;
 				if (DEBUG) debug("Added file: " + item);
 			} catch (Exception ex) {

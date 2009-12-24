@@ -57,7 +57,7 @@ public class StatusBar extends JPanel {
 				}
 			};
 			add(controllerLabel, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
-				new Insets(3, 6, 3, 0), 0, 0));
+				new Insets(3, 12, 3, 0), 0, 0));
 			controllerLabel.setIcon(redImage);
 		}
 		{
@@ -67,7 +67,7 @@ public class StatusBar extends JPanel {
 				}
 			};
 			add(configLabel, new GridBagConstraints(2, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
-				new Insets(3, 6, 3, 0), 0, 0));
+				new Insets(3, 12, 3, 0), 0, 0));
 			configLabel.setIcon(redImage);
 		}
 		{

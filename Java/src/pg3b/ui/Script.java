@@ -70,7 +70,7 @@ public class Script extends Editable {
 	}
 
 	public void load (File file) throws IOException {
-		this.file = file;
+		this.file = file.getAbsoluteFile();
 		BufferedReader reader = new BufferedReader(new FileReader(file));
 		try {
 			StringBuilder buffer = new StringBuilder(4096);
