@@ -95,9 +95,13 @@ public class ScriptEditor extends EditorPanel<Script> {
 		initializeLayout();
 		initializeEvents();
 
-		setFontSize(11f);
+		setFontSize(12f);
 
-		DefaultCompletionProvider provider = new DefaultCompletionProvider();
+		DefaultCompletionProvider provider = new DefaultCompletionProvider() {
+			protected boolean isValidChar (char ch) {
+				return super.isValidChar(ch) || ch == '.';
+			}
+		};
 		try {
 			provider.loadFromXML(getClass().getResourceAsStream("/completion.xml"));
 		} catch (IOException ex) {
@@ -371,6 +375,7 @@ public class ScriptEditor extends EditorPanel<Script> {
 			codeText.setCaretColor(Color.black);
 			codeText.setBackground(Color.white);
 			codeText.setSelectionColor(new Color(0xb8ddff));
+			codeText.setTextAntiAliasHint("VALUE_TEXT_ANTIALIAS_ON");
 			{
 				codeScroll = new RTextScrollPane(codeText);
 				getContentPanel().add(
