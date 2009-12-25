@@ -121,25 +121,24 @@ public class PG3B extends Device {
 			String response = input.readLine();
 			if (response == null) throw new IOException("Connection was closed.");
 			if (response.startsWith(responsePrefix)) {
-				if (TRACE) {
-					if (debugEnabled) {
-						response = response.substring(9);
-						while (true) {
-							char c = response.length() == 0 ? '\n' : response.charAt(0);
-							if (c == '\n') {
-								if (TRACE) trace("Received: " + responsePrefix);
-								return new byte[0];
-							}
-							if (c == ' ') {
-								if (TRACE) trace("Received: " + responsePrefix + response);
-								return hexStringToBytes(response, 1);
-							}
-							if (TRACE) trace("Debug: " + response);
-							response = input.readLine();
-							if (response == null) throw new IOException("Connection was closed.");
+				if (debugEnabled) {
+					response = response.substring(9);
+					while (true) {
+						char c = response.length() == 0 ? '\n' : response.charAt(0);
+						if (c == '\n') {
+							if (TRACE) trace("Received: " + responsePrefix);
+							return new byte[0];
 						}
-					} else
-						trace("Received: " + response);
+						if (c == ' ') {
+							if (TRACE) trace("Received: " + responsePrefix + response);
+							return hexStringToBytes(response, 1);
+						}
+						if (TRACE) trace("Debug: " + response);
+						response = input.readLine();
+						if (response == null) throw new IOException("Connection was closed.");
+					}
+				} else if (TRACE) {
+					trace("Received: " + response);
 				}
 				return hexStringToBytes(response, 10);
 			}
