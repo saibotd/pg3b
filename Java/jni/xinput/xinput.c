@@ -10,13 +10,13 @@
 #include <xinput.h>
 
 
-JNIEXPORT void JNICALL Java_pg3b_input_XInputXboxController_setEnabled
+JNIEXPORT void JNICALL Java_com_esotericsoftware_controller_input_XInputXboxController_setEnabled
 (JNIEnv* env, jclass c, jboolean enabled) {
 	XInputEnable((BOOL)enabled);
 }
 
 
-JNIEXPORT void JNICALL Java_pg3b_input_XInputXboxController_poll
+JNIEXPORT void JNICALL Java_com_esotericsoftware_controller_input_XInputXboxController_poll
 (JNIEnv* env, jclass c, jint index, jobject byteBuffer) {
 	short *buffer = (short*)(*env)->GetDirectBufferAddress(env, byteBuffer);
 	XINPUT_STATE state;
