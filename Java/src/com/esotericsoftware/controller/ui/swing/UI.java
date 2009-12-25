@@ -67,6 +67,8 @@ import com.esotericsoftware.controller.ui.InputTrigger;
 import com.esotericsoftware.controller.ui.Settings;
 import com.esotericsoftware.controller.ui.Trigger;
 import com.esotericsoftware.controller.util.LoaderDialog;
+import com.esotericsoftware.controller.util.Util;
+import com.esotericsoftware.controller.xim.XIM;
 import com.esotericsoftware.minlog.Log;
 
 public class UI extends JFrame {
@@ -79,7 +81,7 @@ public class UI extends JFrame {
 	private XboxController controller;
 	private Config activeConfig;
 
-	private JMenuItem pg3bConnectMenuItem, controllerConnectMenuItem, exitMenuItem;
+	private JMenuItem pg3bConnectMenuItem, ximConnectMenuItem, disconnectMenuItem, controllerConnectMenuItem, exitMenuItem;
 	private JCheckBoxMenuItem showControllerMenuItem, showLogMenuItem, debugEnabledMenuItem, calibrationEnabledMenuItem;
 	private JMenuItem roundTripMenuItem, clearMenuItem, calibrateMenuItem, setControllerTypeMenuItem;
 
@@ -128,7 +130,9 @@ public class UI extends JFrame {
 		statusBar.setDevice(null);
 		controllerPanel.setController(null);
 		statusBar.setController(null);
+
 		roundTripMenuItem.setEnabled(false);
+		disconnectMenuItem.setEnabled(false);
 		clearMenuItem.setEnabled(false);
 		calibrateMenuItem.setEnabled(false);
 		setControllerTypeMenuItem.setEnabled(false);
@@ -189,6 +193,7 @@ public class UI extends JFrame {
 				statusBar.setDevice(device);
 				configTab.getConfigEditor().setDevice(device);
 
+				disconnectMenuItem.setEnabled(device != null);
 				roundTripMenuItem.setEnabled(device != null && controller != null);
 
 				boolean isPG3B = device instanceof PG3B;
@@ -253,12 +258,33 @@ public class UI extends JFrame {
 	}
 
 	private void initializeEvents () {
+		disconnectMenuItem.addActionListener(new ActionListener() {
+			public void actionPerformed (ActionEvent event) {
+				setDevice(null);
+			}
+		});
+
+		ximConnectMenuItem.addActionListener(new ActionListener() {
+			public void actionPerformed (ActionEvent event) {
+				setDevice(null);
+				try {
+					setDevice(new XIM());
+					statusBar.setMessage("XIM connected.");
+				} catch (IOException ex) {
+					if (Log.ERROR) error("Error connecting to XIM.", ex);
+					statusBar.setMessage("XIM connection failed.");
+					Util.errorDialog(UI.this, "Connect Error", "An error occurred while attempting to connect to the XIM.");
+				}
+			}
+		});
+
 		pg3bConnectMenuItem.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
 				setDevice(null);
 				new ConnectPG3BDialog(UI.this).setVisible(true);
 			}
 		});
+
 		statusBar.setDeviceClickedListener(new Runnable() {
 			public void run () {
 				pg3bConnectMenuItem.doClick();
@@ -507,6 +533,11 @@ public class UI extends JFrame {
 				menuBar.add(menu);
 				{
 					pg3bConnectMenuItem = menu.add(new JMenuItem("Connect to PG3B..."));
+					ximConnectMenuItem = menu.add(new JMenuItem("Connect to XIM..."));
+					disconnectMenuItem = menu.add(new JMenuItem("Disconnect"));
+				}
+				menu.addSeparator();
+				{
 					controllerConnectMenuItem = menu.add(new JMenuItem("Connect to Controller..."));
 				}
 				menu.addSeparator();
@@ -515,7 +546,7 @@ public class UI extends JFrame {
 					menu.add(setControllerTypeMenuItem);
 				}
 				{
-					calibrateMenuItem = new JMenuItem("Axes Calibration...");
+					calibrateMenuItem = new JMenuItem("PG3B Axes Calibration...");
 					menu.add(calibrateMenuItem);
 				}
 				menu.addSeparator();
@@ -549,11 +580,11 @@ public class UI extends JFrame {
 				}
 				menu.addSeparator();
 				{
-					debugEnabledMenuItem = new JCheckBoxMenuItem("Debug");
+					debugEnabledMenuItem = new JCheckBoxMenuItem("PG3B Debug");
 					menu.add(debugEnabledMenuItem);
 				}
 				{
-					calibrationEnabledMenuItem = new JCheckBoxMenuItem("Calibration");
+					calibrationEnabledMenuItem = new JCheckBoxMenuItem("PG3B Calibration");
 					menu.add(calibrationEnabledMenuItem);
 					calibrationEnabledMenuItem.setSelected(true);
 				}

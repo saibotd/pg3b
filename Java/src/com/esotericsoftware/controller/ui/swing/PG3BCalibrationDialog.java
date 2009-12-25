@@ -61,7 +61,7 @@ public class PG3BCalibrationDialog extends JDialog {
 	private JButton refreshButton;
 
 	public PG3BCalibrationDialog (UI owner, PG3B pg3b, XboxController controller) {
-		super(owner, "Axes Calibration", true);
+		super(owner, "PG3B Axes Calibration", true);
 
 		this.pg3b = pg3b;
 		this.controller = controller;
