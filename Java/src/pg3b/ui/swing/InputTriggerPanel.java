@@ -188,16 +188,20 @@ public class InputTriggerPanel extends JPanel {
 	}
 
 	public void setTriggerText (InputTrigger trigger) {
-		boolean ctrl = trigger.getCtrl();
-		boolean alt = trigger.getAlt();
-		boolean shift = trigger.getShift();
-		trigger.setCtrl(ctrlCheckBox.isSelected());
-		trigger.setAlt(altCheckBox.isSelected());
-		trigger.setShift(shiftCheckBox.isSelected());
-		triggerLabel.setText(trigger.toString());
-		trigger.setCtrl(ctrl);
-		trigger.setAlt(alt);
-		trigger.setShift(shift);
+		if (trigger.getInput() == null)
+			triggerLabel.setText("Click to set trigger...");
+		else {
+			boolean ctrl = trigger.getCtrl();
+			boolean alt = trigger.getAlt();
+			boolean shift = trigger.getShift();
+			trigger.setCtrl(ctrlCheckBox.isSelected());
+			trigger.setAlt(altCheckBox.isSelected());
+			trigger.setShift(shiftCheckBox.isSelected());
+			triggerLabel.setText(trigger.toString());
+			trigger.setCtrl(ctrl);
+			trigger.setAlt(alt);
+			trigger.setShift(shift);
+		}
 	}
 
 	private void initializeEvents () {
@@ -392,7 +396,7 @@ public class InputTriggerPanel extends JPanel {
 				GridBagConstraints.HORIZONTAL, new Insets(0, 6, 6, 6), 0, 0));
 			triggerLabel.setOpaque(true);
 			triggerLabel.setBorder(descriptionText.getBorder());
-			triggerLabel.setFocusable(false);
+			triggerLabel.setFocusable(true);
 		}
 		{
 			JPanel spacer = new JPanel();

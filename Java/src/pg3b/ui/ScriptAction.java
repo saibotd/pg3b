@@ -72,6 +72,7 @@ public class ScriptAction implements Action {
 		pkg.set("get".intern(), Functions.get);
 		pkg.set("set".intern(), Functions.set);
 		pkg.set("toggle".intern(), Functions.toggle);
+		pkg.set("fork".intern(), Functions.fork);
 		pkg.set("print".intern(), Functions.print);
 		pkg.set("isCtrlDown".intern(), Functions.isCtrlDown);
 		pkg.set("isAltDown".intern(), Functions.isAltDown);

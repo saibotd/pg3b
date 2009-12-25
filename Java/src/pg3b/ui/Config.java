@@ -114,19 +114,24 @@ public class Config extends Editable {
 				HashSet<Poller> pollers = new HashSet();
 				for (Trigger trigger : getTriggers())
 					pollers.add(trigger.getPoller());
+				// Poll and check them all initially so their last state is current.
+				for (Poller poller : pollers)
+					poller.poll();
+				for (Trigger trigger : getTriggers())
+					trigger.check();
 				while (running) {
 					for (Poller poller : pollers)
 						poller.poll();
-					for (final Trigger trigger : getTriggers()) {
-						final Object state = trigger.check();
+					for (Trigger trigger : getTriggers()) {
+						Object state = trigger.check();
 						if (state == null) continue;
 						final Action action = trigger.getAction();
 						try {
 							if (action.execute(Config.this, trigger, state)) {
-								if (DEBUG) debug("Trigger \"" + trigger + "\" executed action: " + action);
+								if (DEBUG) debug("Executing action \"" + action + "\" for trigger \"" + trigger + "\".");
 							}
 						} catch (Exception ex) {
-							if (ERROR) error("Error executing action \"" + action + "\" for trigger: " + trigger, ex);
+							if (ERROR) error("Error executing action \"" + action + "\" for trigger \"" + trigger + "\".", ex);
 							hasError = true;
 							running = false;
 						}

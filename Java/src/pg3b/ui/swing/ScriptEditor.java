@@ -213,6 +213,11 @@ public class ScriptEditor extends EditorPanel<Script> {
 		return popupMenu;
 	}
 
+	public void saveItem (Script item, boolean force) {
+		super.saveItem(item, force);
+		errorLabel.setText("");
+	}
+
 	private void initializeEvents () {
 		codeText.addCaretListener(new CaretListener() {
 			public void caretUpdate (CaretEvent event) {

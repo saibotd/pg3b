@@ -70,7 +70,7 @@ import pnuts.lang.Package;
 import com.esotericsoftware.minlog.Log;
 
 public class PG3BUI extends JFrame {
-	static public final String version = "0.0.80";
+	static public final String version = "0.0.82";
 	static public PG3BUI instance;
 
 	static private Settings settings = Settings.get();

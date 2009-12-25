@@ -105,9 +105,13 @@ public class InputTrigger extends Trigger {
 		if (getCtrl()) buffer.append("ctrl+");
 		if (getAlt()) buffer.append("alt+");
 		if (getShift()) buffer.append("shift+");
-		buffer.append(input);
-		buffer.append(": ");
-		buffer.append(input.getInputDevice());
+		if (input == null)
+			buffer.append("<none>");
+		else {
+			buffer.append(input);
+			buffer.append(": ");
+			buffer.append(input.getInputDevice());
+		}
 		return buffer.toString();
 	}
 }
