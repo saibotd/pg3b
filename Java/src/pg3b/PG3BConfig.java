@@ -75,9 +75,10 @@ public class PG3BConfig {
 				throw new IOException("CRC check failed, page: 0, expected: " + Integer.toHexString(crc & 0xff) + ", actual: "
 					+ Integer.toHexString(data[INDEX_CRC] & 0xff));
 			}
+			if (DEBUG) debug("PG3B config loaded, version: " + getVersion() + ", controller type: " + getControllerType());
 		} catch (IOException ex) {
 			// The device really shouldn't ever return an invalid config page.
-			if (WARN) warn("Invalid config, resetting config to defaults.", ex);
+			if (WARN) warn("Invalid PG3B config, resetting to defaults.", ex);
 			data = new byte[32];
 			System.arraycopy(MAGIC_NUMBER.getBytes("ASCII"), 0, data, INDEX_MAGIC, MAGIC_NUMBER.length());
 			data[INDEX_SIZE] = (byte)data.length;
@@ -181,6 +182,8 @@ public class PG3BConfig {
 			System.arraycopy(table, i * PAGE_SIZE, pageData, 0, PAGE_SIZE);
 			writePage((byte)(firstPage + i), pageData);
 		}
+
+		if (DEBUG) debug(axis + " calibration table written.");
 	}
 
 	public byte[] getCalibrationTable (Axis axis) throws IOException {
@@ -198,6 +201,6 @@ public class PG3BConfig {
 	public void save () throws IOException {
 		data[INDEX_CRC] = calculateCRC(data, INDEX_CRC + 1, data[INDEX_SIZE] - 1);
 		writePage(CONFIG_PAGE, data);
-		if (DEBUG) debug("Saved config.");
+		if (DEBUG) debug("PG3B config saved.");
 	}
 }

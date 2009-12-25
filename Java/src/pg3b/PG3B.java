@@ -37,7 +37,6 @@ public class PG3B {
 		}
 	}
 
-	static private final float EPSILON = 0.0001f;
 	static private final char[] hex = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
 	static private final int[] charToDigit = new int[103];
 	static {
@@ -119,6 +118,8 @@ public class PG3B {
 			// For sending... 7: command code, 8: space, 9+: command arguments
 			// For receiving... 7, 8: OK
 
+			if (INFO) info("Connected to PG3B on port: " + port);
+
 			setDebugEnabled(false);
 			setCalibrationEnabled(true);
 
@@ -141,24 +142,26 @@ public class PG3B {
 			String response = input.readLine();
 			if (response == null) throw new IOException("Connection was closed.");
 			if (response.startsWith(responsePrefix)) {
-				if (debugEnabled) {
-					response = response.substring(9);
-					while (true) {
-						char c = response.length() == 0 ? '\n' : response.charAt(0);
-						if (c == '\n') {
-							if (TRACE) trace("Received: " + responsePrefix);
-							return new byte[0];
+				if (TRACE) {
+					if (debugEnabled) {
+						response = response.substring(9);
+						while (true) {
+							char c = response.length() == 0 ? '\n' : response.charAt(0);
+							if (c == '\n') {
+								if (TRACE) trace("Received: " + responsePrefix);
+								return new byte[0];
+							}
+							if (c == ' ') {
+								if (TRACE) trace("Received: " + responsePrefix + response);
+								return hexStringToBytes(response, 1);
+							}
+							if (TRACE) trace("Debug: " + response);
+							response = input.readLine();
+							if (response == null) throw new IOException("Connection was closed.");
 						}
-						if (c == ' ') {
-							if (TRACE) trace("Received: " + responsePrefix + response);
-							return hexStringToBytes(response, 1);
-						}
-						if (TRACE) trace("Debug: " + response);
-						response = input.readLine();
-						if (response == null) throw new IOException("Connection was closed.");
-					}
+					} else
+						trace("Received: " + response);
 				}
-				if (TRACE) trace("Received: " + response);
 				return hexStringToBytes(response, 10);
 			}
 		}
@@ -303,13 +306,11 @@ public class PG3B {
 						state = deflection[0];
 						if (deflection[1] != y) {
 							// BOZO - Set y.
-							System.out.println("set y!");
 						}
 					} else {
 						state = deflection[1];
 						if (deflection[0] != x) {
 							// BOZO - Set x.
-							System.out.println("set x!");
 						}
 					}
 				}
@@ -454,6 +455,7 @@ public class PG3B {
 	public void setCalibrationEnabled (boolean enabled) throws IOException {
 		calibrationEnabled = enabled;
 		commandByte(Command.setCalibrationEnabled, enabled ? 1 : 0);
+		if (DEBUG) debug("Calibration enabled set to: " + enabled);
 	}
 
 	public boolean isCalibrationEnabled () {
@@ -466,6 +468,7 @@ public class PG3B {
 	public void setDebugEnabled (boolean enabled) throws IOException {
 		debugEnabled = enabled;
 		commandByte(Command.setDebugMessagesEnabled, enabled ? 1 : 0);
+		if (DEBUG) debug("Debug enabled set to: " + enabled);
 	}
 
 	public boolean isDebugEnabled () {
@@ -513,12 +516,10 @@ public class PG3B {
 	 */
 	public void addListener (Listener listener) {
 		listeners.addListener(listener);
-		if (TRACE) trace("PG3B listener added: " + listener.getClass().getName());
 	}
 
 	public void removeListener (Listener listener) {
 		listeners.removeListener(listener);
-		if (TRACE) trace("PG3B listener removed: " + listener.getClass().getName());
 	}
 
 	/**

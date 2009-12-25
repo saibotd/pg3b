@@ -58,7 +58,7 @@ public class ConfigEditor extends EditorPanel<Config> {
 	private DefaultTableModel triggersTableModel;
 	private JButton newTriggerButton, deleteTriggerButton, editTriggerButton;
 	private JButton deadzonesButton;
-	private JToggleButton captureButton;
+	private JToggleButton activateButton;
 
 	private PG3B pg3b;
 
@@ -81,7 +81,7 @@ public class ConfigEditor extends EditorPanel<Config> {
 	protected void updateFieldsFromItem (Config config) {
 		triggersTableModel.setRowCount(0);
 		if (config == null) {
-			owner.setCapture(false);
+			owner.setActivated(false);
 		} else {
 			for (Trigger trigger : config.getTriggers())
 				triggersTableModel.addRow(new Object[] {trigger, trigger.getAction(), trigger.getDescription()});
@@ -92,15 +92,15 @@ public class ConfigEditor extends EditorPanel<Config> {
 				Settings.save();
 			}
 		}
-		captureButton.setEnabled(config != null);
+		activateButton.setEnabled(config != null);
 	}
 
 	protected void clearItemSpecificState () {
 		lastSelectedTriggerIndex = -1;
 	}
 
-	public JToggleButton getCaptureButton () {
-		return captureButton;
+	public JToggleButton getActivateButton () {
+		return activateButton;
 	}
 
 	public void setSelectedTrigger (int index) {
@@ -120,9 +120,11 @@ public class ConfigEditor extends EditorPanel<Config> {
 			public void actionPerformed (ActionEvent event) {
 				FileChooser fileChooser = FileChooser.get(owner, "export", ".");
 				if (!fileChooser.show("Export Config", true)) return;
+				File file = fileChooser.getSelectedFile();
+				if (!file.getName().endsWith(".zip")) file = new File(file.getParent(), file.getName() + ".zip");
 				ZipOutputStream output = null;
 				try {
-					output = new ZipOutputStream(new FileOutputStream(fileChooser.getSelectedFile()));
+					output = new ZipOutputStream(new FileOutputStream(file));
 
 					output.putNextEntry(new ZipEntry("config/" + config.getName() + ".config"));
 					ByteArrayOutputStream bytes = new ByteArrayOutputStream(512);
@@ -164,9 +166,9 @@ public class ConfigEditor extends EditorPanel<Config> {
 	}
 
 	private void initializeEvents () {
-		captureButton.addActionListener(new ActionListener() {
+		activateButton.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
-				owner.setCapture(captureButton.isSelected());
+				owner.setActivated(activateButton.isSelected());
 			}
 		});
 
@@ -297,9 +299,9 @@ public class ConfigEditor extends EditorPanel<Config> {
 				panel.add(leftPanel, new GridBagConstraints(0, 0, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
 					new Insets(0, 0, 0, 0), 0, 0));
 				{
-					captureButton = new JToggleButton("Capture");
-					captureButton.setEnabled(false);
-					leftPanel.add(captureButton, new GridBagConstraints(-1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER,
+					activateButton = new JToggleButton("Activate");
+					activateButton.setEnabled(false);
+					leftPanel.add(activateButton, new GridBagConstraints(-1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER,
 						GridBagConstraints.NONE, new Insets(0, 0, 0, 6), 0, 0));
 				}
 				{

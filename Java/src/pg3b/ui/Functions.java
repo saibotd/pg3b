@@ -78,6 +78,18 @@ public class Functions {
 		}
 	};
 
+	static public BaseFunction millis = new BaseFunction("millis", 0, 0, "") {
+		protected Object invoke (Object[] args, Context context) {
+			return System.currentTimeMillis();
+		}
+	};
+
+	static public BaseFunction nanos = new BaseFunction("nanos", 0, 0, "") {
+		protected Object invoke (Object[] args, Context context) {
+			return System.nanoTime();
+		}
+	};
+
 	static private MidiChannel[] channels;
 	static private int currentChannel;
 	static private HashMap<String, Instrument> nameToInstrument = new HashMap();

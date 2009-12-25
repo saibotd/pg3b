@@ -76,12 +76,10 @@ public class Keyboard implements InputDevice {
 
 	public void addListener (Listener listener) {
 		listeners.addListener(listener);
-		if (TRACE) trace("Keyboard listener added: " + listener.getClass().getName());
 	}
 
 	public void removeListener (Listener listener) {
 		listeners.removeListener(listener);
-		if (TRACE) trace("Keyboard listener removed: " + listener.getClass().getName());
 	}
 
 	public boolean poll () {

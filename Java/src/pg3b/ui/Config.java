@@ -5,6 +5,8 @@ import static com.esotericsoftware.minlog.Log.*;
 
 import java.awt.EventQueue;
 import java.io.File;
+import java.io.IOException;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -65,7 +67,6 @@ public class Config extends Editable {
 		} else {
 			if (pollerThread != null) pollerThread.running = false;
 			pollerThread = null;
-			if (INFO) info("Deactivated config: " + getName());
 		}
 	}
 
@@ -85,6 +86,11 @@ public class Config extends Editable {
 			if (other.triggers != null) return false;
 		} else if (!triggers.equals(other.triggers)) return false;
 		return true;
+	}
+
+	public void save (Writer writer) throws IOException {
+		super.save(writer);
+		if (DEBUG) debug("Config saved: " + this);
 	}
 
 	private class PollerThread extends Thread {
@@ -116,9 +122,11 @@ public class Config extends Editable {
 						if (state == null) continue;
 						final Action action = trigger.getAction();
 						try {
-							action.execute(Config.this, trigger, state);
+							if (action.execute(Config.this, trigger, state)) {
+								if (DEBUG) debug("Trigger \"" + trigger + "\" executed action: " + action);
+							}
 						} catch (Exception ex) {
-							if (ERROR) error("Error executing action: " + action, ex);
+							if (ERROR) error("Error executing action \"" + action + "\" for trigger: " + trigger, ex);
 							hasError = true;
 							running = false;
 						}
@@ -129,9 +137,10 @@ public class Config extends Editable {
 				if (ERROR) error("Error checking config triggers.", ex);
 				hasError = true;
 			} finally {
+				if (INFO) info("Deactivated config: " + getName());
 				EventQueue.invokeLater(new Runnable() {
 					public void run () {
-						PG3BUI.instance.setCapture(false);
+						PG3BUI.instance.setActivated(false);
 						if (hasError) PG3BUI.instance.getStatusBar().setMessage("Error during config processing.");
 					}
 				});

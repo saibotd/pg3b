@@ -26,6 +26,6 @@ public class Main {
 		jinputLogger.setLevel(Level.ALL);
 		jinputLogger.addHandler(new LogHandler("jinput"));
 
-		new PG3BUI().setVisible(true);
+		new PG3BUI();
 	}
 }

@@ -112,12 +112,10 @@ public class Mouse implements InputDevice {
 
 	public void addListener (Listener listener) {
 		listeners.addListener(listener);
-		if (TRACE) trace("Mouse listener added: " + listener.getClass().getName());
 	}
 
 	public void removeListener (Listener listener) {
 		listeners.removeListener(listener);
-		if (TRACE) trace("Mouse listener removed: " + listener.getClass().getName());
 	}
 
 	public boolean resetLastInput () {

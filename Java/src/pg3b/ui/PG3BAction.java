@@ -38,14 +38,15 @@ public class PG3BAction implements Action {
 		return PG3BUI.instance.getPG3B() != null;
 	}
 
-	public void execute (Config config, Trigger trigger, Object payload) {
+	public boolean execute (Config config, Trigger trigger, Object payload) {
 		PG3B pg3b = PG3BUI.instance.getPG3B();
-		if (pg3b == null) return;
+		if (pg3b == null) return false;
 		float state = payload instanceof Float ? (Float)payload : 1;
 		try {
 			pg3b.set(target, state);
+			return true;
 		} catch (IOException ex) {
-			if (ERROR) error("Error executing action: " + this, ex);
+			throw new RuntimeException("Error executing action: " + this);
 		}
 	}
 

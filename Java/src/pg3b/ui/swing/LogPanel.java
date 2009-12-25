@@ -114,6 +114,7 @@ public class LogPanel extends JPanel {
 				logText = new JTextArea();
 				logScroll.setViewportView(logText);
 				logText.setLineWrap(true);
+				logText.setEditable(false);
 				try {
 					logText.setFont(Font.createFont(Font.TRUETYPE_FONT, getClass().getResourceAsStream("/VeraMono.ttf")).deriveFont(
 						12f));

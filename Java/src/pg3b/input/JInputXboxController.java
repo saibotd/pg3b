@@ -15,8 +15,8 @@ import pg3b.Button;
 import pg3b.ui.InputTrigger;
 
 /**
- * Reads the state from an Xbox 360 controller using JInput. This will use DirectInput on Windows and has the limitation that the
- * start button state cannot be read and that the left and right triggers share the same axis.
+ * Reads the state from an Xbox 360 controller using JInput. This works on all platforms. On Windows DirectInput will be used,
+ * which has the limitation that the left and right triggers share the same axis.
  */
 public class JInputXboxController extends XboxController {
 	static final int DPAD_UP = 4, DPAD_DOWN = 8, DPAD_LEFT = 16, DPAD_RIGHT = 32;

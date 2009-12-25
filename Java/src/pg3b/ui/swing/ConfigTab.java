@@ -14,7 +14,7 @@ public class ConfigTab extends JPanel {
 	private CardLayout cardLayout;
 	private ConfigEditor configEditor;
 	private InputTriggerPanel inputTriggerPanel;
-	private Boolean wasCaptureButtonDown;
+	private Boolean wasActivateButtonDown;
 
 	public ConfigTab (PG3BUI owner) {
 		this.owner = owner;
@@ -24,18 +24,18 @@ public class ConfigTab extends JPanel {
 	}
 
 	public void showConfigEditor () {
-		JToggleButton captureButton = configEditor.getCaptureButton();
-		captureButton.setEnabled(true);
-		if (wasCaptureButtonDown != null && wasCaptureButtonDown) owner.setCapture(true);
-		wasCaptureButtonDown = null;
+		JToggleButton activateButton = configEditor.getActivateButton();
+		activateButton.setEnabled(true);
+		if (wasActivateButtonDown != null && wasActivateButtonDown) owner.setActivated(true);
+		wasActivateButtonDown = null;
 
 		cardLayout.show(this, "config");
 	}
 
 	public void showInputTriggerPanel (Config config, InputTrigger input) {
-		wasCaptureButtonDown = configEditor.getCaptureButton().isSelected();
-		owner.setCapture(false);
-		configEditor.getCaptureButton().setEnabled(false);
+		wasActivateButtonDown = configEditor.getActivateButton().isSelected();
+		owner.setActivated(false);
+		configEditor.getActivateButton().setEnabled(false);
 
 		inputTriggerPanel.setTrigger(config, input);
 		cardLayout.show(this, "inputTrigger");

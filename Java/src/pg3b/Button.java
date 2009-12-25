@@ -14,13 +14,13 @@ public enum Button implements Target {
 	down("Down", "D"), //
 	left("Left", "L"), //
 	right("Right", "R"), //
-	leftShoulder("Left Shoulder", "LB"), //
-	rightShoulder("Right Shoulder", "RB"), //
-	leftStick("Left Stick", "LS"), //
-	rightStick("Right Stick", "RS"), //
+	leftShoulder("Left Shoulder", "LSH"), //
+	rightShoulder("Right Shoulder", "RSH"), //
+	leftStick("Left Stick", "LST"), //
+	rightStick("Right Stick", "RST"), //
 	start("Start", "S"), //
 	guide("Guide", "G"), //
-	back("Back", null);
+	back("Back", "BK");
 
 	private final String friendlyName;
 	private final String alias;

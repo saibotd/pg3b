@@ -97,6 +97,12 @@
 	</params>
 	<desc>Executes the specified function on a new thread.</desc>
 </keyword>
+<keyword name="millis" type="function" returnType="long">
+	<desc>Returns the current time in milliseconds.</desc>
+</keyword>
+<keyword name="nanos" type="function" returnType="long">
+	<desc>Returns the value in nanoseconds of the most precise available system timer.</desc>
+</keyword>
 
 <!-- Pnuts built-in functions: -->
 

@@ -70,6 +70,7 @@ import pnuts.lang.Package;
 import com.esotericsoftware.minlog.Log;
 
 public class PG3BUI extends JFrame {
+	static public final String version = "0.0.80";
 	static public PG3BUI instance;
 
 	static private Settings settings = Settings.get();
@@ -100,7 +101,7 @@ public class PG3BUI extends JFrame {
 	};
 
 	public PG3BUI () {
-		super("PG3B");
+		super("PG3B v" + version);
 
 		Log.set(settings.logLevel);
 
@@ -120,6 +121,8 @@ public class PG3BUI extends JFrame {
 
 		initializeLayout();
 		initializeEvents();
+
+		if (INFO) info("PG3B v" + version);
 
 		controllerPanel.setPG3B(null);
 		statusBar.setPG3B(null);
@@ -169,6 +172,9 @@ public class PG3BUI extends JFrame {
 				}
 			}
 		}.start();
+
+		setVisible(true);
+		splitPane.setDividerLocation(0.66);
 	}
 
 	public void setPG3B (PG3B newPg3b) {
@@ -293,7 +299,7 @@ public class PG3BUI extends JFrame {
 
 		statusBar.setConfigClickedListener(new Runnable() {
 			public void run () {
-				configTab.getConfigEditor().getCaptureButton().doClick();
+				configTab.getConfigEditor().getActivateButton().doClick();
 			}
 		});
 
@@ -310,7 +316,7 @@ public class PG3BUI extends JFrame {
 		KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(new KeyEventDispatcher() {
 			public boolean dispatchKeyEvent (KeyEvent event) {
 				if (disableKeyboard) {
-					if (event.isControlDown() && event.getKeyCode() == KeyEvent.VK_F4) setCapture(false);
+					if (event.isControlDown() && event.getKeyCode() == KeyEvent.VK_F4) setActivated(false);
 					event.consume();
 				}
 				return false;
@@ -402,8 +408,8 @@ public class PG3BUI extends JFrame {
 		});
 	}
 
-	public void setCapture (boolean enabled) {
-		configTab.getConfigEditor().getCaptureButton().setSelected(enabled);
+	public void setActivated (boolean enabled) {
+		configTab.getConfigEditor().getActivateButton().setSelected(enabled);
 		if (enabled && activeConfig != null) return;
 		if (!enabled && activeConfig == null) return;
 
@@ -468,8 +474,8 @@ public class PG3BUI extends JFrame {
 			component,
 			new GridBagConstraints(0, 2, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0),
 				0, 0));
-		splitPane.resetToPreferredSizes();
 		getContentPane().validate();
+		splitPane.setDividerLocation(0.66);
 	}
 
 	private void initializeLayout () {
@@ -609,7 +615,7 @@ public class PG3BUI extends JFrame {
 				glassPane.add(panel, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
 					new Insets(0, 0, 0, 0), 0, 0));
 				{
-					JLabel label = new JLabel("Press ctrl+F4 to stop capture.");
+					JLabel label = new JLabel("Press ctrl+F4 to deactivate.");
 					panel.add(label);
 				}
 			}

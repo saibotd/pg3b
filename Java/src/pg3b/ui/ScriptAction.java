@@ -32,13 +32,13 @@ public class ScriptAction implements Action {
 		this.scriptName = scriptName;
 	}
 
-	public void execute (Config config, Trigger trigger, Object payload) {
+	public boolean execute (Config config, Trigger trigger, Object payload) {
 		Script script = getScript();
-		if (script == null) return;
+		if (script == null) return false;
 		Pnuts pnuts = script.getPnuts();
-		if (pnuts == null) return;
-		if (TRACE) trace("Executing script: " + script.getName());
+		if (pnuts == null) return false;
 		pnuts.run(getContext(config, trigger, payload));
+		return true;
 	}
 
 	public boolean isValid () {
@@ -76,6 +76,8 @@ public class ScriptAction implements Action {
 		pkg.set("isCtrlDown".intern(), Functions.isCtrlDown);
 		pkg.set("isAltDown".intern(), Functions.isAltDown);
 		pkg.set("isShiftDown".intern(), Functions.isShiftDown);
+		pkg.set("millis".intern(), Functions.millis);
+		pkg.set("nanos".intern(), Functions.nanos);
 	}
 
 	/**

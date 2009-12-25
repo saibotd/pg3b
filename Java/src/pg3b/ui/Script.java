@@ -67,6 +67,7 @@ public class Script extends Editable {
 		} finally {
 			yamlWriter.close();
 		}
+		if (DEBUG) debug("Script saved: " + this);
 	}
 
 	public void load (File file) throws IOException {
