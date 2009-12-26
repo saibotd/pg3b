@@ -3,7 +3,6 @@ package com.esotericsoftware.controller.ui;
 
 import com.esotericsoftware.controller.input.Input;
 import com.esotericsoftware.controller.input.Keyboard;
-import com.esotericsoftware.controller.input.Mouse;
 
 /**
  * A trigger that executes its action based on the state of a JInput controller (keyboard, mouse, joystick, etc, essentially any
@@ -92,12 +91,7 @@ public class InputTrigger extends Trigger {
 		if (input == null) return null;
 		Float state = input.getState(this);
 		if (state == null) return null;
-		float value = state;
-		if (getInput() instanceof Mouse.MouseInput) {
-			// System.out.println(state);
-			// value = Math.min(1, state / 10);
-		}
-		return value;
+		return state;
 	}
 
 	public String toString () {

@@ -124,6 +124,8 @@ public class XIM extends Device {
 	}
 
 	public void set (Axis axis, float state) throws IOException {
+		if (state <= -1) state = -1;
+		if (state >= 1) state = 1;
 		state = getDeflection(axis, state);
 		int index = axisToIndex.get(axis);
 		synchronized (this) {

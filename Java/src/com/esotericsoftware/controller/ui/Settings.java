@@ -3,14 +3,21 @@ package com.esotericsoftware.controller.ui;
 
 import static com.esotericsoftware.minlog.Log.*;
 
+import java.awt.Dimension;
+import java.awt.Rectangle;
+import java.awt.Toolkit;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 
+import javax.swing.JFrame;
+
 import net.sourceforge.yamlbeans.YamlConfig;
 import net.sourceforge.yamlbeans.YamlReader;
 import net.sourceforge.yamlbeans.YamlWriter;
+
+import com.esotericsoftware.controller.ui.swing.UI;
 
 /**
  * Stores application wide settings for the UI.
@@ -22,11 +29,16 @@ public class Settings {
 	public String controllerName;
 	public String selectedConfig;
 	public int logLevel = LEVEL_INFO;
+	public int windowState = JFrame.NORMAL;
+	public Rectangle windowSize = new Rectangle(-1, -1, 720, 814);
+	public float dividerLocation = 0.66f;
 
 	static private Settings instance;
 	static private final String fileName = "settings.txt";
 	static private final YamlConfig yamlConfig = new YamlConfig();
 	static {
+		yamlConfig.setPrivateFields(true);
+		yamlConfig.setBeanProperties(false);
 		yamlConfig.writeConfig.setWriteRootTags(false);
 		yamlConfig.writeConfig.setWriteDefaultValues(true);
 	}
@@ -61,6 +73,7 @@ public class Settings {
 			try {
 				writer = new YamlWriter(new FileWriter(fileName), yamlConfig);
 				writer.write(get());
+				if (TRACE) trace("Settings saved.");
 			} finally {
 				if (writer != null) writer.close();
 			}

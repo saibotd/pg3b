@@ -238,6 +238,9 @@ public class PG3B extends Device {
 
 	public void set (Axis axis, float state) throws IOException {
 		if (axis == null) throw new IllegalArgumentException("axis cannot be null.");
+		if (state <= -1) state = -1;
+		if (state >= 1) state = 1;
+
 		float originalState = state;
 		state = getDeflection(axis, state);
 

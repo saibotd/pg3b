@@ -171,7 +171,8 @@ public class DeadzoneDialog extends JDialog {
 				label.setFocusable(false);
 				label.setBorder(BorderFactory.createEmptyBorder());
 				label
-					.setText("Slowly increase the value for each axis below. As soon as the game responds, decrease the value by one.");
+					.setText("Slowly increase the value for each axis below. The device's axis will be set to the value. As soon as "
+						+ "the game responds, decrease the value by one.");
 			}
 		}
 		{

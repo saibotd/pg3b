@@ -1,6 +1,7 @@
 
 package com.esotericsoftware.controller.ui;
 
+import java.awt.EventQueue;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.util.logging.Level;
@@ -26,6 +27,10 @@ public class Main {
 		jinputLogger.setLevel(Level.ALL);
 		jinputLogger.addHandler(new LogHandler("jinput"));
 
-		new UI();
+		EventQueue.invokeLater(new Runnable() {
+			public void run () {
+				new UI();
+			}
+		});
 	}
 }

@@ -13,6 +13,12 @@ public interface Input {
 	public boolean isValid ();
 
 	/**
+	 * Returns true if this input can be mapped to the full range of an axis. If false, it will only be possible to map this input
+	 * to an axis direction.
+	 */
+	public boolean isAxis ();
+
+	/**
 	 * Returns the device to which this input belongs.
 	 */
 	public InputDevice getInputDevice ();

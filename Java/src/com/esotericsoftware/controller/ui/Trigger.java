@@ -13,7 +13,7 @@ abstract public class Trigger {
 	}
 
 	public void setDescription (String description) {
-		this.description = description;
+		this.description = description == null || description.length() == 0 ? null : description;
 	}
 
 	public Action getAction () {

@@ -164,8 +164,6 @@ abstract public class Device {
 	}
 
 	public float getDeflection (Axis axis, float state) {
-		if (state <= -1) return -1;
-		if (state >= 1) return 1;
 		Stick stick = axis.getStick();
 		if (stick == null) return state;
 		Deadzone deadzone = deadzones[stick.ordinal()];

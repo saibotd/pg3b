@@ -258,6 +258,10 @@ public class JInputXboxController extends XboxController {
 			return getInputDevice() != null;
 		}
 
+		public boolean isAxis () {
+			return axis != null;
+		}
+
 		public String toString () {
 			if (button != null) return button + " button";
 			if (axis != null) return axis + " axis";

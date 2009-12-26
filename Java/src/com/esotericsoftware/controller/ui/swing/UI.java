@@ -6,6 +6,7 @@ import static com.esotericsoftware.minlog.Log.*;
 import java.awt.AWTEvent;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.FlowLayout;
 import java.awt.Graphics;
@@ -15,16 +16,21 @@ import java.awt.Insets;
 import java.awt.KeyEventDispatcher;
 import java.awt.KeyboardFocusManager;
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.event.AWTEventListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowFocusListener;
 import java.awt.image.BufferedImage;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.util.Map;
 
@@ -177,8 +183,17 @@ public class UI extends JFrame {
 			}
 		}.start();
 
+		setSize(settings.windowSize.width, settings.windowSize.height);
+		if (settings.windowSize.x == -1 || settings.windowSize.y == -1)
+			setLocationRelativeTo(null);
+		else
+			setLocation(settings.windowSize.x, settings.windowSize.y);
+		setExtendedState(settings.windowState);
+
 		setVisible(true);
-		splitPane.setDividerLocation(0.66);
+
+		int range = splitPane.getMaximumDividerLocation() - splitPane.getMinimumDividerLocation() - splitPane.getDividerSize();
+		splitPane.setDividerLocation(splitPane.getMinimumDividerLocation() + (int)(range * settings.dividerLocation));
 	}
 
 	public void setDevice (Device newDevice) {
@@ -434,6 +449,19 @@ public class UI extends JFrame {
 			public void windowGainedFocus (WindowEvent event) {
 			}
 		});
+
+		addComponentListener(new ComponentAdapter() {
+			public void componentResized (ComponentEvent event) {
+				saveFrameState();
+			}
+		});
+
+		splitPane.addPropertyChangeListener(new PropertyChangeListener() {
+			public void propertyChange (PropertyChangeEvent event) {
+				if (!event.getPropertyName().equals(JSplitPane.DIVIDER_LOCATION_PROPERTY)) return;
+				saveFrameState();
+			}
+		});
 	}
 
 	public void setActivated (boolean enabled) {
@@ -503,7 +531,31 @@ public class UI extends JFrame {
 			new GridBagConstraints(0, 2, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0),
 				0, 0));
 		getContentPane().validate();
-		splitPane.setDividerLocation(0.66);
+		splitPane.setDividerLocation(settings.dividerLocation);
+	}
+
+	private void saveFrameState () {
+		if (!isVisible()) return;
+
+		int extendedState = getExtendedState();
+		if (extendedState == JFrame.ICONIFIED) extendedState = JFrame.NORMAL;
+
+		Rectangle windowSize = settings.windowSize;
+		if ((extendedState & JFrame.MAXIMIZED_BOTH) == 0) windowSize = getBounds();
+
+		float dividerLocation = settings.dividerLocation;
+		if (splitPane.getParent() != null) {
+			dividerLocation = (splitPane.getDividerLocation() - splitPane.getMinimumDividerLocation())
+				/ (float)(splitPane.getMaximumDividerLocation() - splitPane.getMinimumDividerLocation());
+			if (dividerLocation < 0 || dividerLocation > 1) dividerLocation = 0.66f;
+		}
+
+		if (settings.windowState == extendedState && settings.windowSize.equals(windowSize)
+			&& settings.dividerLocation == dividerLocation) return;
+		settings.windowState = extendedState;
+		settings.windowSize = windowSize;
+		settings.dividerLocation = dividerLocation;
+		Settings.save();
 	}
 
 	private void initializeLayout () {
@@ -522,8 +574,6 @@ public class UI extends JFrame {
 
 		setIconImage(new ImageIcon(getClass().getResource("/app.png")).getImage());
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-		setSize(720, 814);
-		setLocationRelativeTo(null);
 
 		{
 			JMenuBar menuBar = new JMenuBar();

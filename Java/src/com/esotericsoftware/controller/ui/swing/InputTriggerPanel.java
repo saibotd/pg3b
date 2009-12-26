@@ -44,6 +44,7 @@ import com.esotericsoftware.controller.ui.DeviceAction;
 import com.esotericsoftware.controller.ui.InputTrigger;
 import com.esotericsoftware.controller.ui.Script;
 import com.esotericsoftware.controller.ui.ScriptAction;
+import com.esotericsoftware.controller.ui.DeviceAction.Direction;
 import com.esotericsoftware.controller.ui.swing.XboxControllerPanel.Listener;
 import com.esotericsoftware.controller.util.Util;
 
@@ -59,14 +60,17 @@ public class InputTriggerPanel extends JPanel {
 	private JRadioButton targetRadio, scriptRadio;
 	private JButton saveButton, cancelButton;
 	private JTextField descriptionText;
-	private JComboBox targetCombo, scriptCombo;
+	private JComboBox targetCombo, targetDirectionCombo, scriptCombo;
 	private JCheckBox altCheckBox, ctrlCheckBox, shiftCheckBox, anyCheckBox, noneCheckBox;
-	private DefaultComboBoxModel scriptComboModel, targetComboModel;
+	private DefaultComboBoxModel scriptComboModel, targetComboModel, targetDirectionComboModel;
 
 	private Listener controllerPanelListener = new Listener() {
 		public void axisChanged (Axis axis, float state) {
 			if (!isVisible()) return;
-			if (Math.abs(state) > 0.1f) targetCombo.setSelectedItem(axis);
+			if (Math.abs(state) > 0.25f) {
+				targetCombo.setSelectedItem(axis);
+				targetDirectionCombo.setSelectedIndex(state < 0 ? 0 : 1);
+			}
 		}
 
 		public void buttonChanged (Button button, boolean pressed) {
@@ -135,9 +139,21 @@ public class InputTriggerPanel extends JPanel {
 				scriptRadio.setSelected(true);
 				scriptCombo.setSelectedItem(((ScriptAction)action).getScriptName());
 			} else if (action instanceof DeviceAction) {
+				DeviceAction deviceAction = ((DeviceAction)action);
 				targetRadio.setSelected(true);
-				Target target = ((DeviceAction)action).getTarget();
+				Target target = deviceAction.getTarget();
 				if (target != null) targetCombo.setSelectedItem(target);
+				Direction direction = deviceAction.getDirection();
+				switch (direction) {
+				case up:
+				case left:
+					targetDirectionCombo.setSelectedIndex(0);
+					break;
+				case down:
+				case right:
+					targetDirectionCombo.setSelectedIndex(1);
+					break;
+				}
 			} else {
 				// Unknown action, can't change it.
 				Util.setEnabled(false, targetRadio, targetCombo, scriptRadio, scriptCombo);
@@ -168,7 +184,7 @@ public class InputTriggerPanel extends JPanel {
 					if (!device.poll()) continue;
 					Input input = device.getLastInput();
 					if (input == null) continue;
-					Float value = input.getState(new InputTrigger());
+					final Float value = input.getState(new InputTrigger());
 					if (value == 0) continue;
 					trigger.setInput(input);
 					SwingUtilities.invokeLater(new Runnable() {
@@ -177,6 +193,7 @@ public class InputTriggerPanel extends JPanel {
 							triggerLabel.setFont(triggerLabel.getFont().deriveFont(Font.PLAIN));
 							cancelButton.setEnabled(true);
 							saveButton.setEnabled(true);
+							updateTargetDirection();
 						}
 					});
 					listenForTrigger(false);
@@ -204,6 +221,34 @@ public class InputTriggerPanel extends JPanel {
 		}
 	}
 
+	private void updateTargetDirection () {
+		targetDirectionCombo.setVisible(false);
+
+		if (trigger == null) return;
+		Input input = trigger.getInput();
+		if (input == null || input.isAxis()) return;
+
+		Target target = (Target)targetCombo.getSelectedItem();
+		if (target instanceof Axis) {
+			switch ((Axis)target) {
+			case leftStickX:
+			case rightStickX:
+				targetDirectionCombo.setVisible(true);
+				targetDirectionComboModel.removeAllElements();
+				targetDirectionComboModel.addElement("Left");
+				targetDirectionComboModel.addElement("Right");
+				break;
+			case leftStickY:
+			case rightStickY:
+				targetDirectionCombo.setVisible(true);
+				targetDirectionComboModel.removeAllElements();
+				targetDirectionComboModel.addElement("Up");
+				targetDirectionComboModel.addElement("Down");
+				break;
+			}
+		}
+	}
+
 	private void initializeEvents () {
 		scriptCombo.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
@@ -217,6 +262,7 @@ public class InputTriggerPanel extends JPanel {
 				if (targetCombo.getSelectedItem() == null) return;
 				targetRadio.setSelected(true);
 				scriptCombo.setSelectedItem(null);
+				updateTargetDirection();
 			}
 		});
 
@@ -225,6 +271,7 @@ public class InputTriggerPanel extends JPanel {
 				if (!scriptRadio.isSelected()) return;
 				targetCombo.setSelectedItem(null);
 				if (scriptCombo.getSelectedIndex() == -1) scriptCombo.setSelectedIndex(0);
+				updateTargetDirection();
 			}
 		});
 
@@ -264,7 +311,12 @@ public class InputTriggerPanel extends JPanel {
 				trigger.setShift(shiftCheckBox.isSelected());
 				trigger.setNoModifiers(noneCheckBox.isSelected());
 				if (targetRadio.isSelected()) {
-					trigger.setAction(new DeviceAction((Target)targetCombo.getSelectedItem()));
+					DeviceAction action = new DeviceAction((Target)targetCombo.getSelectedItem());
+					trigger.setAction(action);
+					if (targetDirectionCombo.isVisible())
+						action.setDirection(Direction.valueOf(((String)targetDirectionCombo.getSelectedItem()).toLowerCase()));
+					else
+						action.setDirection(Direction.both);
 				} else if (scriptRadio.isSelected()) {
 					if (scriptCombo.getSelectedIndex() == 0)
 						trigger.setAction(new ScriptAction(owner.getScriptEditor().newItem().getName()));
@@ -371,6 +423,13 @@ public class InputTriggerPanel extends JPanel {
 					Button.rightStick, Button.start, Button.back, Button.guide, Axis.leftStickX, Axis.leftStickY, Axis.rightStickX,
 					Axis.rightStickY, Axis.leftTrigger, Axis.rightTrigger});
 				targetCombo.setModel(targetComboModel);
+			}
+			{
+				targetDirectionCombo = new JComboBox();
+				panel.add(targetDirectionCombo);
+				targetDirectionComboModel = new DefaultComboBoxModel();
+				targetDirectionCombo.setModel(targetDirectionComboModel);
+				targetDirectionCombo.setVisible(false);
 			}
 		}
 		{

@@ -94,6 +94,7 @@ public class Keyboard implements InputDevice {
 		if (lastKeyCode == -1) return null;
 		KeyboardInput input = new KeyboardInput();
 		input.keyCode = lastKeyCode;
+		input.keyName = KeyEvent.getKeyText(lastKeyCode);
 		return input;
 	}
 
@@ -103,6 +104,7 @@ public class Keyboard implements InputDevice {
 
 	static public class KeyboardInput implements Input {
 		private int keyCode;
+		private String keyName;
 		private transient float lastState = Float.NaN;
 
 		public Float getState (InputTrigger trigger) {
@@ -121,8 +123,12 @@ public class Keyboard implements InputDevice {
 			return true;
 		}
 
+		public boolean isAxis () {
+			return false;
+		}
+
 		public String toString () {
-			return KeyEvent.getKeyText(keyCode);
+			return keyName;
 		}
 	}
 

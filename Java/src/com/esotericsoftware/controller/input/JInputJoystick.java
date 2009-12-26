@@ -145,6 +145,10 @@ public class JInputJoystick implements InputDevice {
 			return getComponent() != null;
 		}
 
+		public boolean isAxis () {
+			return getComponent() instanceof Identifier.Axis;
+		}
+
 		public String toString () {
 			if (component == null) {
 				getComponent();

@@ -233,6 +233,10 @@ public class XInputXboxController extends XboxController {
 			return controllers[player].isConnected();
 		}
 
+		public boolean isAxis () {
+			return axis != null;
+		}
+
 		public String toString () {
 			if (button != null) return button + " button";
 			if (axis != null) return axis + " axis";
