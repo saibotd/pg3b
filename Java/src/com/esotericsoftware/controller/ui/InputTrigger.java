@@ -87,11 +87,14 @@ public class InputTrigger extends Trigger {
 		return true;
 	}
 
-	public Object check () {
+	public boolean isActive () {
+		if (input == null) return false;
+		return input.getState() != 0 && checkModifiers();
+	}
+
+	public Float getState () {
 		if (input == null) return null;
-		Float state = input.getState(this);
-		if (state == null) return null;
-		return state;
+		return input.getState();
 	}
 
 	public String toString () {

@@ -2,31 +2,38 @@
 package com.esotericsoftware.controller.device;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 
 import com.esotericsoftware.controller.util.Listeners;
 
 abstract public class Device {
 	static private final HashMap<String, Target> nameToTarget = new HashMap();
+	static private List<Target> targets = new ArrayList();
 	static {
-		for (Axis axis : Axis.values()) {
-			nameToTarget.put(axis.name().toLowerCase(), axis);
-			String friendlyName = axis.toString().toLowerCase();
-			nameToTarget.put(friendlyName, axis);
-			nameToTarget.put(friendlyName.substring(0, friendlyName.length() - 5), axis);
-			if (axis.getAlias() != null) nameToTarget.put(axis.getAlias().toLowerCase(), axis);
-		}
 		for (Button button : Button.values()) {
+			targets.add(button);
 			nameToTarget.put(button.name().toLowerCase(), button);
 			String friendlyName = button.toString().toLowerCase();
 			nameToTarget.put(friendlyName, button);
 			nameToTarget.put(friendlyName.substring(0, friendlyName.length() - 7), button);
 			if (button.getAlias() != null) nameToTarget.put(button.getAlias().toLowerCase(), button);
 		}
+		for (Axis axis : Axis.values()) {
+			targets.add(axis);
+			nameToTarget.put(axis.name().toLowerCase(), axis);
+			String friendlyName = axis.toString().toLowerCase();
+			nameToTarget.put(friendlyName, axis);
+			nameToTarget.put(friendlyName.substring(0, friendlyName.length() - 5), axis);
+			if (axis.getAlias() != null) nameToTarget.put(axis.getAlias().toLowerCase(), axis);
+		}
+		targets = Collections.unmodifiableList(targets);
 	}
 
-	protected final boolean[] buttonStates = new boolean[Button.values().length];
-	protected final float[] axisStates = new float[Axis.values().length];
+	protected boolean[] buttonStates = new boolean[Button.values().length];
+	protected float[] axisStates = new float[Axis.values().length];
 
 	private final Listeners<Listener> listeners = new Listeners(Listener.class);
 	private final Deadzone[] deadzones = new Deadzone[Stick.values().length];
@@ -207,6 +214,16 @@ abstract public class Device {
 	}
 
 	/**
+	 * Changes made to the device will not actually be applied until {@link #applyChanges()} is called.
+	 */
+	abstract public void collectChanges ();
+
+	/**
+	 * Applies changes to the device made since {@link #collectChanges()} was called.
+	 */
+	abstract public void applyChanges () throws IOException;
+
+	/**
 	 * Adds a listener to be notified when the device manipulates a button or axis.
 	 */
 	public void addListener (Listener listener) {
@@ -235,6 +252,13 @@ abstract public class Device {
 	static public Target getTarget (String name) {
 		if (name == null) throw new IllegalArgumentException("name cannot be null.");
 		return nameToTarget.get(name.trim().toLowerCase());
+	}
+
+	/**
+	 * Returns all targets.
+	 */
+	static public List<Target> getTargets () {
+		return targets;
 	}
 
 	/**

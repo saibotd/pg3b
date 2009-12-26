@@ -32,6 +32,7 @@ public class Settings {
 	public int windowState = JFrame.NORMAL;
 	public Rectangle windowSize = new Rectangle(-1, -1, 720, 814);
 	public float dividerLocation = 0.66f;
+	public boolean ximConnected;
 
 	static private Settings instance;
 	static private final String fileName = "settings.txt";

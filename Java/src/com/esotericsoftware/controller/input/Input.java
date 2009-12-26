@@ -24,7 +24,7 @@ public interface Input {
 	public InputDevice getInputDevice ();
 
 	/**
-	 * Returns the value for this input if it has changed since the last call to this method, or null if the value has not changed.
+	 * Returns the value for this input.
 	 */
-	public Float getState (InputTrigger trigger);
+	public float getState ();
 }

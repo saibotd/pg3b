@@ -31,13 +31,13 @@ public class ScriptAction implements Action {
 		this.scriptName = scriptName;
 	}
 
-	public boolean execute (Config config, Trigger trigger, Object payload) {
+	public Object execute (Config config, Trigger trigger, Object payload) {
 		Script script = getScript();
-		if (script == null) return false;
+		if (script == null) return null;
 		Pnuts pnuts = script.getPnuts();
-		if (pnuts == null) return false;
-		pnuts.run(getContext(config, trigger, payload));
-		return true;
+		if (pnuts == null) return null;
+		Object result = pnuts.run(getContext(config, trigger, payload));
+		return result != null ? result : Boolean.TRUE;
 	}
 
 	public boolean isValid () {

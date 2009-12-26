@@ -9,8 +9,6 @@ import com.esotericsoftware.controller.device.Device;
 import com.esotericsoftware.controller.device.Target;
 import com.esotericsoftware.controller.ui.swing.UI;
 
-// BOZO - Multiple triggers modifying the same target can result in the target being release while a trigger is still down.
-
 /**
  * An action that sets the state of a button or axis when executed.
  */
@@ -50,9 +48,9 @@ public class DeviceAction implements Action {
 		return UI.instance.getDevice() != null;
 	}
 
-	public boolean execute (Config config, Trigger trigger, Object payload) {
+	public Object execute (Config config, Trigger trigger, Object payload) {
 		Device device = UI.instance.getDevice();
-		if (device == null) return false;
+		if (device == null) return null;
 		float state = payload instanceof Float ? (Float)payload : 1;
 		switch (direction) {
 		case up:
@@ -62,7 +60,7 @@ public class DeviceAction implements Action {
 		}
 		try {
 			device.set(target, state);
-			return true;
+			return state;
 		} catch (IOException ex) {
 			throw new RuntimeException("Error executing action: " + this);
 		}

@@ -105,14 +105,9 @@ public class Keyboard implements InputDevice {
 	static public class KeyboardInput implements Input {
 		private int keyCode;
 		private String keyName;
-		private transient float lastState = Float.NaN;
 
-		public Float getState (InputTrigger trigger) {
-			float state = instance.isPressed(keyCode) ? 1 : 0;
-			if (state != 0 && !trigger.checkModifiers()) return null;
-			if (state == lastState) return null;
-			lastState = state;
-			return state;
+		public float getState () {
+			return instance.isPressed(keyCode) ? 1 : 0;
 		}
 
 		public Keyboard getInputDevice () {

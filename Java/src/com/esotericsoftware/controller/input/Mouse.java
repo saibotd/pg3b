@@ -13,7 +13,6 @@ import java.awt.event.MouseWheelEvent;
 
 import javax.swing.JFrame;
 
-import com.esotericsoftware.controller.ui.InputTrigger;
 import com.esotericsoftware.controller.util.Listeners;
 
 /**
@@ -26,7 +25,7 @@ public class Mouse implements InputDevice {
 	private boolean[] buttons = new boolean[4];
 	private Listeners<Listener> listeners = new Listeners(Listener.class);
 	private int lastButton, lastDeltaX, lastDeltaY, lastMouseWheel;
-	private int currentDeltaX, currentDeltaY;
+	private int currentDeltaX, currentDeltaY, currentMouseWheel;
 	private JFrame grabbedFrame;
 	private boolean usingRobot;
 	private Robot robot;
@@ -139,6 +138,8 @@ public class Mouse implements InputDevice {
 		currentDeltaY = lastDeltaY;
 		lastDeltaX = 0;
 		lastDeltaY = 0;
+		currentMouseWheel = lastMouseWheel;
+		lastMouseWheel = 0;
 		return true;
 	}
 
@@ -150,7 +151,6 @@ public class Mouse implements InputDevice {
 		private String axis;
 		private int button;
 		private boolean mouseWheel;
-		private transient float lastState = Float.NaN;
 
 		public MouseInput () {
 		}
@@ -167,36 +167,12 @@ public class Mouse implements InputDevice {
 			this.mouseWheel = mouseWheel;
 		}
 
-		public Float getState (InputTrigger trigger) {
-			if (button > 0) {
-				float state = instance.isPressed(button) ? 1 : 0;
-				if (state != 0 && !trigger.checkModifiers()) return null;
-				if (state == lastState) return null;
-				lastState = state;
-				return state;
-			}
-			if ("x".equals(axis)) {
-				if (!trigger.checkModifiers()) return null;
-				float state = instance.currentDeltaX;
-				if (state == 0 && lastState == 0) return null;
-				lastState = state;
-				return state;
-			}
-			if ("y".equals(axis)) {
-				if (!trigger.checkModifiers()) return null;
-				float state = instance.currentDeltaY;
-				if (state == 0 && lastState == 0) return null;
-				lastState = state;
-				return state;
-			}
-			if (mouseWheel) {
-				if (!trigger.checkModifiers()) return null;
-				float state = (float)instance.lastMouseWheel;
-				if (state == 0) return null;
-				instance.lastMouseWheel = 0;
-				return state;
-			}
-			return null;
+		public float getState () {
+			if (button > 0) return instance.isPressed(button) ? 1 : 0;
+			if ("x".equals(axis)) return instance.currentDeltaX;
+			if ("y".equals(axis)) return instance.currentDeltaY;
+			if (mouseWheel) return instance.currentMouseWheel;
+			return 0;
 		}
 
 		public Mouse getInputDevice () {

@@ -168,6 +168,18 @@ public class UI extends JFrame {
 								}
 							}
 						}.start("Pg3bConnect");
+
+						if (settings.ximConnected) new LoaderDialog("Connecting to XIM") {
+							public void load () throws Exception {
+								setMessage("Opening XIM...");
+								try {
+									setDevice(new XIM());
+								} catch (IOException ex) {
+									setDevice(null);
+									if (DEBUG) debug("Unable to reconnect to XIM.", ex);
+								}
+							}
+						}.start("XimConnect");
 					}
 				});
 
@@ -220,6 +232,7 @@ public class UI extends JFrame {
 		});
 
 		settings.pg3bPort = device instanceof PG3B ? ((PG3B)device).getPort() : null;
+		settings.ximConnected = device instanceof XIM;
 		Settings.save();
 	}
 

@@ -184,7 +184,7 @@ public class InputTriggerPanel extends JPanel {
 					if (!device.poll()) continue;
 					Input input = device.getLastInput();
 					if (input == null) continue;
-					final Float value = input.getState(new InputTrigger());
+					float value = input.getState();
 					if (value == 0) continue;
 					trigger.setInput(input);
 					SwingUtilities.invokeLater(new Runnable() {

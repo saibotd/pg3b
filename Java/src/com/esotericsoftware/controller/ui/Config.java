@@ -103,6 +103,16 @@ public class Config extends Editable {
 			start();
 		}
 
+		private void execute (Trigger trigger) {
+			try {
+				trigger.execute(Config.this);
+			} catch (Exception ex) {
+				if (ERROR) error("Error executing action \"" + trigger.getAction() + "\" for trigger \"" + trigger + "\".", ex);
+				hasError = true;
+				running = false;
+			}
+		}
+
 		public void run () {
 			try {
 				Device device = UI.instance.getDevice();
@@ -110,32 +120,37 @@ public class Config extends Editable {
 					device.setDeadzone(Stick.left, leftDeadzone);
 					device.setDeadzone(Stick.right, rightDeadzone);
 				}
-				// Multiple triggers may use the same poller. Obtain a distinct list of pollers to avoid polling the same one twice.
+				// Multiple triggers may use the same poller. Obtain a distinct list to avoid polling the same one twice.
 				HashSet<Poller> pollers = new HashSet();
 				for (Trigger trigger : getTriggers())
 					pollers.add(trigger.getPoller());
-				// Poll and check them all initially so their last state is current.
+				// Poll initially to clear any values.
 				for (Poller poller : pollers)
 					poller.poll();
-				for (Trigger trigger : getTriggers())
-					trigger.check();
+				ArrayList<Trigger> activeTriggers = new ArrayList();
 				while (running) {
+					device.collectChanges();
 					for (Poller poller : pollers)
 						poller.poll();
 					for (Trigger trigger : getTriggers()) {
-						Object state = trigger.check();
-						if (state == null) continue;
-						final Action action = trigger.getAction();
-						try {
-							if (action.execute(Config.this, trigger, state)) {
-								if (DEBUG) debug("Executing action \"" + action + "\" for trigger \"" + trigger + "\".");
+						boolean wasActive = activeTriggers.contains(trigger);
+						if (trigger.isActive()) {
+							if (!wasActive) {
+								activeTriggers.add(trigger);
+								if (TRACE) debug("Trigger \"" + trigger + "\" is active with state: " + trigger.getState());
 							}
-						} catch (Exception ex) {
-							if (ERROR) error("Error executing action \"" + action + "\" for trigger \"" + trigger + "\".", ex);
-							hasError = true;
-							running = false;
+						} else {
+							if (wasActive) {
+								activeTriggers.remove(trigger);
+								if (TRACE) debug("Trigger \"" + trigger + "\" is inactive with state: " + trigger.getState());
+								execute(trigger);
+							}
 						}
 					}
+					// Triggers are applied continuously in activation order so those that manipulate the same targets work correctly.
+					for (Trigger trigger : activeTriggers)
+						execute(trigger);
+					device.applyChanges();
 					Thread.yield();
 				}
 			} catch (Exception ex) {
@@ -151,5 +166,10 @@ public class Config extends Editable {
 				});
 			}
 		}
+	}
+
+	static private class TargetState {
+		Trigger trigger;
+		float state;
 	}
 }

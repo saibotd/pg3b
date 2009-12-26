@@ -210,7 +210,6 @@ public class JInputXboxController extends XboxController {
 		private Axis axis;
 		private String controllerName;
 		private transient JInputXboxController device;
-		private transient float lastState = Float.NaN;
 
 		public ControllerInput (String controllerName, Button button) {
 			this.controllerName = controllerName;
@@ -222,26 +221,14 @@ public class JInputXboxController extends XboxController {
 			this.axis = axis;
 		}
 
-		public Float getState (InputTrigger trigger) {
+		public float getState () {
 			if (device == null) {
 				getInputDevice();
-				if (device == null) return null;
+				if (device == null) return 0;
 			}
-			if (axis != null) {
-				if (!trigger.checkModifiers()) return null;
-				float state = device.get(axis);
-				if (state == lastState) return null;
-				lastState = state;
-				return state;
-			}
-			if (button != null) {
-				float state = device.get(button) ? 1 : 0;
-				if (state != 0 && !trigger.checkModifiers()) return null;
-				if (state == lastState) return null;
-				lastState = state;
-				return state;
-			}
-			return null;
+			if (axis != null) return device.get(axis);
+			if (button != null) return device.get(button) ? 1 : 0;
+			return 0;
 		}
 
 		public JInputXboxController getInputDevice () {

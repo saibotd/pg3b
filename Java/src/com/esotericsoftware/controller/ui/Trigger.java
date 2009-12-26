@@ -24,15 +24,18 @@ abstract public class Trigger {
 		this.action = action;
 	}
 
+	public Object execute (Config config) {
+		return action.execute(config, this, getState());
+	}
+
 	/**
 	 * Returns the object that should be polled prior to this trigger being checked.
 	 */
 	abstract public Poller getPoller ();
 
-	/**
-	 * Checks this trigger and returns a non-null object if the trigger was activated.
-	 */
-	abstract public Object check ();
+	abstract public boolean isActive ();
+
+	abstract public Object getState ();
 
 	/**
 	 * Returns true if this trigger is able to be checked.

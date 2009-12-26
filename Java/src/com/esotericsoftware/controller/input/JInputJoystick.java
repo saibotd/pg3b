@@ -87,7 +87,6 @@ public class JInputJoystick implements InputDevice {
 		private String controllerName;
 		private transient Component component;
 		private transient JInputJoystick device;
-		private transient float lastState = Float.NaN;
 
 		public JoystickInput () {
 		}
@@ -98,20 +97,12 @@ public class JInputJoystick implements InputDevice {
 			controllerName = controller.getName();
 		}
 
-		public Float getState (InputTrigger trigger) {
+		public float getState () {
 			if (component == null) {
 				getComponent();
-				if (component == null) return null;
+				if (component == null) return 0;
 			}
-			float state = component.getPollData();
-			if (component.getIdentifier() instanceof Identifier.Axis) {
-				if (!trigger.checkModifiers()) return null;
-			} else {
-				if (state != 0 && !trigger.checkModifiers()) return null;
-			}
-			if (state == lastState) return null;
-			lastState = state;
-			return state;
+			return component.getPollData();
 		}
 
 		public Component getComponent () {

@@ -207,22 +207,10 @@ public class XInputXboxController extends XboxController {
 			this.axis = axis;
 		}
 
-		public Float getState (InputTrigger trigger) {
-			if (axis != null) {
-				if (!trigger.checkModifiers()) return null;
-				float state = controllers[player].get(axis);
-				if (state == lastState) return null;
-				lastState = state;
-				return state;
-			}
-			if (button != null) {
-				float state = controllers[player].get(button) ? 1 : 0;
-				if (state != 0 && !trigger.checkModifiers()) return null;
-				if (state == lastState) return null;
-				lastState = state;
-				return state;
-			}
-			return null;
+		public float getState () {
+			if (axis != null) return controllers[player].get(axis);
+			if (button != null) return controllers[player].get(button) ? 1 : 0;
+			return 0;
 		}
 
 		public XInputXboxController getInputDevice () {

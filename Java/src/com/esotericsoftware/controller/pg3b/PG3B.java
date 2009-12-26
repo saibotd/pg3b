@@ -54,7 +54,9 @@ public class PG3B extends Device {
 	private OutputStreamWriter output;
 	private final PG3BConfig config;
 	private final char[] buffer = new char[256];
-	private boolean debugEnabled, calibrationEnabled;
+	private boolean debugEnabled, calibrationEnabled, collectingChanges;
+	private boolean[] snapshotButtonStates = new boolean[Button.values().length];
+	private float[] snapshotAxisStates = new float[Axis.values().length];
 
 	/**
 	 * Creates a new PG3B with a timeout of 300.
@@ -228,8 +230,14 @@ public class PG3B extends Device {
 		short actionKey = getActionKey(ActionDevice.xbox, (short)state);
 		short actionCode = getActionCode(actionKey, (short)button.ordinal());
 		synchronized (this) {
+			int ordinal = button.ordinal();
+			if (collectingChanges) {
+				buttonStates[ordinal] = pressed;
+				return;
+			}
+			if (buttonStates[ordinal] == pressed) return;
 			commandWord(Command.action, actionCode);
-			buttonStates[button.ordinal()] = pressed;
+			buttonStates[ordinal] = pressed;
 		}
 		if (DEBUG) debug(button + ": " + pressed);
 
@@ -238,8 +246,8 @@ public class PG3B extends Device {
 
 	public void set (Axis axis, float state) throws IOException {
 		if (axis == null) throw new IllegalArgumentException("axis cannot be null.");
-		if (state <= -1) state = -1;
-		if (state >= 1) state = 1;
+		if (state < -1) state = -1;
+		if (state > 1) state = 1;
 
 		float originalState = state;
 		state = getDeflection(axis, state);
@@ -255,12 +263,43 @@ public class PG3B extends Device {
 		short actionKey = getActionKey(ActionDevice.xbox, (short)axis.ordinal());
 		short actionCode = getActionCode(actionKey, (short)wiperValue);
 		synchronized (this) {
+			int ordinal = axis.ordinal();
+			if (collectingChanges) {
+				axisStates[ordinal] = originalState;
+				return;
+			}
+			if (axisStates[ordinal] == originalState) return;
 			commandWord(Command.action, actionCode);
-			axisStates[axis.ordinal()] = originalState;
+			axisStates[ordinal] = originalState;
 		}
 		if (DEBUG) debug(axis + ": " + state);
 
 		notifyAxisChanged(axis, state);
+	}
+
+	public synchronized void collectChanges () {
+		collectingChanges = true;
+		System.arraycopy(buttonStates, 0, snapshotButtonStates, 0, buttonStates.length);
+		System.arraycopy(axisStates, 0, snapshotAxisStates, 0, axisStates.length);
+	}
+
+	public synchronized void applyChanges () throws IOException {
+		collectingChanges = false;
+		boolean[] targetButtonStates = buttonStates;
+		buttonStates = snapshotButtonStates;
+		snapshotButtonStates = targetButtonStates;
+
+		float[] targetAxisStates = axisStates;
+		axisStates = snapshotAxisStates;
+		snapshotAxisStates = targetAxisStates;
+
+		Button[] buttons = Button.values();
+		for (int i = 0, n = targetButtonStates.length; i < n; i++)
+			set(buttons[i], targetButtonStates[i]);
+
+		Axis[] axes = Axis.values();
+		for (int i = 0, n = targetAxisStates.length; i < n; i++)
+			set(axes[i], targetAxisStates[i]);
 	}
 
 	public void close () {

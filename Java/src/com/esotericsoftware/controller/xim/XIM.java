@@ -1,6 +1,8 @@
 
 package com.esotericsoftware.controller.xim;
 
+import static com.esotericsoftware.minlog.Log.*;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -91,6 +93,7 @@ public class XIM extends Device {
 
 	private final ByteBuffer stateByteBuffer;
 	private final ShortBuffer stateBuffer;
+	private boolean collectingChanges;
 
 	public XIM () throws IOException {
 		checkResult(connect());
@@ -118,9 +121,16 @@ public class XIM extends Device {
 		}
 		synchronized (this) {
 			stateBuffer.put(index / 2, (short)(first + (second << 8)));
+			if (collectingChanges) {
+				buttonStates[button.ordinal()] = pressed;
+				return;
+			}
 			checkResult(setState(stateByteBuffer, 200));
 			buttonStates[button.ordinal()] = pressed;
 		}
+		if (DEBUG) debug(button + ": " + pressed);
+
+		notifyButtonChanged(button, pressed);
 	}
 
 	public void set (Axis axis, float state) throws IOException {
@@ -130,9 +140,25 @@ public class XIM extends Device {
 		int index = axisToIndex.get(axis);
 		synchronized (this) {
 			stateBuffer.put(7 + index, (short)(32767 * state));
+			if (collectingChanges) {
+				axisStates[axis.ordinal()] = state;
+				return;
+			}
 			checkResult(setState(stateByteBuffer, 200));
 			axisStates[axis.ordinal()] = state;
 		}
+		if (DEBUG) debug(axis + ": " + state);
+
+		notifyAxisChanged(axis, state);
+	}
+
+	public void collectChanges () {
+		collectingChanges = true;
+	}
+
+	public void applyChanges () throws IOException {
+		collectingChanges = false;
+		checkResult(setState(stateByteBuffer, 200));
 	}
 
 	/**
