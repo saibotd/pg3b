@@ -34,7 +34,7 @@ JNIEXPORT jint JNICALL Java_com_esotericsoftware_controller_xim_XIM_setState
 
 static XIMSMOOTHNESS smoothness;
 
-JNIEXPORT void JNICALL Java_com_esotericsoftware_controller_xim_XIM_setSmoothness (
+JNIEXPORT void JNICALL Java_com_esotericsoftware_controller_xim_XIMMouseTranslation_setSmoothness (
 	JNIEnv* env, jclass c,
 	jfloat intensity, jint inputUpdateFrequency, jfloat stickYXRatio, jfloat stickTranslationExponent,
 	jfloat stickSensitivity
@@ -45,7 +45,7 @@ JNIEXPORT void JNICALL Java_com_esotericsoftware_controller_xim_XIM_setSmoothnes
 	);
 }
 
-JNIEXPORT void JNICALL Java_com_esotericsoftware_controller_xim_XIM_computeStickValues (
+JNIEXPORT void JNICALL Java_com_esotericsoftware_controller_xim_XIMMouseTranslation_computeStickValues (
 	JNIEnv* env, jclass c,
     jfloat deltaX, jfloat deltaY,
     jfloat stickYXRatio, jfloat stickTranslationExponent, jfloat stickSensitivity,

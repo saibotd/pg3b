@@ -56,7 +56,7 @@ public class ConfigEditor extends EditorPanel<Config> {
 	private JTable triggersTable;
 	private DefaultTableModel triggersTableModel;
 	private JButton newTriggerButton, deleteTriggerButton, editTriggerButton;
-	private JButton deadzonesButton;
+	private JButton deadzonesButton, mouseButton;
 	private JToggleButton activateButton;
 
 	private Device device;
@@ -243,6 +243,12 @@ public class ConfigEditor extends EditorPanel<Config> {
 				new DeadzoneDialog(owner, device, getSelectedItem()).setVisible(true);
 			}
 		});
+		
+		mouseButton.addActionListener(new ActionListener() {
+			public void actionPerformed (ActionEvent event) {
+				new XIMMouseDialog(owner, getSelectedItem()).setVisible(true);
+			}
+		});
 	}
 
 	private void initializeLayout () {
@@ -306,6 +312,11 @@ public class ConfigEditor extends EditorPanel<Config> {
 				{
 					deadzonesButton = new JButton("Deadzones");
 					leftPanel.add(deadzonesButton, new GridBagConstraints(-1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER,
+						GridBagConstraints.NONE, new Insets(0, 0, 0, 6), 0, 0));
+				}
+				{
+					mouseButton = new JButton("Mouse");
+					leftPanel.add(mouseButton, new GridBagConstraints(-1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER,
 						GridBagConstraints.NONE, new Insets(0, 0, 0, 6), 0, 0));
 				}
 			}

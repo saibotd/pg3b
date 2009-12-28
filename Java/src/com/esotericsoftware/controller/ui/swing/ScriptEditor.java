@@ -63,6 +63,7 @@ import pnuts.lang.ParseException;
 import pnuts.lang.Pnuts;
 import pnuts.lang.PnutsException;
 
+import com.esotericsoftware.controller.device.Device;
 import com.esotericsoftware.controller.ui.Action;
 import com.esotericsoftware.controller.ui.Config;
 import com.esotericsoftware.controller.ui.Script;
@@ -275,7 +276,19 @@ public class ScriptEditor extends EditorPanel<Script> {
 				try {
 					Config config = owner.getConfigTab().getConfigEditor().getSelectedItem();
 					Context context = new ScriptAction("<temp>").getContext(config, null, 1);
-					Pnuts.load(new StringReader(codeText.getText()), context);
+					Device device = owner.getDevice();
+					if (device != null) device.collectChanges();
+					try {
+						Pnuts.load(new StringReader(codeText.getText()), context);
+					} finally {
+						if (device != null) {
+							try {
+								device.applyChanges();
+							} catch (IOException ex) {
+								if (Log.ERROR) error("Error applying device changes.", ex);
+							}
+						}
+					}
 					EventQueue.invokeLater(new Runnable() {
 						public void run () {
 							errorLabel.setForeground(Color.black);

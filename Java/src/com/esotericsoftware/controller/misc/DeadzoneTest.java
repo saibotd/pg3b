@@ -163,7 +163,7 @@ public class DeadzoneTest extends JFrame {
 		public void drawDeflection (Graphics g, float x, float y) {
 			deadzone.setSizeX(deadzoneX);
 			deadzone.setSizeY(deadzoneY);
-			float[] deflection = deadzone.toDeflection(x, y);
+			float[] deflection = deadzone.getDeflection(x, y);
 			int r = 5, d = r * 2;
 			g.fillRect((int)(deflection[0] * 256) + 256 - r, (int)(deflection[1] * 256) + 256 - r, d, d);
 		}

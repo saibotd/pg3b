@@ -124,6 +124,8 @@ public class DeadzoneDialog extends JDialog {
 					device.reset();
 				} catch (IOException ignored) {
 				}
+				device.setDeadzone(Stick.left, leftDeadzone);
+				device.setDeadzone(Stick.right, rightDeadzone);
 				dispose();
 			}
 		});
@@ -280,14 +282,14 @@ public class DeadzoneDialog extends JDialog {
 				panel.add(buttonPanel, new GridBagConstraints(0, 0, 1, 1, 1.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE,
 					new Insets(0, 0, 0, 0), 0, 0));
 				{
-					saveButton = new JButton();
-					buttonPanel.add(saveButton);
-					saveButton.setText("Save");
-				}
-				{
 					cancelButton = new JButton();
 					buttonPanel.add(cancelButton);
 					cancelButton.setText("Cancel");
+				}
+				{
+					saveButton = new JButton();
+					buttonPanel.add(saveButton);
+					saveButton.setText("Save");
 				}
 			}
 		}

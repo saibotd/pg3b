@@ -18,15 +18,26 @@ import com.esotericsoftware.controller.util.WindowsRegistry;
  * Controls the XIM2 hardware.
  */
 public class XIM extends Device {
-	static {
+	static void load () {
 		String ximPath = WindowsRegistry.get("HKCU/Software/XIM", "");
 		if (ximPath != null) {
-			System.load(ximPath + "/SiUSBXp.dll");
-			System.load(ximPath + "/XIMCore.dll");
-			System.loadLibrary("xim32");
+			try {
+				System.load(ximPath + "/SiUSBXp.dll");
+				System.load(ximPath + "/XIMCore.dll");
+				System.loadLibrary("xim32");
+			} catch (Throwable ex) {
+				if (ERROR) error("Error loading XIM native libraries.", ex);
+			}
 		} else {
-			if (ERROR) error("XIM installation path not found in registry at: HKCU/Software/XIM");
+			if (ERROR) {
+				error("XIM installation path not found in registry at: HKCU/Software/XIM\n"
+					+ "Please ensure the XIM360 software is installed.");
+			}
 		}
+	}
+
+	static {
+		load();
 	}
 
 	static private HashMap<Integer, String> statusToMessage = new HashMap();
@@ -50,38 +61,37 @@ public class XIM extends Device {
 		statusToMessage.put(407, "NEEDS_CALIBRATION");
 	}
 
-	static private HashMap<Button, Integer> buttonToIndex = new HashMap();
+	static private int[] buttonToIndex = new int[Button.values().length];
 	static {
-		buttonToIndex.put(Button.rightShoulder, 0);
-		buttonToIndex.put(Button.rightStick, 1);
-		buttonToIndex.put(Button.leftShoulder, 2);
-		buttonToIndex.put(Button.leftStick, 3);
-		buttonToIndex.put(Button.a, 4);
-		buttonToIndex.put(Button.b, 5);
-		buttonToIndex.put(Button.x, 6);
-		buttonToIndex.put(Button.y, 7);
-		buttonToIndex.put(Button.up, 8);
-		buttonToIndex.put(Button.down, 9);
-		buttonToIndex.put(Button.left, 10);
-		buttonToIndex.put(Button.right, 11);
-		buttonToIndex.put(Button.start, 12);
-		buttonToIndex.put(Button.back, 13);
-		buttonToIndex.put(Button.guide, 14);
+		buttonToIndex[Button.rightShoulder.ordinal()] = 0;
+		buttonToIndex[Button.rightStick.ordinal()] = 1;
+		buttonToIndex[Button.leftShoulder.ordinal()] = 2;
+		buttonToIndex[Button.leftStick.ordinal()] = 3;
+		buttonToIndex[Button.a.ordinal()] = 4;
+		buttonToIndex[Button.b.ordinal()] = 5;
+		buttonToIndex[Button.x.ordinal()] = 6;
+		buttonToIndex[Button.y.ordinal()] = 7;
+		buttonToIndex[Button.up.ordinal()] = 8;
+		buttonToIndex[Button.down.ordinal()] = 9;
+		buttonToIndex[Button.left.ordinal()] = 10;
+		buttonToIndex[Button.right.ordinal()] = 11;
+		buttonToIndex[Button.start.ordinal()] = 12;
+		buttonToIndex[Button.back.ordinal()] = 13;
+		buttonToIndex[Button.guide.ordinal()] = 14;
 	}
 
-	static private HashMap<Axis, Integer> axisToIndex = new HashMap();
+	static private int[] axisToIndex = new int[Axis.values().length];
 	static {
-		axisToIndex.put(Axis.rightStickX, 0);
-		axisToIndex.put(Axis.rightStickY, 1);
-		axisToIndex.put(Axis.leftStickX, 2);
-		axisToIndex.put(Axis.leftStickY, 3);
-		axisToIndex.put(Axis.rightTrigger, 4);
-		axisToIndex.put(Axis.leftTrigger, 5);
+		axisToIndex[Axis.rightStickX.ordinal()] = 0;
+		axisToIndex[Axis.rightStickY.ordinal()] = 1;
+		axisToIndex[Axis.leftStickX.ordinal()] = 2;
+		axisToIndex[Axis.leftStickY.ordinal()] = 3;
+		axisToIndex[Axis.rightTrigger.ordinal()] = 4;
+		axisToIndex[Axis.leftTrigger.ordinal()] = 5;
 	}
 
 	private final ByteBuffer stateByteBuffer;
 	private final ShortBuffer stateBuffer;
-	private boolean collectingChanges;
 
 	public XIM () throws IOException {
 		checkResult(connect());
@@ -95,58 +105,31 @@ public class XIM extends Device {
 		disconnect();
 	}
 
-	public void set (Button button, boolean pressed) throws IOException {
+	public void setButton (Button button, boolean pressed) throws IOException {
 		int value = pressed ? 1 : 0;
-		int index = buttonToIndex.get(button);
-		short existingValue = stateBuffer.get(index / 2);
-		int first, second;
-		if (index % 2 == 0) {
-			first = value & 0xFF;
-			second = existingValue >> 8;
-		} else {
-			first = existingValue & 0xFF;
-			second = value & 0xFF;
-		}
+		int index = buttonToIndex[button.ordinal()];
 		synchronized (this) {
-			stateBuffer.put(index / 2, (short)(first + (second << 8)));
-			if (collectingChanges) {
-				buttonStates[button.ordinal()] = pressed;
-				return;
+			// Button states are stored as bytes packed into shorts.
+			short existingValue = stateBuffer.get(index / 2);
+			int first, second;
+			if (index % 2 == 0) {
+				first = value & 0xFF;
+				second = existingValue >> 8;
+			} else {
+				first = existingValue & 0xFF;
+				second = value & 0xFF;
 			}
-			checkResult(setState(stateByteBuffer, 200));
-			buttonStates[button.ordinal()] = pressed;
+			stateBuffer.put(index / 2, (short)(first + (second << 8)));
+			if (!collectingChanges) checkResult(setState(stateByteBuffer, 200));
 		}
-		if (DEBUG) debug(button + ": " + pressed);
-
-		notifyButtonChanged(button, pressed);
 	}
 
-	public void set (Axis axis, float state) throws IOException {
-		if (state <= -1) state = -1;
-		if (state >= 1) state = 1;
-		state = getDeflection(axis, state);
-		int index = axisToIndex.get(axis);
+	public void setAxis (Axis axis, float state) throws IOException {
+		int index = axisToIndex[axis.ordinal()];
 		synchronized (this) {
 			stateBuffer.put(7 + index, (short)(32767 * state));
-			if (collectingChanges) {
-				axisStates[axis.ordinal()] = state;
-				return;
-			}
-			checkResult(setState(stateByteBuffer, 200));
-			axisStates[axis.ordinal()] = state;
+			if (!collectingChanges) checkResult(setState(stateByteBuffer, 200));
 		}
-		if (DEBUG) debug(axis + ": " + state);
-
-		notifyAxisChanged(axis, state);
-	}
-
-	public void collectChanges () {
-		collectingChanges = true;
-	}
-
-	public void applyChanges () throws IOException {
-		collectingChanges = false;
-		checkResult(setState(stateByteBuffer, 200));
 	}
 
 	/**
@@ -172,10 +155,4 @@ public class XIM extends Device {
 	static private native int setMode (int mode);
 
 	static private native int setState (ByteBuffer byteBuffer, float timeout);
-
-	static native void setSmoothness (float intensity, int inputUpdateFrequency, float stickYXRatio,
-		float stickTranslationExponent, float stickSensitivity);
-
-	static native void computeStickValues (float deltaX, float deltaY, float stickYXRatio, float stickTranslationExponent,
-		float stickSensitivity, float stickDiagonalDampen, int stickDeadZoneType, float stickDeadZone, ByteBuffer byteBuffer);
 }

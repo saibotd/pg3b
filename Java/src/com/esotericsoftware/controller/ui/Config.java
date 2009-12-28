@@ -23,6 +23,7 @@ public class Config extends Editable {
 	private List<Trigger> triggers = new ArrayList();
 	private transient PollerThread pollerThread;
 	private Deadzone leftDeadzone, rightDeadzone;
+	private MouseTranslation mouseTranslation;
 
 	public Config () {
 	}
@@ -53,6 +54,14 @@ public class Config extends Editable {
 
 	public void setRightDeadzone (Deadzone rightDeadzone) {
 		this.rightDeadzone = rightDeadzone;
+	}
+
+	public MouseTranslation getMouseTranslation () {
+		return mouseTranslation;
+	}
+
+	public void setMouseTranslation (MouseTranslation mouseTranslation) {
+		this.mouseTranslation = mouseTranslation;
 	}
 
 	/**
@@ -114,8 +123,8 @@ public class Config extends Editable {
 		}
 
 		public void run () {
+			Device device = UI.instance.getDevice();
 			try {
-				Device device = UI.instance.getDevice();
 				if (device != null) {
 					device.setDeadzone(Stick.left, leftDeadzone);
 					device.setDeadzone(Stick.right, rightDeadzone);
@@ -128,8 +137,16 @@ public class Config extends Editable {
 				for (Poller poller : pollers)
 					poller.poll();
 				ArrayList<Trigger> activeTriggers = new ArrayList();
+				long lastTime = System.nanoTime();
 				while (running) {
-					device.collectChanges();
+					long time = System.nanoTime();
+					float delta = (time - lastTime) / 1000000f;
+					lastTime = time;
+
+					if (device != null) device.collectChanges();
+					
+					if (mouseTranslation != null) mouseTranslation.update(device, delta);
+					
 					for (Poller poller : pollers)
 						poller.poll();
 					for (Trigger trigger : getTriggers()) {
@@ -150,13 +167,20 @@ public class Config extends Editable {
 					// Triggers are applied continuously in activation order so those that manipulate the same targets work correctly.
 					for (Trigger trigger : activeTriggers)
 						execute(trigger);
-					device.applyChanges();
+					if (device != null) device.applyChanges();
 					Thread.yield();
 				}
 			} catch (Exception ex) {
 				if (ERROR) error("Error checking config triggers.", ex);
 				hasError = true;
 			} finally {
+				if (device != null) {
+					try {
+						device.reset();
+						device.applyChanges();
+					} catch (IOException ignored) {
+					}
+				}
 				if (INFO) info("Deactivated config: " + getName());
 				EventQueue.invokeLater(new Runnable() {
 					public void run () {

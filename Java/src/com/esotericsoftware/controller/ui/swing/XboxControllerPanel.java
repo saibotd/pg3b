@@ -74,6 +74,10 @@ public class XboxControllerPanel extends JPanel {
 		public void axisChanged (Axis axis, float state) {
 			repaint();
 		}
+
+		public void deviceReset () {
+			repaint();
+		}
 	};
 
 	public XboxControllerPanel () {
@@ -437,19 +441,41 @@ public class XboxControllerPanel extends JPanel {
 		int y = stick == Stick.left ? 129 : 213;
 		if ((int)(valueY * 100) != 0) {
 			if (valueY < 0) {
-				packedImages.get("upArrow").draw(g, x, y);
+				PackedImage arrowImage = packedImages.get("upArrow-green");
+				arrowImage.draw(g, x, y);
+				g.clipRect(x + arrowImage.offsetX, y + arrowImage.offsetY + 3, arrowImage.image.getWidth(), (int)((arrowImage.image
+					.getHeight() - 18) * (1 - Math.abs(valueY))));
+				packedImages.get("upArrow-white").draw(g, x, y);
+				g.setClip(null);
 				drawString(g, toPercent(valueY), x + 62, y + 27);
 			} else if (valueY > 0) {
-				packedImages.get("downArrow").draw(g, x, y);
+				PackedImage arrowImage = packedImages.get("downArrow-green");
+				arrowImage.draw(g, x, y);
+				g.clipRect(x + arrowImage.offsetX, y + arrowImage.offsetY + 15
+					+ (int)((arrowImage.image.getHeight() - 18) * Math.abs(valueY)), arrowImage.image.getWidth(), arrowImage.image
+					.getHeight());
+				packedImages.get("downArrow-white").draw(g, x, y);
+				g.setClip(null);
 				drawString(g, toPercent(valueY), x + 62, y + 27 + 77);
 			}
 		}
 		if ((int)(valueX * 100) != 0) {
 			if (valueX < 0) {
-				packedImages.get("leftArrow").draw(g, x, y);
+				PackedImage arrowImage = packedImages.get("leftArrow-green");
+				arrowImage.draw(g, x, y);
+				g.clipRect(x + arrowImage.offsetX + 3, y + arrowImage.offsetY, (int)((arrowImage.image.getWidth() - 18) * (1 - Math
+					.abs(valueX))), arrowImage.image.getHeight());
+				packedImages.get("leftArrow-white").draw(g, x, y);
+				g.setClip(null);
 				drawString(g, toPercent(valueX), x + 62 - 44, y + 27 + 39);
 			} else if (valueX > 0) {
-				packedImages.get("rightArrow").draw(g, x, y);
+				PackedImage arrowImage = packedImages.get("rightArrow-green");
+				arrowImage.draw(g, x, y);
+				g.clipRect(x + arrowImage.offsetX + 15 + (int)((arrowImage.image.getWidth() - 18) * Math.abs(valueX)), y
+					+ arrowImage.offsetY, (int)((arrowImage.image.getWidth() - 18) * (1 - Math.abs(valueX))), arrowImage.image
+					.getHeight());
+				packedImages.get("rightArrow-white").draw(g, x, y);
+				g.setClip(null);
 				drawString(g, toPercent(valueX), x + 62 + 43, y + 27 + 39);
 			}
 		}

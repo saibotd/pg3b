@@ -192,6 +192,10 @@ public class Mouse implements InputDevice {
 			return axis != null;
 		}
 
+		public String getAxis () {
+			return axis;
+		}
+
 		public String toString () {
 			if (button == 1) return "Left button";
 			if (button == 2) return "Middle button";

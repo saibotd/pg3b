@@ -25,10 +25,10 @@ public abstract class Deadzone {
 	 * the first stick deflection in that direction that is outside the deadzone.
 	 * @return Returns an 2 element array containing the x and y deflection values.
 	 */
-	abstract public float[] toDeflection (float x, float y);
+	abstract public float[] getDeflection (float x, float y);
 
 	static public class Square extends Deadzone {
-		public float[] toDeflection (float x, float y) {
+		public float[] getDeflection (float x, float y) {
 			float[] deflection = new float[2];
 			deflection[0] = (1 - sizeX) * x + sizeX * Math.signum(x);
 			deflection[1] = (1 - sizeY) * y + sizeY * Math.signum(y);
@@ -37,7 +37,7 @@ public abstract class Deadzone {
 	}
 
 	static public class Round extends Deadzone {
-		public float[] toDeflection (float x, float y) {
+		public float[] getDeflection (float x, float y) {
 			float[] deflection = new float[2];
 			if (x != 0 || y != 0) {
 				double angle = Math.atan2(y, x);

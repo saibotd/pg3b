@@ -1,6 +1,8 @@
 
 package com.esotericsoftware.controller.device;
 
+import static com.esotericsoftware.minlog.Log.*;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -32,27 +34,93 @@ abstract public class Device {
 		targets = Collections.unmodifiableList(targets);
 	}
 
-	protected boolean[] buttonStates = new boolean[Button.values().length];
-	protected float[] axisStates = new float[Axis.values().length];
+	protected boolean collectingChanges;
+
+	private boolean[] buttonStates = new boolean[Button.values().length];
+	private float[] axisStates = new float[Axis.values().length];
+	private float[] axisDeflections = new float[Axis.values().length];
+	private boolean[] snapshotButtonStates = new boolean[Button.values().length];
+	private float[] snapshotAxisStates = new float[Axis.values().length];
 
 	private final Listeners<Listener> listeners = new Listeners(Listener.class);
-	private final Deadzone[] deadzones = new Deadzone[Stick.values().length];
+	private final Deadzone[] stickToDeadzone = new Deadzone[Stick.values().length];
+	private float[] stickToMouseDeltaX = new float[Stick.values().length];
+	private float[] stickToMouseDeltaY = new float[Stick.values().length];
 
 	public Device () {
 		super();
 	}
 
 	/**
+	 * Does the actual communication with the device to set the button state.
+	 * @throws IOException When communication with the device fails.
+	 */
+	abstract protected void setButton (Button button, boolean pressed) throws IOException;
+
+	/**
+	 * Does the actual communication with the device to set the axis state.
+	 * @throws IOException When communication with the device fails.
+	 */
+	abstract protected void setAxis (Axis axis, float state) throws IOException;
+
+	/**
 	 * Sets the button state.
 	 * @throws IOException When communication with the device fails.
 	 */
-	abstract public void set (Button button, boolean pressed) throws IOException;
+	public void set (Button button, boolean pressed) throws IOException {
+		if (button == null) throw new IllegalArgumentException("button cannot be null.");
+
+		synchronized (this) {
+			int ordinal = button.ordinal();
+			if (collectingChanges) {
+				buttonStates[ordinal] = pressed;
+				return;
+			}
+			if (buttonStates[ordinal] == pressed) return;
+			setButton(button, pressed);
+			buttonStates[ordinal] = pressed;
+		}
+
+		notifyButtonChanged(button, pressed);
+	}
 
 	/**
 	 * Sets the axis state.
 	 * @throws IOException When communication with the device fails.
 	 */
-	abstract public void set (Axis axis, float state) throws IOException;
+	public void set (Axis axis, float state) throws IOException {
+		if (axis == null) throw new IllegalArgumentException("axis cannot be null.");
+		if (state < -1) state = -1;
+		if (state > 1) state = 1;
+
+		synchronized (this) {
+			int ordinal = axis.ordinal();
+			if (collectingChanges) {
+				axisStates[ordinal] = state;
+				return;
+			}
+			if (axisStates[ordinal] == state) return;
+			setAxis(axis, state);
+			axisDeflections[ordinal] = state;
+			axisStates[ordinal] = state;
+		}
+
+		notifyAxisChanged(axis, state);
+	}
+
+	private void notifyButtonChanged (Button button, boolean pressed) {
+		if (DEBUG) debug(button + ": " + pressed);
+		Listener[] listeners = this.listeners.toArray();
+		for (int i = 0, n = listeners.length; i < n; i++)
+			listeners[i].buttonChanged(button, pressed);
+	}
+
+	private void notifyAxisChanged (Axis axis, float state) {
+		if (DEBUG) debug(axis + ": " + state);
+		Listener[] listeners = this.listeners.toArray();
+		for (int i = 0, n = listeners.length; i < n; i++)
+			listeners[i].axisChanged(axis, state);
+	}
 
 	/**
 	 * Sets the button or axis state. If the target is an axis, it will be to 0 (false) or 1 (true).
@@ -106,10 +174,8 @@ abstract public class Device {
 	 */
 	public void set (Stick stick, float stateX, float stateY) throws IOException {
 		if (stick == null) throw new IllegalArgumentException("stick cannot be null.");
-		Axis axisX = stick == Stick.left ? Axis.leftStickX : Axis.rightStickX;
-		Axis axisY = stick == Stick.left ? Axis.leftStickY : Axis.rightStickY;
-		set(axisX, stateX);
-		set(axisY, stateY);
+		set(stick.getAxisX(), stateX);
+		set(stick.getAxisY(), stateY);
 	}
 
 	/**
@@ -165,39 +231,6 @@ abstract public class Device {
 		return get(getTarget(target));
 	}
 
-	public void setDeadzone (Stick stick, Deadzone deadzone) {
-		if (stick == null) throw new IllegalArgumentException("stick cannot be null.");
-		deadzones[stick.ordinal()] = deadzone;
-	}
-
-	public float getDeflection (Axis axis, float state) {
-		Stick stick = axis.getStick();
-		if (stick == null) return state;
-		Deadzone deadzone = deadzones[stick.ordinal()];
-		if (deadzone == null) return state;
-		Axis axisX = stick.getAxisX();
-		float x, y;
-		if (axis == axisX) {
-			x = state;
-			y = axisStates[stick.getAxisY().ordinal()];
-		} else {
-			x = axisStates[axisX.ordinal()];
-			y = state;
-		}
-		float[] deflection = deadzone.toDeflection(x, y);
-		if (axis == axisX) {
-			if (deflection[1] != y) {
-				// BOZO - Set y.
-			}
-			return deflection[0];
-		} else {
-			if (deflection[0] != x) {
-				// BOZO - Set x.
-			}
-			return deflection[1];
-		}
-	}
-
 	/**
 	 * Closes the connection with this device. No further communication will be possible with this device instance.
 	 */
@@ -205,23 +238,113 @@ abstract public class Device {
 
 	/**
 	 * Sets all buttons to released and all axes to zero.
+	 * @throws IOException When communication with the device fails.
 	 */
 	public void reset () throws IOException {
 		for (Button button : Button.values())
-			set(button, false);
+			setButton(button, false);
 		for (Axis axis : Axis.values())
-			set(axis, 0);
+			setAxis(axis, 0);
+		for (int i = 0, n = buttonStates.length; i < n; i++)
+			buttonStates[i] = false;
+		for (int i = 0, n = axisStates.length; i < n; i++) {
+			axisStates[i] = 0;
+			axisDeflections[i] = 0;
+		}
+		if (collectingChanges) collectChanges();
+
+		if (DEBUG) debug("Device reset.");
+		Listener[] listeners = this.listeners.toArray();
+		for (int i = 0, n = listeners.length; i < n; i++)
+			listeners[i].deviceReset();
+	}
+
+	public void setDeadzone (Stick stick, Deadzone deadzone) {
+		if (stick == null) throw new IllegalArgumentException("stick cannot be null.");
+		stickToDeadzone[stick.ordinal()] = deadzone;
+	}
+
+	public void addMouseDelta (Stick stick, float mouseDeltaX, float mouseDeltaY) {
+		int ordinal = stick.ordinal();
+		stickToMouseDeltaX[ordinal] += mouseDeltaX;
+		stickToMouseDeltaY[ordinal] += mouseDeltaY;
+	}
+
+	public float[] getMouseDelta (Stick stick) {
+		int ordinal = stick.ordinal();
+		float[] mouseDelta = new float[] {stickToMouseDeltaX[ordinal], stickToMouseDeltaY[ordinal]};
+		stickToMouseDeltaX[ordinal] = 0;
+		stickToMouseDeltaY[ordinal] = 0;
+		return mouseDelta;
 	}
 
 	/**
 	 * Changes made to the device will not actually be applied until {@link #applyChanges()} is called.
 	 */
-	abstract public void collectChanges ();
+	public synchronized void collectChanges () {
+		collectingChanges = true;
+		System.arraycopy(buttonStates, 0, snapshotButtonStates, 0, buttonStates.length);
+		System.arraycopy(axisStates, 0, snapshotAxisStates, 0, axisStates.length);
+	}
 
 	/**
 	 * Applies changes to the device made since {@link #collectChanges()} was called.
+	 * @throws IOException When communication with the device fails.
 	 */
-	abstract public void applyChanges () throws IOException;
+	public synchronized void applyChanges () throws IOException {
+		if (!collectingChanges) return;
+		collectingChanges = false;
+
+		boolean[] targetButtonStates = buttonStates;
+		buttonStates = snapshotButtonStates;
+		snapshotButtonStates = targetButtonStates;
+
+		Button[] buttons = Button.values();
+		for (int i = 0, n = targetButtonStates.length; i < n; i++)
+			set(buttons[i], targetButtonStates[i]);
+
+		float[] targetAxisStates = axisStates;
+		axisStates = snapshotAxisStates;
+		snapshotAxisStates = targetAxisStates;
+
+		applyDeadzones(Stick.left, targetAxisStates[Axis.leftStickX.ordinal()], targetAxisStates[Axis.leftStickY.ordinal()]);
+		applyDeadzones(Stick.right, targetAxisStates[Axis.rightStickX.ordinal()], targetAxisStates[Axis.rightStickY.ordinal()]);
+		set(Axis.leftTrigger, targetAxisStates[Axis.leftTrigger.ordinal()]);
+		set(Axis.rightTrigger, targetAxisStates[Axis.rightTrigger.ordinal()]);
+	}
+
+	/**
+	 * Sets the stick deflection after compensating for the deadzone.
+	 * @throws IOException When communication with the device fails.
+	 */
+	private void applyDeadzones (Stick stick, float targetX, float targetY) throws IOException {
+		float[] deflection;
+		Deadzone deadzone = stickToDeadzone[stick.ordinal()];
+		if (deadzone == null)
+			deflection = new float[] {targetX, targetY};
+		else
+			deflection = deadzone.getDeflection(targetX, targetY);
+
+		Axis axisX = stick.getAxisX();
+		int indexX = axisX.ordinal();
+		float deflectionX = deflection[0];
+		if (deflectionX != axisDeflections[indexX]) {
+			setAxis(axisX, deflectionX);
+			axisDeflections[indexX] = deflectionX;
+			notifyAxisChanged(axisX, targetX);
+		}
+		axisStates[indexX] = targetX;
+
+		Axis axisY = stick.getAxisY();
+		int indexY = axisY.ordinal();
+		float deflectionY = deflection[1];
+		if (deflectionY != axisDeflections[indexY]) {
+			setAxis(axisY, deflectionY);
+			axisDeflections[indexY] = deflectionY;
+			notifyAxisChanged(axisY, targetY);
+		}
+		axisStates[indexY] = targetY;
+	}
 
 	/**
 	 * Adds a listener to be notified when the device manipulates a button or axis.
@@ -234,24 +357,14 @@ abstract public class Device {
 		listeners.removeListener(listener);
 	}
 
-	protected void notifyButtonChanged (Button button, boolean pressed) {
-		Listener[] listeners = this.listeners.toArray();
-		for (int i = 0, n = listeners.length; i < n; i++)
-			listeners[i].buttonChanged(button, pressed);
-	}
-
-	protected void notifyAxisChanged (Axis axis, float state) {
-		Listener[] listeners = this.listeners.toArray();
-		for (int i = 0, n = listeners.length; i < n; i++)
-			listeners[i].axisChanged(axis, state);
-	}
-
 	/**
 	 * Returns the target with the specified name or alias (case insensitive).
 	 */
 	static public Target getTarget (String name) {
 		if (name == null) throw new IllegalArgumentException("name cannot be null.");
-		return nameToTarget.get(name.trim().toLowerCase());
+		Target target = nameToTarget.get(name.trim().toLowerCase());
+		if (target == null) throw new IllegalArgumentException("Unknown target: " + name);
+		return target;
 	}
 
 	/**
@@ -269,6 +382,9 @@ abstract public class Device {
 		}
 
 		public void axisChanged (Axis axis, float state) {
+		}
+
+		public void deviceReset () {
 		}
 	}
 }

@@ -33,6 +33,7 @@ public class Settings {
 	public Rectangle windowSize = new Rectangle(-1, -1, 720, 814);
 	public float dividerLocation = 0.66f;
 	public boolean ximConnected;
+	public boolean activationDisablesInput = true;
 
 	static private Settings instance;
 	static private final String fileName = "settings.txt";

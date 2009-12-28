@@ -7,6 +7,10 @@ import com.esotericsoftware.controller.device.Axis;
 import com.esotericsoftware.controller.device.Button;
 import com.esotericsoftware.controller.device.Device;
 import com.esotericsoftware.controller.device.Target;
+import com.esotericsoftware.controller.input.Input;
+import com.esotericsoftware.controller.input.InputDevice;
+import com.esotericsoftware.controller.input.Mouse;
+import com.esotericsoftware.controller.input.Mouse.MouseInput;
 import com.esotericsoftware.controller.ui.swing.UI;
 
 /**
@@ -59,6 +63,22 @@ public class DeviceAction implements Action {
 			if (state > 0) state = -state;
 		}
 		try {
+			if (target instanceof Axis && trigger instanceof InputTrigger) {
+				Input input = ((InputTrigger)trigger).getInput();
+				if (input instanceof Mouse.MouseInput) {
+					String axis = ((MouseInput)input).getAxis();
+					if (axis != null) {
+						float deltaX = 0, deltaY = 0;
+						if (axis.equals("x"))
+							deltaX = state;
+						else if (axis.equals("y")) {
+							deltaY = state;
+						}
+						device.addMouseDelta(((Axis)target).getStick(), deltaX, deltaY);
+						return state;
+					}
+				}
+			}
 			device.set(target, state);
 			return state;
 		} catch (IOException ex) {

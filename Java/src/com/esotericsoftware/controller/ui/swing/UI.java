@@ -88,8 +88,10 @@ public class UI extends JFrame {
 
 	private JMenu pg3bMenu;
 	private JMenuBar menuBar;
-	private JMenuItem pg3bConnectMenuItem, ximConnectMenuItem, disconnectMenuItem, controllerConnectMenuItem, exitMenuItem;
-	private JCheckBoxMenuItem showControllerMenuItem, showLogMenuItem, debugEnabledMenuItem, calibrationEnabledMenuItem;
+	private JMenuItem pg3bConnectMenuItem, ximConnectMenuItem, disconnectDeviceMenuItem, disconnectControllerMenuItem,
+		controllerConnectMenuItem, exitMenuItem;
+	private JCheckBoxMenuItem showControllerMenuItem, showLogMenuItem, debugEnabledMenuItem, calibrationEnabledMenuItem,
+		activationDisablesInputMenuItem;
 	private JMenuItem roundTripMenuItem, clearMenuItem, calibrateMenuItem, setControllerTypeMenuItem;
 
 	private XboxControllerPanel controllerPanel;
@@ -139,7 +141,8 @@ public class UI extends JFrame {
 		statusBar.setController(null);
 
 		roundTripMenuItem.setEnabled(false);
-		disconnectMenuItem.setEnabled(false);
+		disconnectDeviceMenuItem.setEnabled(false);
+		disconnectControllerMenuItem.setEnabled(false);
 		clearMenuItem.setEnabled(false);
 		calibrateMenuItem.setEnabled(false);
 		setControllerTypeMenuItem.setEnabled(false);
@@ -154,6 +157,7 @@ public class UI extends JFrame {
 		showControllerMenuItem.setSelected(settings.showController);
 		showLog(settings.showLog);
 		showLogMenuItem.setSelected(settings.showLog);
+		activationDisablesInputMenuItem.setSelected(settings.activationDisablesInput);
 
 		statusBar.setMessage("");
 
@@ -225,7 +229,7 @@ public class UI extends JFrame {
 				statusBar.setDevice(device);
 				configTab.getConfigEditor().setDevice(device);
 
-				disconnectMenuItem.setEnabled(device != null);
+				disconnectDeviceMenuItem.setEnabled(device != null);
 				roundTripMenuItem.setEnabled(device != null && controller != null);
 
 				boolean isPG3B = device instanceof PG3B;
@@ -260,6 +264,7 @@ public class UI extends JFrame {
 				controllerPanel.setController(controller);
 				statusBar.setController(controller);
 
+				disconnectControllerMenuItem.setEnabled(controller != null);
 				roundTripMenuItem.setEnabled(controller != null && device != null);
 				calibrateMenuItem.setEnabled(roundTripMenuItem.isEnabled());
 			}
@@ -295,9 +300,15 @@ public class UI extends JFrame {
 	}
 
 	private void initializeEvents () {
-		disconnectMenuItem.addActionListener(new ActionListener() {
+		disconnectDeviceMenuItem.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
 				setDevice(null);
+			}
+		});
+
+		disconnectControllerMenuItem.addActionListener(new ActionListener() {
+			public void actionPerformed (ActionEvent event) {
+				setController(null);
 			}
 		});
 
@@ -356,6 +367,13 @@ public class UI extends JFrame {
 			}
 		});
 
+		activationDisablesInputMenuItem.addActionListener(new ActionListener() {
+			public void actionPerformed (ActionEvent event) {
+				settings.activationDisablesInput = activationDisablesInputMenuItem.isSelected();
+				Settings.save();
+			}
+		});
+
 		exitMenuItem.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
 				exit();
@@ -380,10 +398,10 @@ public class UI extends JFrame {
 
 		KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(new KeyEventDispatcher() {
 			public boolean dispatchKeyEvent (KeyEvent event) {
-				if (disableKeyboard) {
+				if (activeConfig != null) {
 					if (event.isControlDown() && event.getKeyCode() == KeyEvent.VK_F4) setActivated(false);
-					event.consume();
 				}
+				if (disableKeyboard) event.consume();
 				return false;
 			}
 		});
@@ -445,7 +463,7 @@ public class UI extends JFrame {
 				try {
 					((PG3B)device).setDebugEnabled(debugEnabledMenuItem.isSelected());
 				} catch (IOException ex) {
-					if (Log.ERROR) error("Error setting PG3B calibration.", ex);
+					if (Log.ERROR) error("Error setting PG3B debug.", ex);
 				}
 			}
 		});
@@ -511,15 +529,17 @@ public class UI extends JFrame {
 
 		activeConfig.setActive(true);
 
-		// Disable mouse and/or keyboard.
-		for (Trigger trigger : activeConfig.getTriggers()) {
-			if (trigger instanceof InputTrigger) {
-				Input input = ((InputTrigger)trigger).getInput();
-				if (input instanceof Mouse.MouseInput || input instanceof Keyboard.KeyboardInput) {
-					getGlassPane().setVisible(true);
-					Mouse.instance.grab(UI.this);
-					disableKeyboard = true;
-					return;
+		if (settings.activationDisablesInput) {
+			// Disable mouse and/or keyboard.
+			for (Trigger trigger : activeConfig.getTriggers()) {
+				if (trigger instanceof InputTrigger) {
+					Input input = ((InputTrigger)trigger).getInput();
+					if (input instanceof Mouse.MouseInput || input instanceof Keyboard.KeyboardInput) {
+						getGlassPane().setVisible(true);
+						Mouse.instance.grab(UI.this);
+						disableKeyboard = true;
+						return;
+					}
 				}
 			}
 		}
@@ -607,11 +627,12 @@ public class UI extends JFrame {
 				{
 					pg3bConnectMenuItem = menu.add(new JMenuItem("Connect to PG3B..."));
 					ximConnectMenuItem = menu.add(new JMenuItem("Connect to XIM..."));
-					disconnectMenuItem = menu.add(new JMenuItem("Disconnect"));
+					disconnectDeviceMenuItem = menu.add(new JMenuItem("Disconnect Device"));
 				}
 				menu.addSeparator();
 				{
 					controllerConnectMenuItem = menu.add(new JMenuItem("Connect to Controller..."));
+					disconnectControllerMenuItem = menu.add(new JMenuItem("Disconnect Controller"));
 				}
 				menu.addSeparator();
 				{
@@ -630,6 +651,11 @@ public class UI extends JFrame {
 				{
 					showLogMenuItem = new JCheckBoxMenuItem("Show Log");
 					menu.add(showLogMenuItem);
+				}
+				menu.addSeparator();
+				{
+					activationDisablesInputMenuItem = new JCheckBoxMenuItem("Activation Disables Input");
+					menu.add(activationDisablesInputMenuItem);
 				}
 			}
 			{
