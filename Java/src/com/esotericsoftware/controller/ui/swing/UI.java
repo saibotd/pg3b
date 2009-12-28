@@ -6,7 +6,6 @@ import static com.esotericsoftware.minlog.Log.*;
 import java.awt.AWTEvent;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.FlowLayout;
 import java.awt.Graphics;
@@ -87,6 +86,8 @@ public class UI extends JFrame {
 	private XboxController controller;
 	private Config activeConfig;
 
+	private JMenu pg3bMenu;
+	private JMenuBar menuBar;
 	private JMenuItem pg3bConnectMenuItem, ximConnectMenuItem, disconnectMenuItem, controllerConnectMenuItem, exitMenuItem;
 	private JCheckBoxMenuItem showControllerMenuItem, showLogMenuItem, debugEnabledMenuItem, calibrationEnabledMenuItem;
 	private JMenuItem roundTripMenuItem, clearMenuItem, calibrateMenuItem, setControllerTypeMenuItem;
@@ -145,6 +146,10 @@ public class UI extends JFrame {
 		debugEnabledMenuItem.setEnabled(false);
 		calibrationEnabledMenuItem.setEnabled(false);
 
+		if (!System.getProperty("os.name").toLowerCase().contains("windows")) {
+			ximConnectMenuItem.setEnabled(false);
+		}
+
 		controllerPanel.setVisible(settings.showController);
 		showControllerMenuItem.setSelected(settings.showController);
 		showLog(settings.showLog);
@@ -174,7 +179,7 @@ public class UI extends JFrame {
 								setMessage("Opening XIM...");
 								try {
 									setDevice(new XIM());
-								} catch (IOException ex) {
+								} catch (Throwable ex) {
 									setDevice(null);
 									if (DEBUG) debug("Unable to reconnect to XIM.", ex);
 								}
@@ -228,6 +233,10 @@ public class UI extends JFrame {
 				setControllerTypeMenuItem.setEnabled(isPG3B);
 				debugEnabledMenuItem.setEnabled(isPG3B);
 				calibrationEnabledMenuItem.setEnabled(isPG3B);
+
+				menuBar.remove(pg3bMenu);
+				if (isPG3B) menuBar.add(pg3bMenu);
+				menuBar.repaint();
 			}
 		});
 
@@ -298,7 +307,7 @@ public class UI extends JFrame {
 				try {
 					setDevice(new XIM());
 					statusBar.setMessage("XIM connected.");
-				} catch (IOException ex) {
+				} catch (Throwable ex) {
 					if (Log.ERROR) error("Error connecting to XIM.", ex);
 					statusBar.setMessage("XIM connection failed.");
 					Util.errorDialog(UI.this, "Connect Error", "An error occurred while attempting to connect to the XIM.");
@@ -589,10 +598,11 @@ public class UI extends JFrame {
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
 		{
-			JMenuBar menuBar = new JMenuBar();
+			menuBar = new JMenuBar();
 			setJMenuBar(menuBar);
 			{
 				JMenu menu = new JMenu("Device");
+				menu.setMnemonic('D');
 				menuBar.add(menu);
 				{
 					pg3bConnectMenuItem = menu.add(new JMenuItem("Connect to PG3B..."));
@@ -605,21 +615,13 @@ public class UI extends JFrame {
 				}
 				menu.addSeparator();
 				{
-					setControllerTypeMenuItem = new JMenuItem("PG3B Controller Type...");
-					menu.add(setControllerTypeMenuItem);
-				}
-				{
-					calibrateMenuItem = new JMenuItem("PG3B Axes Calibration...");
-					menu.add(calibrateMenuItem);
-				}
-				menu.addSeparator();
-				{
 					exitMenuItem = new JMenuItem("Exit");
 					menu.add(exitMenuItem);
 				}
 			}
 			{
 				JMenu menu = new JMenu("View");
+				menu.setMnemonic('V');
 				menuBar.add(menu);
 				{
 					showControllerMenuItem = new JCheckBoxMenuItem("Show Controller");
@@ -632,6 +634,7 @@ public class UI extends JFrame {
 			}
 			{
 				JMenu menu = new JMenu("Diagnostics");
+				menu.setMnemonic('i');
 				menuBar.add(menu);
 				{
 					roundTripMenuItem = new JMenuItem("Round Trip...");
@@ -641,14 +644,26 @@ public class UI extends JFrame {
 					clearMenuItem = new JMenuItem("Clear");
 					menu.add(clearMenuItem);
 				}
-				menu.addSeparator();
+			}
+			{
+				pg3bMenu = new JMenu("PG3B");
+				pg3bMenu.setMnemonic('P');
 				{
-					debugEnabledMenuItem = new JCheckBoxMenuItem("PG3B Debug");
-					menu.add(debugEnabledMenuItem);
+					setControllerTypeMenuItem = new JMenuItem("Controller Type...");
+					pg3bMenu.add(setControllerTypeMenuItem);
 				}
 				{
-					calibrationEnabledMenuItem = new JCheckBoxMenuItem("PG3B Calibration");
-					menu.add(calibrationEnabledMenuItem);
+					calibrateMenuItem = new JMenuItem("Axes Calibration...");
+					pg3bMenu.add(calibrateMenuItem);
+				}
+				pg3bMenu.addSeparator();
+				{
+					debugEnabledMenuItem = new JCheckBoxMenuItem("Debug");
+					pg3bMenu.add(debugEnabledMenuItem);
+				}
+				{
+					calibrationEnabledMenuItem = new JCheckBoxMenuItem("Calibration");
+					pg3bMenu.add(calibrationEnabledMenuItem);
 					calibrationEnabledMenuItem.setSelected(true);
 				}
 			}

@@ -9,6 +9,7 @@
 #include <windows.h>
 #include <XIMCore.h>
 
+extern "C" {
 
 JNIEXPORT jint JNICALL Java_com_esotericsoftware_controller_xim_XIM_connect
 (JNIEnv* env, jclass c) {
@@ -65,4 +66,6 @@ JNIEXPORT void JNICALL Java_com_esotericsoftware_controller_xim_XIM_computeStick
 	short *buffer = (short*)env->GetDirectBufferAddress(byteBuffer);
 	buffer[0] = stickResultX;
 	buffer[1] = stickResultY;
+}
+
 }

@@ -5,6 +5,8 @@ import static com.esotericsoftware.minlog.Log.*;
 
 import java.awt.AWTEvent;
 import java.awt.AWTException;
+import java.awt.Component;
+import java.awt.Point;
 import java.awt.Robot;
 import java.awt.Toolkit;
 import java.awt.event.AWTEventListener;
@@ -12,6 +14,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 
 import javax.swing.JFrame;
+import javax.swing.SwingUtilities;
 
 import com.esotericsoftware.controller.util.Listeners;
 
@@ -45,8 +48,10 @@ public class Mouse implements InputDevice {
 				case MouseEvent.MOUSE_DRAGGED:
 					int lastX = x;
 					int lastY = y;
-					x = event.getXOnScreen();
-					y = event.getYOnScreen();
+					Point screenPoint = event.getPoint();
+					SwingUtilities.convertPointToScreen(screenPoint, (Component)event.getSource());
+					x = screenPoint.x;
+					y = screenPoint.y;
 					lastDeltaX += x - lastX;
 					lastDeltaY += y - lastY;
 					for (int i = 0, n = listeners.length; i < n; i++)

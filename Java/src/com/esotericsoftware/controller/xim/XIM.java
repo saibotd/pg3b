@@ -12,32 +12,20 @@ import java.util.HashMap;
 import com.esotericsoftware.controller.device.Axis;
 import com.esotericsoftware.controller.device.Button;
 import com.esotericsoftware.controller.device.Device;
+import com.esotericsoftware.controller.util.WindowsRegistry;
 
 /**
  * Controls the XIM2 hardware.
  */
 public class XIM extends Device {
 	static {
-		if (System.getProperty("sun.arch.data.model", "").equals("64")) {
-			try {
-				System.loadLibrary("xim64");
-			} catch (UnsatisfiedLinkError ex64) {
-				try {
-					System.loadLibrary("xim32");
-				} catch (UnsatisfiedLinkError ignored) {
-					throw ex64;
-				}
-			}
+		String ximPath = WindowsRegistry.get("HKCU/Software/XIM", "");
+		if (ximPath != null) {
+			System.load(ximPath + "/SiUSBXp.dll");
+			System.load(ximPath + "/XIMCore.dll");
+			System.loadLibrary("xim32");
 		} else {
-			try {
-				System.loadLibrary("xim32");
-			} catch (UnsatisfiedLinkError ex32) {
-				try {
-					System.loadLibrary("xim64");
-				} catch (UnsatisfiedLinkError ignored) {
-					throw ex32;
-				}
-			}
+			if (ERROR) error("XIM installation path not found in registry at: HKCU/Software/XIM");
 		}
 	}
 
@@ -170,7 +158,7 @@ public class XIM extends Device {
 
 	private void checkResult (int status) throws IOException {
 		if (status == 0) return;
-		throw new IOException("Error communicating with XIM: " + status);
+		throw new IOException("Error communicating with XIM: " + statusToMessage.get(status));
 	}
 
 	public String toString () {

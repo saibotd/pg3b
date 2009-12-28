@@ -8,6 +8,7 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionListener;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.Arrays;
@@ -96,7 +97,7 @@ public class XboxControllerPanel extends JPanel {
 			throw new RuntimeException(ex);
 		}
 
-		MouseAdapter mouseListener = new MouseAdapter() {
+		class MouseListener extends MouseAdapter implements MouseMotionListener {
 			public void mouseMoved (MouseEvent event) {
 				// Highlight buttons when moused over.
 				int x = event.getX(), y = event.getY();
@@ -254,7 +255,8 @@ public class XboxControllerPanel extends JPanel {
 				isOver = true;
 				repaint();
 			}
-		};
+		}
+		MouseListener mouseListener = new MouseListener();
 		addMouseMotionListener(mouseListener);
 		addMouseListener(mouseListener);
 		enableEvents(AWTEvent.MOUSE_WHEEL_EVENT_MASK);
