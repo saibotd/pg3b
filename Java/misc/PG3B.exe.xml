@@ -1,9 +1,9 @@
 <launch4jConfig>
   <dontWrapJar>true</dontWrapJar>
   <headerType>gui</headerType>
-  <jar>pg3b.jar</jar>
-  <outfile>PG3B.exe</outfile>
-  <errTitle>PG3B</errTitle>
+  <jar>controller.jar</jar>
+  <outfile>Controller.exe</outfile>
+  <errTitle>Controller</errTitle>
   <cmdLine></cmdLine>
   <chdir>.</chdir>
   <priority>normal</priority>
@@ -12,9 +12,9 @@
   <customProcName>true</customProcName>
   <stayAlive>false</stayAlive>
   <manifest></manifest>
-  <icon>C:\Dev\Java\pg3b\Java\resources\pg3b.ico</icon>
+  <icon>C:\Dev\Java\pg3b\Java\resources\app.ico</icon>
   <classPath>
-    <mainClass>pg3b.ui.Main</mainClass>
+    <mainClass>com.esotericsoftware.controller.ui.Main</mainClass>
     <cp>lib/autocomplete-svn147.jar</cp>
     <cp>lib/jinput-2.0.0-b01.jar</cp>
     <cp>lib/minlog-1.1.jar</cp>
@@ -34,13 +34,13 @@
   <versionInfo>
     <fileVersion>0.0.0.0</fileVersion>
     <txtFileVersion>0.0</txtFileVersion>
-    <fileDescription>PG3B</fileDescription>
-    <copyright>PG3B</copyright>
+    <fileDescription>Controller</fileDescription>
+    <copyright>Controller</copyright>
     <productVersion>0.0.0.0</productVersion>
     <txtProductVersion>0.0</txtProductVersion>
-    <productName>PG3B</productName>
-    <companyName>PG3B</companyName>
-    <internalName>PG3B</internalName>
-    <originalFilename>PG3B.exe</originalFilename>
+    <productName>Controller</productName>
+    <companyName>Controller</companyName>
+    <internalName>Controller</internalName>
+    <originalFilename>Controller.exe</originalFilename>
   </versionInfo>
 </launch4jConfig>

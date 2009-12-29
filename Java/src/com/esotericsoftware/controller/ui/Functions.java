@@ -201,7 +201,7 @@ public class Functions {
 				value = args[2];
 				break;
 			}
-			Package.getPackage(packageName).set(valueName.intern(), value);
+			Package.getPackage(packageName, context).set(valueName.intern(), value);
 			return null;
 		}
 	};
@@ -220,6 +220,26 @@ public class Functions {
 				break;
 			}
 			return Package.getPackage(packageName, context).get(valueName.intern());
+		}
+	};
+
+	static public class interval extends BaseFunction {
+		private HashMap<String, Long> nameToStartTime = new HashMap();
+
+		public interval () {
+			super("get", 2, 2, "name, delay");
+		}
+
+		protected Object invoke (Object[] args, Context context) {
+			String name = (String)args[0];
+			long delay = (Integer)args[1];
+
+			Long startTime = nameToStartTime.get(name);
+			if (startTime == null || System.currentTimeMillis() - startTime >= delay) {
+				nameToStartTime.put(name, System.currentTimeMillis());
+				return true;
+			}
+			return false;
 		}
 	};
 
@@ -242,40 +262,6 @@ public class Functions {
 			object = object != null ? null : Boolean.TRUE;
 			pkg.set(valueName, object);
 			return object != null;
-		}
-	};
-
-	static public BaseFunction getPayload = new BaseFunction("getPayload", 0, 0, "") {
-		protected Object invoke (Object[] args, Context context) {
-			return context.get("payload");
-		}
-	};
-
-	static public BaseFunction getAction = new BaseFunction("getAction", 0, 0, "") {
-		protected Object invoke (Object[] args, Context context) {
-			return context.get("action");
-		}
-	};
-
-	static public BaseFunction getTrigger = new BaseFunction("getTrigger", 0, 0, "") {
-		protected Object invoke (Object[] args, Context context) {
-			return context.get("trigger");
-		}
-	};
-
-	static public BaseFunction getConfig = new BaseFunction("getConfig", 0, 0, "") {
-		protected Object invoke (Object[] args, Context context) {
-			return context.get("config");
-		}
-	};
-
-	static public BaseFunction print = new BaseFunction("print", 0, 1, "object") {
-		protected Object invoke (Object[] args, Context context) {
-			if (args.length == 0)
-				System.out.println();
-			else
-				System.out.println(args[0]);
-			return null;
 		}
 	};
 

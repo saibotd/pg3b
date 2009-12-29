@@ -213,6 +213,16 @@ public class ScriptEditor extends EditorPanel<Script> {
 	public void saveItem (Script item, boolean force) {
 		super.saveItem(item, force);
 		errorLabel.setText("");
+
+		ConfigEditor configEditor = owner.getConfigTab().getConfigEditor();
+		for (Config config : configEditor.getItems()) {
+			for (Trigger trigger : config.getTriggers()) {
+				if (trigger.getAction() instanceof ScriptAction) {
+					ScriptAction action = (ScriptAction)trigger.getAction();
+					if (action.getScript() == item) action.reset(config, trigger);
+				}
+			}
+		}
 	}
 
 	private void initializeEvents () {
@@ -274,12 +284,16 @@ public class ScriptEditor extends EditorPanel<Script> {
 		new Thread("Execute") {
 			public void run () {
 				try {
-					Config config = owner.getConfigTab().getConfigEditor().getSelectedItem();
-					Context context = new ScriptAction("<temp>").getContext(config, null, 1);
 					Device device = owner.getDevice();
 					if (device != null) device.collectChanges();
 					try {
-						Pnuts.load(new StringReader(codeText.getText()), context);
+						Context context = ScriptAction.getContext(null, null, null);
+						Pnuts pnuts = Pnuts.parse(new StringReader(codeText.getText()));
+						pnuts.run(context);
+						ScriptAction.execute(pnuts, context, ScriptAction.FUNCTION_INIT, 0);
+						ScriptAction.execute(pnuts, context, ScriptAction.FUNCTION_ACTIVATE, 1);
+						ScriptAction.execute(pnuts, context, ScriptAction.FUNCTION_CONTINUOUS, 1);
+						ScriptAction.execute(pnuts, context, ScriptAction.FUNCTION_DEACTIVATE, 0);
 					} finally {
 						if (device != null) {
 							try {
@@ -311,6 +325,14 @@ public class ScriptEditor extends EditorPanel<Script> {
 								highlightTag = codeText.getHighlighter().addHighlight(start, end, errorPainter);
 							} catch (BadLocationException ignored) {
 							}
+							displayErrorMessage(message);
+						}
+					});
+				} catch (final Exception ex) {
+					if (DEBUG) debug("Error during script compilation.", ex);
+					final String message = ex.getMessage();
+					EventQueue.invokeLater(new Runnable() {
+						public void run () {
 							displayErrorMessage(message);
 						}
 					});

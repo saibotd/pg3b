@@ -10,6 +10,12 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOError;
+import java.io.IOException;
 import java.io.PrintStream;
 
 import javax.swing.ButtonGroup;
@@ -36,6 +42,22 @@ public class LogPanel extends JPanel {
 	public LogPanel () {
 		initializeLayout();
 		initializeEvents();
+
+		File logFile = new File("log.txt");
+		if (logFile.exists()) {
+			try {
+				BufferedReader reader = new BufferedReader(new FileReader(logFile));
+				StringBuilder buffer = new StringBuilder(512);
+				while (true) {
+					String line = reader.readLine();
+					if (line == null) break;
+					buffer.append(line);
+					buffer.append('\n');
+				}
+				logText.setText(buffer.toString());
+			} catch (IOException ignored) {
+			}
+		}
 
 		output = new TextComponentOutputStream(logText, logScroll);
 		System.setOut(new PrintStream(new MultiplexOutputStream(System.out, output), true));

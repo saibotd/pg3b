@@ -11,8 +11,12 @@ import java.io.StringReader;
 import java.io.Writer;
 
 import net.sourceforge.yamlbeans.YamlWriter;
+import pnuts.compiler.CompilerPnutsImpl;
+import pnuts.lang.Context;
+import pnuts.lang.Package;
 import pnuts.lang.ParseException;
 import pnuts.lang.Pnuts;
+import pnuts.lang.PnutsFunction;
 
 /**
  * Stores the code for a Pnuts script.
@@ -44,8 +48,10 @@ public class Script extends Editable {
 		pnuts = null;
 		if (code != null) {
 			try {
-				pnuts = Pnuts.parse(code);
+				pnuts = Pnuts.parse(new StringReader(code));
 			} catch (ParseException ex) {
+				if (TRACE) trace("Error compiling script.", ex);
+			} catch (IOException ex) {
 				if (TRACE) trace("Error compiling script.", ex);
 			}
 		}

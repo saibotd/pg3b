@@ -92,7 +92,7 @@ public class InputTrigger extends Trigger {
 		return input.getState() != 0 && checkModifiers();
 	}
 
-	public Float getState () {
+	public Float getPayload () {
 		if (input == null) return null;
 		return input.getState();
 	}

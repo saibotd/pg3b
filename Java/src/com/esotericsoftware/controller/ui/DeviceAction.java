@@ -8,7 +8,6 @@ import com.esotericsoftware.controller.device.Button;
 import com.esotericsoftware.controller.device.Device;
 import com.esotericsoftware.controller.device.Target;
 import com.esotericsoftware.controller.input.Input;
-import com.esotericsoftware.controller.input.InputDevice;
 import com.esotericsoftware.controller.input.Mouse;
 import com.esotericsoftware.controller.input.Mouse.MouseInput;
 import com.esotericsoftware.controller.ui.swing.UI;
@@ -52,17 +51,22 @@ public class DeviceAction implements Action {
 		return UI.instance.getDevice() != null;
 	}
 
-	public Object execute (Config config, Trigger trigger, Object payload) {
+	public void reset (Config config, Trigger trigger) {
+	}
+
+	public Object execute (Config config, Trigger trigger) {
 		Device device = UI.instance.getDevice();
 		if (device == null) return null;
-		float state = payload instanceof Float ? (Float)payload : 1;
+		Object object = trigger.getPayload();
+		float payload = object instanceof Float ? (Float)object : 1;
 		switch (direction) {
 		case up:
-			if (state > 0) state = -state;
+			if (payload > 0) payload = -payload;
 		case left:
-			if (state > 0) state = -state;
+			if (payload > 0) payload = -payload;
 		}
 		try {
+			// If the target is an axis and the trigger was activated by a mouse axis...
 			if (target instanceof Axis && trigger instanceof InputTrigger) {
 				Input input = ((InputTrigger)trigger).getInput();
 				if (input instanceof Mouse.MouseInput) {
@@ -70,17 +74,17 @@ public class DeviceAction implements Action {
 					if (axis != null) {
 						float deltaX = 0, deltaY = 0;
 						if (axis.equals("x"))
-							deltaX = state;
+							deltaX = payload;
 						else if (axis.equals("y")) {
-							deltaY = state;
+							deltaY = payload;
 						}
 						device.addMouseDelta(((Axis)target).getStick(), deltaX, deltaY);
-						return state;
+						return payload;
 					}
 				}
 			}
-			device.set(target, state);
-			return state;
+			device.set(target, payload);
+			return payload;
 		} catch (IOException ex) {
 			throw new RuntimeException("Error executing action: " + this);
 		}

@@ -109,6 +109,10 @@ public class XIMMouseTranslation implements MouseTranslation {
 	}
 
 	private void apply (Device device, Stick stick) {
+		if (device == null) {
+			getDeflection(0, 0);
+			return;
+		}
 		float[] mouseDelta = device.getMouseDelta(stick);
 		float[] deflection = getDeflection(mouseDelta[0], mouseDelta[1]);
 		try {

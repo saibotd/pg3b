@@ -2,13 +2,13 @@
 <environment paramStartChar="(" paramEndChar=")" paramSeparator=", " terminal=";" />
 <keywords>
 
-<!-- PG3B functions: -->
+<!-- Controller functions: -->
 
-<keyword name="pg3b" type="constant">
-	<desc>Provides access to the connected PG3B hardware.</desc>
+<keyword name="device" type="constant">
+	<desc>Provides access to the connected device.</desc>
 </keyword>
-<keyword name="pg3bui" type="constant">
-	<desc>Provides access to the PG3B GUI.</desc>
+<keyword name="ui" type="constant">
+	<desc>Provides access to the Controller GUI.</desc>
 </keyword>
 <keyword name="controller" type="constant">
 	<desc>Provides access to the connected Xbox controller.</desc>
@@ -33,6 +33,13 @@
 		<param type="boolean" name="on"><desc>(optional) If false, a lower pitch beep will play. Default is true.</desc></param>
 	</params>
 	<desc>Plays a short beep sound.</desc>
+</keyword>
+<keyword name="interval" type="function" returnType="boolean">
+	<params>
+		<param type="String" name="name"><desc>The name that uniquely identifies the interval.</desc></param>
+		<param type="int" name="delay"><desc>The number of milliseconds between returning true.</desc></param>
+	</params>
+	<desc>Returns true the first time. Each subsequent call will return false until X milliseconds have passed since true was returned.</desc>
 </keyword>
 <keyword name="set" type="function" returnType="void">
 	<params>
@@ -64,19 +71,19 @@
 		return value
 	]]></desc>
 </keyword>
-<keyword name="getPayload" type="function" returnType="Object">
-	<desc>Returns the value that caused the trigger to execute this action. The type of payload varies for different triggers.</desc>
+<keyword name="payload" type="constant">
+	<desc>The value that caused the trigger to execute this action. The type of payload varies for different triggers.</desc>
 </keyword>
-<keyword name="getConfig" type="function" returnType="Config">
-	<desc>Returns the Config that contains the Trigger that caused this script's Action to execute.</desc>
+<keyword name="config" type="constant">
+	<desc>The Config that contains the Trigger that caused this script's Action to execute.</desc>
 </keyword>
-<keyword name="getTrigger" type="function" returnType="Trigger">
-	<desc>Returns the Trigger that caused this script's Action to execute.</desc>
+<keyword name="trigger" type="constant">
+	<desc>The Trigger that caused this script's Action to execute.</desc>
 </keyword>
-<keyword name="getAction" type="function" returnType="Action">
-	<desc>Returns the Action that executed this script.</desc>
+<keyword name="action" type="constant">
+	<desc>The ScriptAction that executed this script.</desc>
 </keyword>
-<keyword name="print" type="function" returnType="void">
+<keyword name="println" type="function" returnType="void">
 	<params>
 		<param type="Object" name="object"><desc>The object to print.</desc></param>
 	</params>

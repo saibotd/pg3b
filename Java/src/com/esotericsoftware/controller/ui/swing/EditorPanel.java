@@ -373,8 +373,11 @@ public class EditorPanel<T extends Editable> extends JPanel {
 					scroll.setMinimumSize(new Dimension(3, 62));
 					scroll.setMaximumSize(new Dimension(3, 62));
 					scroll.setPreferredSize(new Dimension(3, 62));
+					scroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 					{
 						descriptionText = new JTextArea();
+						descriptionText.setLineWrap(true);
+						descriptionText.setWrapStyleWord(true);
 						scroll.setViewportView(descriptionText);
 					}
 				}

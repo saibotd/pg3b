@@ -1,6 +1,6 @@
 
 <project>
-	<id>pg3b</id>
-	<name>PG3B</name>
-	<main>pg3b.ui.Main</main>
+	<id>controller</id>
+	<name>Controller</name>
+	<main>com.esotericsoftware.controller.ui.Main</main>
 </project>

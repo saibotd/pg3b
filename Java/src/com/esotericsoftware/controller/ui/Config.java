@@ -131,8 +131,12 @@ public class Config extends Editable {
 				}
 				// Multiple triggers may use the same poller. Obtain a distinct list to avoid polling the same one twice.
 				HashSet<Poller> pollers = new HashSet();
-				for (Trigger trigger : getTriggers())
-					pollers.add(trigger.getPoller());
+				for (Trigger trigger : getTriggers()) {
+					Poller poller = trigger.getPoller();
+					if (poller != null) pollers.add(poller);
+
+					trigger.getAction().reset(Config.this, trigger);
+				}
 				// Poll initially to clear any values.
 				for (Poller poller : pollers)
 					poller.poll();
@@ -144,22 +148,23 @@ public class Config extends Editable {
 					lastTime = time;
 
 					if (device != null) device.collectChanges();
-					
+
 					if (mouseTranslation != null) mouseTranslation.update(device, delta);
-					
+
 					for (Poller poller : pollers)
 						poller.poll();
 					for (Trigger trigger : getTriggers()) {
 						boolean wasActive = activeTriggers.contains(trigger);
 						if (trigger.isActive()) {
 							if (!wasActive) {
+								if (TRACE) debug("Trigger \"" + trigger + "\" is active with state: " + trigger.getPayload());
 								activeTriggers.add(trigger);
-								if (TRACE) debug("Trigger \"" + trigger + "\" is active with state: " + trigger.getState());
+								execute(trigger);
 							}
 						} else {
 							if (wasActive) {
+								if (TRACE) debug("Trigger \"" + trigger + "\" is inactive with state: " + trigger.getPayload());
 								activeTriggers.remove(trigger);
-								if (TRACE) debug("Trigger \"" + trigger + "\" is inactive with state: " + trigger.getState());
 								execute(trigger);
 							}
 						}

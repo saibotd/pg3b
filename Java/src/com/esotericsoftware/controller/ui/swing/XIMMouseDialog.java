@@ -32,7 +32,7 @@ public class XIMMouseDialog extends JDialog {
 	private JButton saveButton, cancelButton;
 
 	public XIMMouseDialog (UI owner, Config config) {
-		super(owner, "Deadzones", true);
+		super(owner, "Mouse", true);
 		this.owner = owner;
 
 		this.config = config;

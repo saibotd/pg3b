@@ -18,7 +18,14 @@ import com.esotericsoftware.controller.util.WindowsRegistry;
  * Controls the XIM2 hardware.
  */
 public class XIM extends Device {
+	static boolean loaded;
+	static {
+		load();
+	}
+
 	static void load () {
+		if (loaded) return;
+		loaded = true;
 		String ximPath = WindowsRegistry.get("HKCU/Software/XIM", "");
 		if (ximPath != null) {
 			try {
@@ -34,10 +41,6 @@ public class XIM extends Device {
 					+ "Please ensure the XIM360 software is installed.");
 			}
 		}
-	}
-
-	static {
-		load();
 	}
 
 	static private HashMap<Integer, String> statusToMessage = new HashMap();
@@ -91,14 +94,16 @@ public class XIM extends Device {
 	}
 
 	private final ByteBuffer stateByteBuffer;
-	private final ShortBuffer stateBuffer;
+	private final ShortBuffer buttonStateBuffer, axisStateBuffer;
 
 	public XIM () throws IOException {
 		checkResult(connect());
 
 		stateByteBuffer = ByteBuffer.allocateDirect(28);
 		stateByteBuffer.order(ByteOrder.nativeOrder());
-		stateBuffer = stateByteBuffer.asShortBuffer();
+		buttonStateBuffer = stateByteBuffer.asShortBuffer();
+		stateByteBuffer.position(16);
+		axisStateBuffer = stateByteBuffer.slice().asShortBuffer();
 	}
 
 	public void close () {
@@ -110,7 +115,7 @@ public class XIM extends Device {
 		int index = buttonToIndex[button.ordinal()];
 		synchronized (this) {
 			// Button states are stored as bytes packed into shorts.
-			short existingValue = stateBuffer.get(index / 2);
+			short existingValue = buttonStateBuffer.get(index / 2);
 			int first, second;
 			if (index % 2 == 0) {
 				first = value & 0xFF;
@@ -119,7 +124,7 @@ public class XIM extends Device {
 				first = existingValue & 0xFF;
 				second = value & 0xFF;
 			}
-			stateBuffer.put(index / 2, (short)(first + (second << 8)));
+			buttonStateBuffer.put(index / 2, (short)(first + (second << 8)));
 			if (!collectingChanges) checkResult(setState(stateByteBuffer, 200));
 		}
 	}
@@ -127,7 +132,7 @@ public class XIM extends Device {
 	public void setAxis (Axis axis, float state) throws IOException {
 		int index = axisToIndex[axis.ordinal()];
 		synchronized (this) {
-			stateBuffer.put(7 + index, (short)(32767 * state));
+			axisStateBuffer.put(index, (short)(32767 * state));
 			if (!collectingChanges) checkResult(setState(stateByteBuffer, 200));
 		}
 	}

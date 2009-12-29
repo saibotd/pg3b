@@ -25,7 +25,7 @@ abstract public class Trigger {
 	}
 
 	public Object execute (Config config) {
-		return action.execute(config, this, getState());
+		return action.execute(config, this);
 	}
 
 	/**
@@ -35,7 +35,7 @@ abstract public class Trigger {
 
 	abstract public boolean isActive ();
 
-	abstract public Object getState ();
+	abstract public Object getPayload ();
 
 	/**
 	 * Returns true if this trigger is able to be checked.
