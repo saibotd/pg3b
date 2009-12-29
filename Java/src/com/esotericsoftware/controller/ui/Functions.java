@@ -11,7 +11,6 @@ import java.util.concurrent.Executors;
 import javax.sound.midi.Instrument;
 import javax.sound.midi.MidiChannel;
 import javax.sound.midi.MidiSystem;
-import javax.sound.midi.MidiUnavailableException;
 import javax.sound.midi.Patch;
 import javax.sound.midi.Synthesizer;
 
@@ -99,11 +98,16 @@ public class Functions {
 			Synthesizer synthesizer = MidiSystem.getSynthesizer();
 			synthesizer.open();
 			channels = synthesizer.getChannels();
-			Instrument[] instruments = synthesizer.getDefaultSoundbank().getInstruments();
+			Instrument[] instruments = synthesizer.getAvailableInstruments();
 			synthesizer.loadAllInstruments(synthesizer.getDefaultSoundbank());
-			for (int i = 0; i < instruments.length; i++)
-				nameToInstrument.put(instruments[i].getName(), instruments[i]);
-		} catch (MidiUnavailableException ex) {
+			for (int i = 0; i < instruments.length; i++) {
+				Instrument instrument = instruments[i];
+				if (synthesizer.isSoundbankSupported(instrument.getSoundbank())) {
+					synthesizer.loadInstrument(instrument);
+					nameToInstrument.put(instrument.getName(), instrument);
+				}
+			}
+		} catch (Exception ex) {
 			if (WARN) warn("Midi is not available.", ex);
 		}
 	}

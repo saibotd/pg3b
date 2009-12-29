@@ -28,8 +28,8 @@ JNIEXPORT jint JNICALL Java_com_esotericsoftware_controller_xim_XIM_setMode
 
 JNIEXPORT jint JNICALL Java_com_esotericsoftware_controller_xim_XIM_setState
 (JNIEnv* env, jclass c, jobject byteBuffer, jfloat timeout) {
-	short *buffer = (short*)env->GetDirectBufferAddress(byteBuffer);
-	return XIMSendXbox360Input((XIMXbox360Input*)buffer, timeout);
+	XIMXbox360Input *input = (XIMXbox360Input*)env->GetDirectBufferAddress(byteBuffer);
+	return XIMSendXbox360Input(input, timeout);
 }
 
 static XIMSMOOTHNESS smoothness;

@@ -90,8 +90,15 @@ abstract public class Device {
 	 */
 	public void set (Axis axis, float state) throws IOException {
 		if (axis == null) throw new IllegalArgumentException("axis cannot be null.");
-		if (state < -1) state = -1;
-		if (state > 1) state = 1;
+		if (axis.isTrigger()) {
+			if (state < 0)
+				state = 0;
+			else if (state > 1) state = 1;
+		} else {
+			if (state < -1)
+				state = -1;
+			else if (state > 1) state = 1;
+		}
 
 		synchronized (this) {
 			int ordinal = axis.ordinal();

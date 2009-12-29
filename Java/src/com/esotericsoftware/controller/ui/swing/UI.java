@@ -77,7 +77,7 @@ import com.esotericsoftware.controller.xim.XIM;
 import com.esotericsoftware.minlog.Log;
 
 public class UI extends JFrame {
-	static public final String version = "0.1.6";
+	static public final String version = "0.1.9";
 	static public UI instance;
 
 	static private Settings settings = Settings.get();

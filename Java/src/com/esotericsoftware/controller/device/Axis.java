@@ -40,6 +40,10 @@ public enum Axis implements Target {
 		}
 	}
 
+	public boolean isTrigger () {
+		return this == leftTrigger || this == Axis.rightTrigger;
+	}
+
 	public String getAlias () {
 		return alias;
 	}

@@ -102,8 +102,8 @@ public class XIM extends Device {
 		stateByteBuffer = ByteBuffer.allocateDirect(28);
 		stateByteBuffer.order(ByteOrder.nativeOrder());
 		buttonStateBuffer = stateByteBuffer.asShortBuffer();
-		stateByteBuffer.position(16);
-		axisStateBuffer = stateByteBuffer.slice().asShortBuffer();
+		stateByteBuffer.position(15);
+		axisStateBuffer = stateByteBuffer.slice().order(ByteOrder.nativeOrder()).asShortBuffer();
 	}
 
 	public void close () {
