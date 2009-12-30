@@ -14,7 +14,7 @@ public class ConfigTab extends JPanel {
 	private CardLayout cardLayout;
 	private ConfigEditor configEditor;
 	private InputTriggerPanel inputTriggerPanel;
-	private Boolean wasActivateButtonDown;
+	private Config activeConfig;
 
 	public ConfigTab (UI owner) {
 		this.owner = owner;
@@ -26,15 +26,15 @@ public class ConfigTab extends JPanel {
 	public void showConfigEditor () {
 		JToggleButton activateButton = configEditor.getActivateButton();
 		activateButton.setEnabled(true);
-		if (wasActivateButtonDown != null && wasActivateButtonDown) owner.setActivated(true);
-		wasActivateButtonDown = null;
+		if (activeConfig != null) owner.setActiveConfig(activeConfig);
+		activeConfig = null;
 
 		cardLayout.show(this, "config");
 	}
 
 	public void showInputTriggerPanel (Config config, InputTrigger input) {
-		wasActivateButtonDown = configEditor.getActivateButton().isSelected();
-		owner.setActivated(false);
+		activeConfig = owner.getActiveConfig();
+		owner.setActiveConfig(null);
 		configEditor.getActivateButton().setEnabled(false);
 
 		inputTriggerPanel.setTrigger(config, input);

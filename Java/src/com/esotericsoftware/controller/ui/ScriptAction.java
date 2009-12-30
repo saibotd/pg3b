@@ -1,6 +1,8 @@
 
 package com.esotericsoftware.controller.ui;
 
+import static com.esotericsoftware.minlog.Log.*;
+
 import java.io.PrintWriter;
 import java.util.List;
 
@@ -11,7 +13,6 @@ import pnuts.lang.Pnuts;
 import pnuts.lang.PnutsFunction;
 
 import com.esotericsoftware.controller.ui.swing.UI;
-import static com.esotericsoftware.minlog.Log.*;
 
 /**
  * An action that runs a Pnuts script when executed.
@@ -113,19 +114,21 @@ public class ScriptAction implements Action {
 		pkg.set(CONSTANT_ACTION, action);
 		pkg.set(CONSTANT_PAYLOAD, 0);
 
-		pkg.set("sleep".intern(), Functions.sleep);
-		pkg.set("play".intern(), Functions.play);
-		pkg.set("beep".intern(), Functions.beep);
-		pkg.set("get".intern(), Functions.get);
-		pkg.set("set".intern(), Functions.set);
-		pkg.set("toggle".intern(), Functions.toggle);
-		pkg.set("fork".intern(), Functions.fork);
-		pkg.set("isCtrlDown".intern(), Functions.isCtrlDown);
-		pkg.set("isAltDown".intern(), Functions.isAltDown);
-		pkg.set("isShiftDown".intern(), Functions.isShiftDown);
-		pkg.set("millis".intern(), Functions.millis);
-		pkg.set("nanos".intern(), Functions.nanos);
-		pkg.set("interval".intern(), new Functions.interval());
+		pkg.set(Functions.sleep.getName(), Functions.sleep);
+		pkg.set(Functions.play.getName(), Functions.play);
+		pkg.set(Functions.beep.getName(), Functions.beep);
+		pkg.set(Functions.get.getName(), Functions.get);
+		pkg.set(Functions.set.getName(), Functions.set);
+		pkg.set(Functions.toggle.getName(), Functions.toggle);
+		pkg.set(Functions.fork.getName(), Functions.fork);
+		pkg.set(Functions.isCtrlDown.getName(), Functions.isCtrlDown);
+		pkg.set(Functions.isAltDown.getName(), Functions.isAltDown);
+		pkg.set(Functions.isShiftDown.getName(), Functions.isShiftDown);
+		pkg.set(Functions.millis.getName(), Functions.millis);
+		pkg.set(Functions.nanos.getName(), Functions.nanos);
+		pkg.set(Functions.interval.getName(), Functions.interval);
+		pkg.set(Functions.getConfig.getName(), Functions.getConfig);
+		pkg.set(Functions.setConfig.getName(), Functions.setConfig);
 
 		Context context = new Context(pkg);
 		context.setWriter(new PrintWriter(System.out, true));

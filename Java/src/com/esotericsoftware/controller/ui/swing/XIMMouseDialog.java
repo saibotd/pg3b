@@ -85,7 +85,7 @@ public class XIMMouseDialog extends JDialog {
 			JPanel panel = new JPanel(new GridBagLayout());
 			getContentPane().add(
 				panel,
-				new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(6, 6, 6,
+				new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(6, 6, 0,
 					6), 0, 0));
 			{
 				JLabel label = new JLabel("YX ratio:");

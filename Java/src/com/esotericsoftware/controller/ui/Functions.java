@@ -20,6 +20,7 @@ import pnuts.lang.PnutsException;
 import pnuts.lang.PnutsFunction;
 
 import com.esotericsoftware.controller.input.Keyboard;
+import com.esotericsoftware.controller.ui.swing.UI;
 import com.esotericsoftware.controller.util.NamedThreadFactory;
 import com.esotericsoftware.controller.util.Util;
 
@@ -27,13 +28,13 @@ import com.esotericsoftware.controller.util.Util;
  * App specific Pnuts functions.
  */
 public class Functions {
-	static private abstract class BaseFunction extends PnutsFunction {
+	static public abstract class BaseFunction extends PnutsFunction {
 		private final int minArgs;
 		private final int maxArgs;
 		private final String toString;
 
 		public BaseFunction (String name, int minArgs, int maxArgs, String argNames) {
-			super(name);
+			super(name.intern());
 			this.minArgs = minArgs;
 			this.maxArgs = maxArgs;
 			toString = "function " + name + "(" + argNames + ")";
@@ -189,6 +190,27 @@ public class Functions {
 		}
 	};
 
+	static public BaseFunction getConfig = new BaseFunction("getConfig", 1, 1, "name") {
+		protected Object invoke (Object[] args, Context context) {
+			String name = (String)args[0];
+			for (Config config : UI.instance.getConfigTab().getConfigEditor().getItems())
+				if (config.getName().equalsIgnoreCase(name)) return config;
+			return null;
+		}
+	};
+
+	static public BaseFunction setConfig = new BaseFunction("setConfig", 1, 1, "config") {
+		protected Object invoke (Object[] args, Context context) {
+			Config config;
+			if (args[0] instanceof Config)
+				config = (Config)args[0];
+			else
+				config = (Config)getConfig.invoke(args, context);
+			UI.instance.setActiveConfig(config);
+			return null;
+		}
+	};
+
 	static public BaseFunction set = new BaseFunction("set", 2, 3, "[packageName,] name, value") {
 		protected Object invoke (Object[] args, Context context) {
 			String packageName = "__global";
@@ -227,13 +249,8 @@ public class Functions {
 		}
 	};
 
-	static public class interval extends BaseFunction {
-		private HashMap<String, Long> nameToStartTime = new HashMap();
-
-		public interval () {
-			super("get", 2, 2, "name, delay");
-		}
-
+	static private HashMap<String, Long> nameToStartTime = new HashMap();
+	static public BaseFunction interval = new BaseFunction("interval", 2, 2, "name, delay") {
 		protected Object invoke (Object[] args, Context context) {
 			String name = (String)args[0];
 			long delay = (Integer)args[1];

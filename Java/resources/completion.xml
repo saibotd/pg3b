@@ -49,6 +49,18 @@
 	</params>
 	<desc>Convenience method to store a value in a package.</desc>
 </keyword>
+<keyword name="getConfig" type="function" returnType="Config">
+	<params>
+		<param type="String" name="name"><desc>The name of the config to look up.</desc></param>
+	</params>
+	<desc>Returns the config with the specified name.</desc>
+</keyword>
+<keyword name="setConfig" type="function" returnType="void">
+	<params>
+		<param type="Config or String" name="config"><desc>The config or name of the config to set as active.</desc></param>
+	</params>
+	<desc>Sets the specified config to be active.</desc>
+</keyword>
 <keyword name="get" type="function" returnType="Object">
 	<params>
 		<param type="String" name="packageName"><desc>(optional) The name of the package where the value will be stored. If omitted, a special global package is used.</desc></param>

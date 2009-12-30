@@ -80,7 +80,7 @@ public class ConfigEditor extends EditorPanel<Config> {
 	protected void updateFieldsFromItem (Config config) {
 		triggersTableModel.setRowCount(0);
 		if (config == null) {
-			owner.setActivated(false);
+			owner.setActiveConfig(null);
 		} else {
 			for (Trigger trigger : config.getTriggers())
 				triggersTableModel.addRow(new Object[] {trigger, trigger.getAction(), trigger.getDescription()});
@@ -92,6 +92,7 @@ public class ConfigEditor extends EditorPanel<Config> {
 			}
 		}
 		activateButton.setEnabled(config != null);
+		if (config != null && activateButton.isSelected()) owner.setActiveConfig(config);
 	}
 
 	protected void clearItemSpecificState () {
@@ -167,7 +168,15 @@ public class ConfigEditor extends EditorPanel<Config> {
 	private void initializeEvents () {
 		activateButton.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
-				owner.setActivated(activateButton.isSelected());
+				owner.setActiveConfig(activateButton.isSelected() ? getSelectedItem() : null);
+				Device device = owner.getDevice();
+				if (device != null) {
+					try {
+						device.reset();
+					} catch (IOException ex) {
+						if (WARN) warn("Unable to reset device.", ex);
+					}
+				}
 			}
 		});
 
@@ -243,7 +252,7 @@ public class ConfigEditor extends EditorPanel<Config> {
 				new DeadzoneDialog(owner, device, getSelectedItem()).setVisible(true);
 			}
 		});
-		
+
 		mouseButton.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
 				new XIMMouseDialog(owner, getSelectedItem()).setVisible(true);

@@ -14,6 +14,6 @@ public class DefaultMouseTranslation implements MouseTranslation {
 		return new float[] {x, y};
 	}
 
-	public void update (Device device, float delta) {
+	public void update (Device device) {
 	}
 }

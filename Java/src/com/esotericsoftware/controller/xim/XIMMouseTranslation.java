@@ -34,6 +34,7 @@ public class XIMMouseTranslation implements MouseTranslation {
 	private transient ByteBuffer byteBuffer;
 	private transient ShortBuffer shortBuffer;
 	private transient float timer;
+	private transient long lastTime;
 
 	public XIMMouseTranslation () {
 		byteBuffer = ByteBuffer.allocateDirect(4);
@@ -100,9 +101,13 @@ public class XIMMouseTranslation implements MouseTranslation {
 		return stickValues;
 	}
 
-	public void update (Device device, float delta) {
+	public void update (Device device) {
+		long time = System.currentTimeMillis();
+		long delta = time - lastTime;
+		lastTime = time;
+
 		timer += delta;
-		if (timer < 1000f / UPDATE_FREQUENCY) return;
+		if (timer < 1000 / UPDATE_FREQUENCY) return;
 		timer = 0;
 		apply(device, Stick.left);
 		apply(device, Stick.right);

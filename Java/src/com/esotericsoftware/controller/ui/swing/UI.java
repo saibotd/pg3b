@@ -67,32 +67,34 @@ import com.esotericsoftware.controller.pg3b.ControllerType;
 import com.esotericsoftware.controller.pg3b.PG3B;
 import com.esotericsoftware.controller.pg3b.PG3BConfig;
 import com.esotericsoftware.controller.ui.Config;
+import com.esotericsoftware.controller.ui.ConfigPoller;
 import com.esotericsoftware.controller.ui.Diagnostics;
 import com.esotericsoftware.controller.ui.InputTrigger;
 import com.esotericsoftware.controller.ui.Settings;
 import com.esotericsoftware.controller.ui.Trigger;
 import com.esotericsoftware.controller.util.LoaderDialog;
 import com.esotericsoftware.controller.util.Util;
+import com.esotericsoftware.controller.util.WindowsRegistry;
 import com.esotericsoftware.controller.xim.XIM;
 import com.esotericsoftware.minlog.Log;
 
 public class UI extends JFrame {
-	static public final String version = "0.1.9";
+	static public final String version = "0.1.11";
 	static public UI instance;
 
 	static private Settings settings = Settings.get();
 
 	private Device device;
 	private XboxController controller;
-	private Config activeConfig;
+	private ConfigPoller configPoller;
 
-	private JMenu pg3bMenu;
+	private JMenu pg3bMenu, ximMenu;
 	private JMenuBar menuBar;
 	private JMenuItem pg3bConnectMenuItem, ximConnectMenuItem, disconnectDeviceMenuItem, disconnectControllerMenuItem,
 		controllerConnectMenuItem, exitMenuItem;
-	private JCheckBoxMenuItem showControllerMenuItem, showLogMenuItem, debugEnabledMenuItem, calibrationEnabledMenuItem,
-		activationDisablesInputMenuItem;
-	private JMenuItem roundTripMenuItem, clearMenuItem, calibrateMenuItem, setControllerTypeMenuItem;
+	private JCheckBoxMenuItem showControllerMenuItem, showLogMenuItem, pg3bDebugEnabledMenuItem, pg3bCalibrationEnabledMenuItem,
+		activationDisablesInputMenuItem, ximThumbsticksEnabledMenuItem;
+	private JMenuItem roundTripMenuItem, clearMenuItem, pg3bCalibrateMenuItem, pg3bSetControllerTypeMenuItem;
 
 	private XboxControllerPanel controllerPanel;
 	private StatusBar statusBar;
@@ -142,10 +144,6 @@ public class UI extends JFrame {
 		disconnectDeviceMenuItem.setEnabled(false);
 		disconnectControllerMenuItem.setEnabled(false);
 		clearMenuItem.setEnabled(false);
-		calibrateMenuItem.setEnabled(false);
-		setControllerTypeMenuItem.setEnabled(false);
-		debugEnabledMenuItem.setEnabled(false);
-		calibrationEnabledMenuItem.setEnabled(false);
 
 		if (!System.getProperty("os.name").toLowerCase().contains("windows")) {
 			ximConnectMenuItem.setEnabled(false);
@@ -230,14 +228,12 @@ public class UI extends JFrame {
 				disconnectDeviceMenuItem.setEnabled(device != null);
 				roundTripMenuItem.setEnabled(device != null && controller != null);
 
-				boolean isPG3B = device instanceof PG3B;
-				calibrateMenuItem.setEnabled(isPG3B && controller != null);
-				setControllerTypeMenuItem.setEnabled(isPG3B);
-				debugEnabledMenuItem.setEnabled(isPG3B);
-				calibrationEnabledMenuItem.setEnabled(isPG3B);
+				pg3bCalibrateMenuItem.setEnabled(controller != null);
 
 				menuBar.remove(pg3bMenu);
-				if (isPG3B) menuBar.add(pg3bMenu);
+				menuBar.remove(ximMenu);
+				if (device instanceof PG3B) menuBar.add(pg3bMenu);
+				if (device instanceof XIM) menuBar.add(ximMenu);
 				menuBar.repaint();
 			}
 		});
@@ -264,7 +260,7 @@ public class UI extends JFrame {
 
 				disconnectControllerMenuItem.setEnabled(controller != null);
 				roundTripMenuItem.setEnabled(controller != null && device != null);
-				calibrateMenuItem.setEnabled(roundTripMenuItem.isEnabled());
+				pg3bCalibrateMenuItem.setEnabled(roundTripMenuItem.isEnabled());
 			}
 		});
 
@@ -297,6 +293,12 @@ public class UI extends JFrame {
 		return tabs;
 	}
 
+	public Config getActiveConfig () {
+		ConfigPoller configPoller = this.configPoller;
+		if (configPoller == null) return null;
+		return configPoller.getConfig();
+	}
+
 	private void initializeEvents () {
 		disconnectDeviceMenuItem.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
@@ -317,9 +319,30 @@ public class UI extends JFrame {
 					setDevice(new XIM());
 					statusBar.setMessage("XIM connected.");
 				} catch (Throwable ex) {
+					if (ex instanceof IOException && ex.getMessage().contains("NEEDS_CALIBRATION")) {
+						final String ximPath = WindowsRegistry.get("HKCU/Software/XIM", "");
+						if (ximPath != null) {
+							if (DEBUG) debug("Running XIM calibration tool.", ex);
+							setVisible(false);
+							try {
+								Runtime.getRuntime().exec(ximPath + "\\XIMCalibrate.exe").waitFor();
+								if (DEBUG) debug("XIM calibration complete.", ex);
+								setDevice(new XIM());
+								statusBar.setMessage("XIM connected.");
+								return;
+							} catch (Exception ex2) {
+								ex = ex2;
+							} finally {
+								setVisible(true);
+							}
+						}
+					}
 					if (Log.ERROR) error("Error connecting to XIM.", ex);
 					statusBar.setMessage("XIM connection failed.");
-					Util.errorDialog(UI.this, "Connect Error", "An error occurred while attempting to connect to the XIM.");
+					if (ex instanceof IOException && ex.getMessage().contains("DEVICE_NOT_FOUND"))
+						Util.errorDialog(UI.this, "Connect Error", "The XIM device could not be found.");
+					else
+						Util.errorDialog(UI.this, "Connect Error", "An error occurred while attempting to connect to the XIM.");
 				}
 			}
 		});
@@ -396,8 +419,8 @@ public class UI extends JFrame {
 
 		KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(new KeyEventDispatcher() {
 			public boolean dispatchKeyEvent (KeyEvent event) {
-				if (activeConfig != null) {
-					if (event.isControlDown() && event.getKeyCode() == KeyEvent.VK_F4) setActivated(false);
+				if (configPoller != null) {
+					if (event.isControlDown() && event.getKeyCode() == KeyEvent.VK_F4) setActiveConfig(null);
 				}
 				if (disableKeyboard) event.consume();
 				return false;
@@ -433,13 +456,13 @@ public class UI extends JFrame {
 			}
 		});
 
-		calibrateMenuItem.addActionListener(new ActionListener() {
+		pg3bCalibrateMenuItem.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
 				new PG3BCalibrationDialog(UI.this, (PG3B)device, controller);
 			}
 		});
 
-		setControllerTypeMenuItem.addActionListener(new ActionListener() {
+		pg3bSetControllerTypeMenuItem.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
 				PG3BConfig config = ((PG3B)device).getConfig();
 				int result = JOptionPane.showOptionDialog(UI.this, "Select the type of controller to which the PG3B is wired:",
@@ -456,23 +479,33 @@ public class UI extends JFrame {
 			}
 		});
 
-		debugEnabledMenuItem.addActionListener(new ActionListener() {
+		pg3bDebugEnabledMenuItem.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
 				try {
-					((PG3B)device).setDebugEnabled(debugEnabledMenuItem.isSelected());
+					((PG3B)device).setDebugEnabled(pg3bDebugEnabledMenuItem.isSelected());
 				} catch (IOException ex) {
 					if (Log.ERROR) error("Error setting PG3B debug.", ex);
 				}
 			}
 		});
 
-		calibrationEnabledMenuItem.addActionListener(new ActionListener() {
+		pg3bCalibrationEnabledMenuItem.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
 				try {
-					((PG3B)device).setCalibrationEnabled(calibrationEnabledMenuItem.isSelected());
+					((PG3B)device).setCalibrationEnabled(pg3bCalibrationEnabledMenuItem.isSelected());
 					device.reset();
 				} catch (IOException ex) {
 					if (Log.ERROR) error("Error setting PG3B calibration.", ex);
+				}
+			}
+		});
+
+		ximThumbsticksEnabledMenuItem.addActionListener(new ActionListener() {
+			public void actionPerformed (ActionEvent event) {
+				try {
+					((XIM)device).setThumsticksEnabled(ximThumbsticksEnabledMenuItem.isSelected());
+				} catch (IOException ex) {
+					if (Log.ERROR) error("Error setting XIM thumbsticks.", ex);
 				}
 			}
 		});
@@ -502,34 +535,29 @@ public class UI extends JFrame {
 		});
 	}
 
-	public void setActivated (boolean enabled) {
-		configTab.getConfigEditor().getActivateButton().setSelected(enabled);
-		if (enabled && activeConfig != null) return;
-		if (!enabled && activeConfig == null) return;
+	public void setActiveConfig (Config config) {
+		if (configPoller == null && config == null) return;
+		if (configPoller != null && config != null && configPoller.getConfig() == config) return;
+		configTab.getConfigEditor().getActivateButton().setSelected(config != null);
 
-		if (activeConfig != null) activeConfig.setActive(false);
+		if (configPoller != null) configPoller.setActive(false);
+		configPoller = null;
 
-		try {
-			if (device != null) device.reset();
-		} catch (IOException ex) {
-			if (WARN) warn("Unable to reset device.", ex);
-		}
+		statusBar.setConfig(config);
 
-		activeConfig = enabled ? configTab.getConfigEditor().getSelectedItem() : null;
-		statusBar.setConfig(activeConfig);
-
-		if (activeConfig == null) {
+		if (config == null) {
 			getGlassPane().setVisible(false);
 			disableKeyboard = false;
 			Mouse.instance.release();
 			return;
 		}
 
-		activeConfig.setActive(true);
+		configPoller = new ConfigPoller(config);
+		configPoller.setActive(true);
 
 		if (settings.activationDisablesInput) {
 			// Disable mouse and/or keyboard.
-			for (Trigger trigger : activeConfig.getTriggers()) {
+			for (Trigger trigger : config.getTriggers()) {
 				if (trigger instanceof InputTrigger) {
 					Input input = ((InputTrigger)trigger).getInput();
 					if (input instanceof Mouse.MouseInput || input instanceof Keyboard.KeyboardInput) {
@@ -673,22 +701,30 @@ public class UI extends JFrame {
 				pg3bMenu = new JMenu("PG3B");
 				pg3bMenu.setMnemonic('P');
 				{
-					setControllerTypeMenuItem = new JMenuItem("Controller Type...");
-					pg3bMenu.add(setControllerTypeMenuItem);
+					pg3bSetControllerTypeMenuItem = new JMenuItem("Controller Type...");
+					pg3bMenu.add(pg3bSetControllerTypeMenuItem);
 				}
 				{
-					calibrateMenuItem = new JMenuItem("Axes Calibration...");
-					pg3bMenu.add(calibrateMenuItem);
+					pg3bCalibrateMenuItem = new JMenuItem("Axes Calibration...");
+					pg3bMenu.add(pg3bCalibrateMenuItem);
 				}
 				pg3bMenu.addSeparator();
 				{
-					debugEnabledMenuItem = new JCheckBoxMenuItem("Debug");
-					pg3bMenu.add(debugEnabledMenuItem);
+					pg3bDebugEnabledMenuItem = new JCheckBoxMenuItem("Debug");
+					pg3bMenu.add(pg3bDebugEnabledMenuItem);
 				}
 				{
-					calibrationEnabledMenuItem = new JCheckBoxMenuItem("Calibration");
-					pg3bMenu.add(calibrationEnabledMenuItem);
-					calibrationEnabledMenuItem.setSelected(true);
+					pg3bCalibrationEnabledMenuItem = new JCheckBoxMenuItem("Calibration");
+					pg3bMenu.add(pg3bCalibrationEnabledMenuItem);
+					pg3bCalibrationEnabledMenuItem.setSelected(true);
+				}
+			}
+			{
+				ximMenu = new JMenu("XIM");
+				ximMenu.setMnemonic('X');
+				{
+					ximThumbsticksEnabledMenuItem = new JCheckBoxMenuItem("Thumbsticks Enabled");
+					ximMenu.add(ximThumbsticksEnabledMenuItem);
 				}
 			}
 		}

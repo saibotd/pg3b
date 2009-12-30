@@ -102,7 +102,7 @@ public class XIM extends Device {
 		stateByteBuffer = ByteBuffer.allocateDirect(28);
 		stateByteBuffer.order(ByteOrder.nativeOrder());
 		buttonStateBuffer = stateByteBuffer.asShortBuffer();
-		stateByteBuffer.position(15);
+		stateByteBuffer.position(16);
 		axisStateBuffer = stateByteBuffer.slice().order(ByteOrder.nativeOrder()).asShortBuffer();
 	}
 
@@ -139,9 +139,10 @@ public class XIM extends Device {
 
 	/**
 	 * If true, the thumbsticks can be used while the XIM is running.
+	 * @throws IOException When communication with the XIM fails.
 	 */
-	public void setThumsticksEnabled (boolean enabled) {
-		setMode(enabled ? 1 : 0);
+	public void setThumsticksEnabled (boolean enabled) throws IOException {
+		checkResult(setMode(enabled ? 1 : 0));
 	}
 
 	private void checkResult (int status) throws IOException {
