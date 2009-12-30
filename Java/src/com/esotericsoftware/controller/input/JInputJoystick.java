@@ -62,9 +62,11 @@ public class JInputJoystick implements InputDevice {
 
 	static public List<JInputJoystick> getAll () {
 		ArrayList<JInputJoystick> list = new ArrayList();
+		boolean isWindows = System.getProperty("os.name").toLowerCase().contains("windows");
 		for (Controller controller : ControllerEnvironment.getDefaultEnvironment().getControllers()) {
 			if (controller.getType() == Type.MOUSE) continue;
 			if (controller.getType() == Type.KEYBOARD) continue;
+			if (isWindows && controller.getName().equals("Controller (Xbox 360 Wireless Receiver for Windows)")) continue;
 			list.add(new JInputJoystick(controller));
 		}
 		return list;

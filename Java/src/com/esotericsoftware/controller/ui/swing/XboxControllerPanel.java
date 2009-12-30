@@ -356,9 +356,9 @@ public class XboxControllerPanel extends JPanel {
 			if (getTargetState(button) != 0) packedImages.get(button.name()).draw(g, 0, 0);
 
 		if (device != null && dpadDirection != DPAD_NONE) {
-			if ((dpadDirection & DPAD_RIGHT) == DPAD_RIGHT) packedImages.get("right").draw(g, 0, 0);
 			if ((dpadDirection & DPAD_LEFT) == DPAD_LEFT) packedImages.get("left").draw(g, 0, 0);
 			if ((dpadDirection & DPAD_UP) == DPAD_UP) packedImages.get("up").draw(g, 0, 0);
+			if ((dpadDirection & DPAD_RIGHT) == DPAD_RIGHT) packedImages.get("right").draw(g, 0, 0);
 			if ((dpadDirection & DPAD_DOWN) == DPAD_DOWN) packedImages.get("down").draw(g, 0, 0);
 		} else {
 			if (overImageName != null) packedImages.get(overImageName).draw(g, 0, 0);

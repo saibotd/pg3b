@@ -9,7 +9,6 @@ import java.util.List;
 
 import com.esotericsoftware.controller.device.Axis;
 import com.esotericsoftware.controller.device.Button;
-import com.esotericsoftware.controller.ui.InputTrigger;
 
 /**
  * Reads the state from an Xbox 360 controller using XInput (Windows only).
@@ -54,8 +53,8 @@ public class XInputXboxController extends XboxController {
 	static private final int BUTTON_X = 0x4000;
 	static private final int BUTTON_Y = 0x8000;
 
-	static private final XInputXboxController[] controllers = {new XInputXboxController(1), new XInputXboxController(2),
-		new XInputXboxController(3), new XInputXboxController(4)};
+	static private final XInputXboxController[] controllers = {new XInputXboxController(0), new XInputXboxController(1),
+		new XInputXboxController(2), new XInputXboxController(3)};
 
 	private final int player;
 	private final ByteBuffer byteBuffer;
@@ -74,8 +73,8 @@ public class XInputXboxController extends XboxController {
 		shortBuffer = byteBuffer.asShortBuffer();
 	}
 
-	public boolean poll () {
-		poll(player - 1, byteBuffer);
+	public synchronized boolean poll () {
+		poll(player, byteBuffer);
 
 		boolean wasConnected = isConnected;
 		isConnected = shortBuffer.get(0) != 0;
@@ -102,6 +101,19 @@ public class XInputXboxController extends XboxController {
 		if ((diff & BUTTON_DPAD_LEFT) != 0) notifyListeners(Button.left, (buttons & BUTTON_DPAD_LEFT) == BUTTON_DPAD_LEFT);
 		if ((diff & BUTTON_DPAD_DOWN) != 0) notifyListeners(Button.down, (buttons & BUTTON_DPAD_DOWN) == BUTTON_DPAD_DOWN);
 		if ((diff & BUTTON_DPAD_UP) != 0) notifyListeners(Button.up, (buttons & BUTTON_DPAD_UP) == BUTTON_DPAD_UP);
+		if ((diff & BUTTON_START) != 0) notifyListeners(Button.start, (buttons & BUTTON_START) == BUTTON_START);
+		if ((diff & BUTTON_BACK) != 0) notifyListeners(Button.back, (buttons & BUTTON_BACK) == BUTTON_BACK);
+		if ((diff & BUTTON_LEFT_THUMB) != 0) notifyListeners(Button.leftStick, (buttons & BUTTON_LEFT_THUMB) == BUTTON_LEFT_THUMB);
+		if ((diff & BUTTON_RIGHT_THUMB) != 0)
+			notifyListeners(Button.rightStick, (buttons & BUTTON_RIGHT_THUMB) == BUTTON_RIGHT_THUMB);
+		if ((diff & BUTTON_LEFT_SHOULDER) != 0)
+			notifyListeners(Button.leftShoulder, (buttons & BUTTON_LEFT_SHOULDER) == BUTTON_LEFT_SHOULDER);
+		if ((diff & BUTTON_RIGHT_SHOULDER) != 0)
+			notifyListeners(Button.rightShoulder, (buttons & BUTTON_RIGHT_SHOULDER) == BUTTON_RIGHT_SHOULDER);
+		if ((diff & BUTTON_A) != 0) notifyListeners(Button.a, (buttons & BUTTON_A) == BUTTON_A);
+		if ((diff & BUTTON_B) != 0) notifyListeners(Button.b, (buttons & BUTTON_B) == BUTTON_B);
+		if ((diff & BUTTON_X) != 0) notifyListeners(Button.x, (buttons & BUTTON_X) == BUTTON_X);
+		if ((diff & BUTTON_Y) != 0) notifyListeners(Button.y, (buttons & BUTTON_Y) == BUTTON_Y);
 
 		if (leftTrigger != oldLeftTrigger) notifyListeners(Axis.leftTrigger, leftTrigger);
 		if (rightTrigger != oldRightTrigger) notifyListeners(Axis.rightTrigger, rightTrigger);
@@ -124,11 +136,11 @@ public class XInputXboxController extends XboxController {
 		case leftStickX:
 			return thumbLX / 32767f;
 		case leftStickY:
-			return thumbLY / 32767f;
+			return thumbLY / -32767f;
 		case rightStickX:
 			return thumbRX / 32767f;
 		case rightStickY:
-			return thumbRY / 32767f;
+			return thumbRY / -32767f;
 		case leftTrigger:
 			return leftTrigger / 255f;
 		case rightTrigger:
@@ -179,7 +191,7 @@ public class XInputXboxController extends XboxController {
 	}
 
 	public int getPort () {
-		return player;
+		return player + 1;
 	}
 
 	public ControllerInput getLastInput () {
@@ -192,7 +204,6 @@ public class XInputXboxController extends XboxController {
 		private int player;
 		private Button button;
 		private Axis axis;
-		private transient float lastState = Float.NaN;
 
 		public ControllerInput () {
 		}
@@ -222,12 +233,12 @@ public class XInputXboxController extends XboxController {
 		}
 
 		public boolean isAxis () {
-			return axis != null;
+			return axis != null && !axis.isTrigger();
 		}
 
 		public String toString () {
-			if (button != null) return button + " button";
-			if (axis != null) return axis + " axis";
+			if (button != null) return button.toString();
+			if (axis != null) return axis.toString();
 			return "<none>";
 		}
 	}

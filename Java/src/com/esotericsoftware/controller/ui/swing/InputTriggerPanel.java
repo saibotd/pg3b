@@ -177,28 +177,32 @@ public class InputTriggerPanel extends JPanel {
 		for (InputDevice device : devices)
 			device.resetLastInput();
 		monitorControllersTask = new TimerTask() {
-			boolean firstRun = true;
-
-			public void run () {
+			private Input getLastInput () {
 				for (InputDevice device : devices) {
 					if (!device.poll()) continue;
 					Input input = device.getLastInput();
 					if (input == null) continue;
 					float value = input.getState();
-					if (value == 0) continue;
-					trigger.setInput(input);
-					SwingUtilities.invokeLater(new Runnable() {
-						public void run () {
-							setTriggerText(trigger);
-							triggerLabel.setFont(triggerLabel.getFont().deriveFont(Font.PLAIN));
-							cancelButton.setEnabled(true);
-							saveButton.setEnabled(true);
-							updateTargetDirection();
-						}
-					});
-					listenForTrigger(false);
-					return;
+					if (Math.abs(value) < 0.25f) continue;
+					return input;
 				}
+				return null;
+			}
+
+			public void run () {
+				Input input = getLastInput();
+				if (input == null) return;
+				trigger.setInput(input);
+				SwingUtilities.invokeLater(new Runnable() {
+					public void run () {
+						setTriggerText(trigger);
+						triggerLabel.setFont(triggerLabel.getFont().deriveFont(Font.PLAIN));
+						cancelButton.setEnabled(true);
+						saveButton.setEnabled(true);
+						updateTargetDirection();
+					}
+				});
+				listenForTrigger(false);
 			}
 		};
 		Util.timer.scheduleAtFixedRate(monitorControllersTask, 125, 125);
@@ -428,6 +432,8 @@ public class InputTriggerPanel extends JPanel {
 				targetDirectionCombo = new JComboBox();
 				panel.add(targetDirectionCombo);
 				targetDirectionComboModel = new DefaultComboBoxModel();
+				targetDirectionComboModel.addElement("Left");
+				targetDirectionComboModel.addElement("Right");
 				targetDirectionCombo.setModel(targetDirectionComboModel);
 				targetDirectionCombo.setVisible(false);
 			}
