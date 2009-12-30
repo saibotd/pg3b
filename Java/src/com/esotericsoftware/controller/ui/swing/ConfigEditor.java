@@ -290,7 +290,7 @@ public class ConfigEditor extends EditorPanel<Config> {
 							if (!trigger.isValid()) label.setForeground(Color.red);
 						} else if (column == 1) {
 							Action action = getSelectedItem().getTriggers().get(row).getAction();
-							if (!action.isValid()) label.setForeground(Color.red);
+							if (action == null || !action.isValid()) label.setForeground(Color.red);
 						}
 						return label;
 					}

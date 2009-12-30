@@ -17,9 +17,12 @@ import com.esotericsoftware.controller.device.Deadzone;
 import com.esotericsoftware.controller.device.Device;
 import com.esotericsoftware.controller.device.Target;
 import com.esotericsoftware.controller.input.JInputJoystick;
+import com.esotericsoftware.controller.input.JInputXboxController;
 import com.esotericsoftware.controller.input.Keyboard;
 import com.esotericsoftware.controller.input.Mouse;
+import com.esotericsoftware.controller.input.XInputXboxController;
 import com.esotericsoftware.controller.ui.swing.EditorPanel;
+import com.esotericsoftware.controller.xim.XIMMouseTranslation;
 
 /**
  * Base class for a file-based object that can be edited and saved by an {@link EditorPanel}.
@@ -43,14 +46,19 @@ public class Editable implements Cloneable {
 			}
 		});
 
-		yamlConfig.setClassTag("input", InputTrigger.class);
 		yamlConfig.setClassTag("device", DeviceAction.class);
 		yamlConfig.setClassTag("script", ScriptAction.class);
 		yamlConfig.setClassTag("mouse", Mouse.MouseInput.class);
-		yamlConfig.setClassTag("keyboard", Keyboard.KeyboardInput.class);
 		yamlConfig.setClassTag("joystick", JInputJoystick.JoystickInput.class);
+		yamlConfig.setClassTag("xboxcontroller", XInputXboxController.ControllerInput.class);
+		yamlConfig.setClassTag("xboxcontroller-jinput", JInputXboxController.ControllerInput.class);
 		yamlConfig.setClassTag("round", Deadzone.Round.class);
 		yamlConfig.setClassTag("square", Deadzone.Square.class);
+		yamlConfig.setClassTag("xim-translation", XIMMouseTranslation.class);
+
+		yamlConfig.setPropertyElementType(Config.class, "triggers", InputTrigger.class);
+		yamlConfig.setPropertyDefaultType(Trigger.class, "action", DeviceAction.class);
+		yamlConfig.setPropertyDefaultType(InputTrigger.class, "input", Keyboard.KeyboardInput.class);
 	}
 
 	protected transient File file;
