@@ -1,6 +1,7 @@
 
 package com.esotericsoftware.controller.ui;
 
+import com.esotericsoftware.controller.device.Deadzone;
 import com.esotericsoftware.controller.input.Input;
 import com.esotericsoftware.controller.input.Keyboard;
 
@@ -10,7 +11,8 @@ import com.esotericsoftware.controller.input.Keyboard;
  */
 public class InputTrigger extends Trigger {
 	private Input input;
-	private boolean shift, ctrl, alt, noModifiers;
+	private boolean shift, ctrl, alt, noModifiers, invert;
+	private Deadzone deadzone;
 
 	public InputTrigger () {
 	}
@@ -60,6 +62,25 @@ public class InputTrigger extends Trigger {
 		this.noModifiers = noModifiers;
 	}
 
+	public boolean getInvert () {
+		return invert;
+	}
+
+	/**
+	 * If true, the payload will be inverted. Only affects
+	 */
+	public void setInvert (boolean invert) {
+		this.invert = invert;
+	}
+
+	public Deadzone getDeadzone () {
+		return deadzone;
+	}
+
+	public void setDeadzone (Deadzone deadzone) {
+		this.deadzone = deadzone;
+	}
+
 	public boolean isValid () {
 		if (input == null) return false;
 		return input.isValid();
@@ -94,7 +115,23 @@ public class InputTrigger extends Trigger {
 
 	public Float getPayload () {
 		if (input == null) return null;
-		return input.getState();
+		float payload = input.getState();
+		if (input.isAxis()) {
+			if (invert) payload = -payload;
+			if (deadzone != null) {
+				float x, y;
+				if (input.isAxisX()) {
+					x = payload;
+					y = input.getOtherState();
+				} else {
+					x = input.getOtherState();
+					y = payload;
+				}
+				float[] values = deadzone.getInput(x, y);
+				payload = input.isAxisX() ? values[0] : values[1];
+			}
+		}
+		return payload;
 	}
 
 	public String toString () {

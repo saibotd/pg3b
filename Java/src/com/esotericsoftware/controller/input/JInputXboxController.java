@@ -231,6 +231,21 @@ public class JInputXboxController extends XboxController {
 			return 0;
 		}
 
+		public float getOtherState () {
+			switch (axis) {
+			case leftStickX:
+				return device.get(Axis.leftStickY);
+			case leftStickY:
+				return device.get(Axis.leftStickX);
+			case rightStickX:
+				return device.get(Axis.rightStickY);
+			case rightStickY:
+				return device.get(Axis.rightStickX);
+			default:
+				return 0;
+			}
+		}
+
 		public JInputXboxController getInputDevice () {
 			if (device != null) return device;
 			for (Controller controller : ControllerEnvironment.getDefaultEnvironment().getControllers()) {
@@ -246,7 +261,11 @@ public class JInputXboxController extends XboxController {
 		}
 
 		public boolean isAxis () {
-			return axis != null;
+			return axis != null && !axis.isTrigger();
+		}
+
+		public boolean isAxisX () {
+			return axis == Axis.leftStickX || axis == Axis.rightStickX;
 		}
 
 		public String toString () {

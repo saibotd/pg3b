@@ -10,6 +10,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.JViewport;
 import javax.swing.ListSelectionModel;
+import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
@@ -49,5 +50,9 @@ public class Util {
 		Point position = viewport.getViewPosition();
 		rect.setLocation(rect.x - position.x, rect.y - position.y);
 		viewport.scrollRectToVisible(rect);
+	}
+
+	static public SpinnerNumberModel newFloatSpinnerModel (float value, float minimum, float maximum, float stepSize) {
+		return new SpinnerNumberModel(new Float(value), new Float(minimum), new Float(maximum), new Float(stepSize));
 	}
 }

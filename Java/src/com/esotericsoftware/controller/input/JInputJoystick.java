@@ -12,8 +12,6 @@ import net.java.games.input.EventQueue;
 import net.java.games.input.Component.Identifier;
 import net.java.games.input.Controller.Type;
 
-import com.esotericsoftware.controller.ui.InputTrigger;
-
 /**
  * A JInput controller input device. This is used for all devices that are not keyboards, mice, or Xbox controllers.
  */
@@ -88,6 +86,7 @@ public class JInputJoystick implements InputDevice {
 		private String type;
 		private String controllerName;
 		private transient Component component;
+		private transient Component otherComponent;
 		private transient JInputJoystick device;
 
 		public JoystickInput () {
@@ -100,24 +99,51 @@ public class JInputJoystick implements InputDevice {
 		}
 
 		public float getState () {
-			if (component == null) {
-				getComponent();
-				if (component == null) return 0;
-			}
+			Component component = getComponent();
+			if (component == null) return 0;
 			return component.getPollData();
+		}
+
+		public float getOtherState () {
+			Component otherComponent = getOtherComponent();
+			return otherComponent.getPollData();
 		}
 
 		public Component getComponent () {
 			if (component == null) {
-				if (device == null) {
-					getInputDevice();
-					if (device == null) return null;
-				}
+				JInputJoystick device = getInputDevice();
+				if (device == null) return null;
 				for (Component component : device.controller.getComponents())
 					if (component.getIdentifier().toString().equals(id)) this.component = component;
-				if (component == null) return null;
 			}
 			return component;
+		}
+
+		public Component getOtherComponent () {
+			if (otherComponent == null) {
+				JInputJoystick device = getInputDevice();
+				if (device == null) return null;
+
+				Identifier otherID;
+				Identifier id = getComponent().getIdentifier();
+				if (id == Identifier.Axis.RX)
+					otherID = Identifier.Axis.RY;
+				else if (id == Identifier.Axis.RY)
+					otherID = Identifier.Axis.RX;
+				else if (id == Identifier.Axis.X)
+					otherID = Identifier.Axis.Y;
+				else if (id == Identifier.Axis.Y)
+					otherID = Identifier.Axis.X;
+				else if (id == Identifier.Axis.X)
+					otherID = Identifier.Axis.Y;
+				else
+					return null;
+
+				for (Component component : device.controller.getComponents())
+					if (component.getIdentifier().toString().equals(otherID)) this.otherComponent = component;
+				if (otherComponent == null) return null;
+			}
+			return otherComponent;
 		}
 
 		public JInputJoystick getInputDevice () {
@@ -139,14 +165,21 @@ public class JInputJoystick implements InputDevice {
 		}
 
 		public boolean isAxis () {
-			return getComponent() instanceof Identifier.Axis;
+			Component component = getComponent();
+			if (component == null) return false;
+			return component.getIdentifier() instanceof Identifier.Axis;
+		}
+
+		public boolean isAxisX () {
+			Component component = getComponent();
+			if (component == null) return false;
+			Identifier id = component.getIdentifier();
+			return id == Identifier.Axis.RX || id == Identifier.Axis.X;
 		}
 
 		public String toString () {
-			if (component == null) {
-				getComponent();
-				if (component == null) return "<none>";
-			}
+			Component component = getComponent();
+			if (component == null) return "<none>";
 			return component.getName();
 		}
 	}

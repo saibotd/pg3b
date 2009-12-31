@@ -18,6 +18,8 @@ public interface Input {
 	 */
 	public boolean isAxis ();
 
+	public boolean isAxisX ();
+
 	/**
 	 * Returns the device to which this input belongs.
 	 */
@@ -27,4 +29,9 @@ public interface Input {
 	 * Returns the value for this input.
 	 */
 	public float getState ();
+
+	/**
+	 * Returns the value for the axis that makes up the x and y axis pair, or zero if there is no corresponding axis.
+	 */
+	public float getOtherState ();
 }

@@ -206,7 +206,7 @@ public class Functions {
 				config = (Config)args[0];
 			else
 				config = (Config)getConfig.invoke(args, context);
-			UI.instance.setActiveConfig(config);
+			config.setActive(true);
 			return null;
 		}
 	};

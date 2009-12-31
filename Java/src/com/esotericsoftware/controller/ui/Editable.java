@@ -21,6 +21,7 @@ import com.esotericsoftware.controller.input.JInputXboxController;
 import com.esotericsoftware.controller.input.Keyboard;
 import com.esotericsoftware.controller.input.Mouse;
 import com.esotericsoftware.controller.input.XInputXboxController;
+import com.esotericsoftware.controller.input.Keyboard.KeyboardInput;
 import com.esotericsoftware.controller.ui.swing.EditorPanel;
 import com.esotericsoftware.controller.xim.XIMMouseTranslation;
 
@@ -43,6 +44,19 @@ public class Editable implements Cloneable {
 
 			public String write (Target target) {
 				return target.toString();
+			}
+		});
+
+		yamlConfig.setScalarSerializer(KeyboardInput.class, new ScalarSerializer<KeyboardInput>() {
+			public KeyboardInput read (String value) {
+				int spaceIndex = value.lastIndexOf(' ');
+				KeyboardInput input = new KeyboardInput();
+				input.setKeyCode(Integer.parseInt(value.substring(spaceIndex + 1)));
+				return input;
+			}
+
+			public String write (KeyboardInput input) {
+				return input + " " + input.getKeyCode();
 			}
 		});
 

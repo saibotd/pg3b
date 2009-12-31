@@ -80,7 +80,7 @@ public class ConfigEditor extends EditorPanel<Config> {
 	protected void updateFieldsFromItem (Config config) {
 		triggersTableModel.setRowCount(0);
 		if (config == null) {
-			owner.setActiveConfig(null);
+			owner.updateActiveConfig();
 		} else {
 			for (Trigger trigger : config.getTriggers())
 				triggersTableModel.addRow(new Object[] {trigger, trigger.getAction(), trigger.getDescription()});
@@ -92,7 +92,8 @@ public class ConfigEditor extends EditorPanel<Config> {
 			}
 		}
 		activateButton.setEnabled(config != null);
-		if (config != null && activateButton.isSelected()) owner.setActiveConfig(config);
+		// BOZO
+		if (config != null && activateButton.isSelected()) config.setActive(true);
 	}
 
 	protected void clearItemSpecificState () {
@@ -168,15 +169,17 @@ public class ConfigEditor extends EditorPanel<Config> {
 	private void initializeEvents () {
 		activateButton.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
-				owner.setActiveConfig(activateButton.isSelected() ? getSelectedItem() : null);
-				Device device = owner.getDevice();
-				if (device != null) {
-					try {
-						device.reset();
-					} catch (IOException ex) {
-						if (WARN) warn("Unable to reset device.", ex);
+				if (activateButton.isSelected()) {
+					Device device = owner.getDevice();
+					if (device != null) {
+						try {
+							device.reset();
+						} catch (IOException ex) {
+							if (WARN) warn("Unable to reset device.", ex);
+						}
 					}
 				}
+				getSelectedItem().setActive(activateButton.isSelected());
 			}
 		});
 
@@ -249,7 +252,7 @@ public class ConfigEditor extends EditorPanel<Config> {
 
 		deadzonesButton.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
-				new DeadzoneDialog(owner, device, getSelectedItem()).setVisible(true);
+				new DeviceDeadzoneDialog(owner, device, getSelectedItem()).setVisible(true);
 			}
 		});
 

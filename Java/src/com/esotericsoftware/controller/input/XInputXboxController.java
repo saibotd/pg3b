@@ -136,11 +136,11 @@ public class XInputXboxController extends XboxController {
 		case leftStickX:
 			return thumbLX / 32767f;
 		case leftStickY:
-			return thumbLY / -32767f;
+			return thumbLY / 32767f;
 		case rightStickX:
 			return thumbRX / 32767f;
 		case rightStickY:
-			return thumbRY / -32767f;
+			return thumbRY / 32767f;
 		case leftTrigger:
 			return leftTrigger / 255f;
 		case rightTrigger:
@@ -224,6 +224,21 @@ public class XInputXboxController extends XboxController {
 			return 0;
 		}
 
+		public float getOtherState () {
+			switch (axis) {
+			case leftStickX:
+				return controllers[player].get(Axis.leftStickY);
+			case leftStickY:
+				return controllers[player].get(Axis.leftStickX);
+			case rightStickX:
+				return controllers[player].get(Axis.rightStickY);
+			case rightStickY:
+				return controllers[player].get(Axis.rightStickX);
+			default:
+				return 0;
+			}
+		}
+
 		public XInputXboxController getInputDevice () {
 			return controllers[player];
 		}
@@ -234,6 +249,10 @@ public class XInputXboxController extends XboxController {
 
 		public boolean isAxis () {
 			return axis != null && !axis.isTrigger();
+		}
+
+		public boolean isAxisX () {
+			return axis == Axis.leftStickX || axis == Axis.rightStickX;
 		}
 
 		public String toString () {

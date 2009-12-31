@@ -38,6 +38,7 @@ import com.esotericsoftware.controller.input.JInputJoystick;
 import com.esotericsoftware.controller.input.Keyboard;
 import com.esotericsoftware.controller.input.Mouse;
 import com.esotericsoftware.controller.input.XboxController;
+import com.esotericsoftware.controller.input.Mouse.MouseInput;
 import com.esotericsoftware.controller.ui.Action;
 import com.esotericsoftware.controller.ui.Config;
 import com.esotericsoftware.controller.ui.DeviceAction;
@@ -52,13 +53,16 @@ public class InputTriggerPanel extends JPanel {
 	private UI owner;
 	private Config config;
 	private InputTrigger trigger;
+	private JCheckBox invertTriggerCheckBox;
+	private JLabel label;
 	private boolean isNewTrigger;
 	private TimerTask monitorControllersTask;
+	private float startMouseX, startMouseY;
 
-	private JPanel titlePanel;
+	private JPanel titlePanel, axisButtonPanel;
 	private JLabel triggerLabel;
 	private JRadioButton targetRadio, scriptRadio;
-	private JButton saveButton, cancelButton;
+	private JButton saveButton, cancelButton, deadzoneButton;
 	private JTextField descriptionText;
 	private JComboBox targetCombo, targetDirectionCombo, scriptCombo;
 	private JCheckBox altCheckBox, ctrlCheckBox, shiftCheckBox, anyCheckBox, noneCheckBox;
@@ -113,6 +117,8 @@ public class InputTriggerPanel extends JPanel {
 			altCheckBox.setSelected(false);
 			anyCheckBox.setSelected(true);
 			noneCheckBox.setSelected(false);
+			invertTriggerCheckBox.setSelected(false);
+			axisButtonPanel.setVisible(false);
 
 			saveButton.setEnabled(false);
 		} else {
@@ -132,6 +138,10 @@ public class InputTriggerPanel extends JPanel {
 				anyCheckBox.setSelected(!trigger.getNoModifiers());
 				noneCheckBox.setSelected(trigger.getNoModifiers());
 			}
+			invertTriggerCheckBox.setSelected(trigger.getInvert());
+			Input input = trigger.getInput();
+			axisButtonPanel.setVisible(input.isAxis() && !(input instanceof MouseInput));
+			axisButtonPanel.setVisible(true);
 			setTriggerText(trigger);
 
 			Action action = trigger.getAction();
@@ -154,9 +164,11 @@ public class InputTriggerPanel extends JPanel {
 					targetDirectionCombo.setSelectedIndex(1);
 					break;
 				}
+
+				saveButton.setEnabled(true);
 			} else {
 				// Unknown action, can't change it.
-				Util.setEnabled(false, targetRadio, targetCombo, scriptRadio, scriptCombo);
+				Util.setEnabled(false, targetRadio, targetCombo, scriptRadio, scriptCombo, invertTriggerCheckBox);
 				targetRadio.setSelected(false);
 				scriptRadio.setSelected(false);
 			}
@@ -182,15 +194,18 @@ public class InputTriggerPanel extends JPanel {
 					if (!device.poll()) continue;
 					Input input = device.getLastInput();
 					if (input == null) continue;
+					if (input instanceof MouseInput && ((MouseInput)input).isAxis()) continue;
 					float value = input.getState();
 					if (Math.abs(value) < 0.25f) continue;
 					return input;
 				}
+				if (Math.abs(startMouseX - Mouse.instance.getX()) > 25) return new MouseInput("x");
+				if (Math.abs(startMouseY - Mouse.instance.getY()) > 25) return new MouseInput("y");
 				return null;
 			}
 
 			public void run () {
-				Input input = getLastInput();
+				final Input input = getLastInput();
 				if (input == null) return;
 				trigger.setInput(input);
 				SwingUtilities.invokeLater(new Runnable() {
@@ -199,6 +214,7 @@ public class InputTriggerPanel extends JPanel {
 						triggerLabel.setFont(triggerLabel.getFont().deriveFont(Font.PLAIN));
 						cancelButton.setEnabled(true);
 						saveButton.setEnabled(true);
+						axisButtonPanel.setVisible(input.isAxis() && !(input instanceof MouseInput));
 						updateTargetDirection();
 					}
 				});
@@ -293,9 +309,17 @@ public class InputTriggerPanel extends JPanel {
 				triggerLabel.setText("Waiting for trigger...");
 				triggerLabel.setFont(triggerLabel.getFont().deriveFont(Font.ITALIC));
 				triggerLabel.requestFocusInWindow();
+				startMouseX = Mouse.instance.getX();
+				startMouseY = Mouse.instance.getY();
 				listenForTrigger(true);
 				cancelButton.setEnabled(false);
 				saveButton.setEnabled(false);
+			}
+		});
+
+		deadzoneButton.addActionListener(new ActionListener() {
+			public void actionPerformed (ActionEvent event) {
+				new InputDeadzoneDialog(owner, trigger).setVisible(true);
 			}
 		});
 
@@ -314,6 +338,7 @@ public class InputTriggerPanel extends JPanel {
 				trigger.setAlt(altCheckBox.isSelected());
 				trigger.setShift(shiftCheckBox.isSelected());
 				trigger.setNoModifiers(noneCheckBox.isSelected());
+				trigger.setInvert(invertTriggerCheckBox.isSelected());
 				if (targetRadio.isSelected()) {
 					DeviceAction action = new DeviceAction((Target)targetCombo.getSelectedItem());
 					trigger.setAction(action);
@@ -393,12 +418,12 @@ public class InputTriggerPanel extends JPanel {
 		}
 		{
 			JLabel label = new JLabel("Action:");
-			titlePanel.add(label, new GridBagConstraints(1, 3, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHEAST,
+			titlePanel.add(label, new GridBagConstraints(1, 4, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHEAST,
 				GridBagConstraints.NONE, new Insets(4, 6, 6, 0), 0, 0));
 		}
 		{
 			JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 6, 0));
-			titlePanel.add(panel, new GridBagConstraints(2, 4, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
+			titlePanel.add(panel, new GridBagConstraints(2, 5, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
 				new Insets(0, 0, 6, 6), 0, 0));
 			{
 				scriptRadio = new JRadioButton("Script");
@@ -413,7 +438,7 @@ public class InputTriggerPanel extends JPanel {
 		}
 		{
 			JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 6, 0));
-			titlePanel.add(panel, new GridBagConstraints(2, 3, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
+			titlePanel.add(panel, new GridBagConstraints(2, 4, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
 				new Insets(0, 0, 6, 6), 0, 0));
 			{
 				targetRadio = new JRadioButton("Device");
@@ -439,16 +464,39 @@ public class InputTriggerPanel extends JPanel {
 			}
 		}
 		{
-			JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 6, 6));
-			titlePanel.add(panel, new GridBagConstraints(1, 5, 2, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE,
-				new Insets(0, 0, 0, 0), 0, 0));
+			JPanel bottomPanel = new JPanel();
+			GridBagLayout jPanel1Layout = new GridBagLayout();
+			titlePanel.add(bottomPanel, new GridBagConstraints(1, 6, 2, 1, 0.0, 0.0, GridBagConstraints.EAST,
+				GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+			bottomPanel.setLayout(jPanel1Layout);
 			{
-				cancelButton = new JButton("Cancel");
-				panel.add(cancelButton);
+				JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 6, 6));
+				bottomPanel.add(panel, new GridBagConstraints(1, 0, 1, 1, 1.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE,
+					new Insets(0, 0, 0, 0), 0, 0));
+				{
+					cancelButton = new JButton("Cancel");
+					panel.add(cancelButton);
+				}
+				{
+					saveButton = new JButton("Save");
+					panel.add(saveButton);
+				}
 			}
 			{
-				saveButton = new JButton("Save");
-				panel.add(saveButton);
+				axisButtonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 6, 6));
+				axisButtonPanel.setVisible(false);
+				bottomPanel.add(axisButtonPanel, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER,
+					GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+				{
+					deadzoneButton = new JButton();
+					axisButtonPanel.add(deadzoneButton);
+					deadzoneButton.setText("Deadzone");
+				}
+				{
+					invertTriggerCheckBox = new JCheckBox();
+					axisButtonPanel.add(invertTriggerCheckBox);
+					invertTriggerCheckBox.setText("Invert axis");
+				}
 			}
 		}
 		{
@@ -473,7 +521,7 @@ public class InputTriggerPanel extends JPanel {
 		}
 		{
 			JLabel label = new JLabel("Key modifier:");
-			titlePanel.add(label, new GridBagConstraints(1, 2, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
+			titlePanel.add(label, new GridBagConstraints(1, 2, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE,
 				new Insets(0, 6, 6, 0), 0, 0));
 		}
 		{

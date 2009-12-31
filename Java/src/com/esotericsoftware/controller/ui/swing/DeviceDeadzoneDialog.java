@@ -31,8 +31,9 @@ import com.esotericsoftware.controller.device.Deadzone;
 import com.esotericsoftware.controller.device.Device;
 import com.esotericsoftware.controller.device.Stick;
 import com.esotericsoftware.controller.ui.Config;
+import com.esotericsoftware.controller.util.Util;
 
-public class DeadzoneDialog extends JDialog {
+public class DeviceDeadzoneDialog extends JDialog {
 	private final UI owner;
 	private final Device device;
 	private final Config config;
@@ -42,8 +43,8 @@ public class DeadzoneDialog extends JDialog {
 	private JButton saveButton, cancelButton;
 	private JPanel leftStickPanel, rightStickPanel;
 
-	public DeadzoneDialog (UI owner, Device device, Config config) {
-		super(owner, "Deadzones", true);
+	public DeviceDeadzoneDialog (UI owner, Device device, Config config) {
+		super(owner, "Device Deadzones", true);
 		this.owner = owner;
 
 		this.device = device;
@@ -61,16 +62,16 @@ public class DeadzoneDialog extends JDialog {
 
 		Deadzone leftDeadzone = config.getLeftDeadzone();
 		if (leftDeadzone != null) {
-			setValue(leftXSpinner, leftDeadzone.getSizeX());
-			setValue(leftYSpinner, leftDeadzone.getSizeY());
+			leftXSpinner.setValue(leftDeadzone.getSizeX());
+			leftXSpinner.setValue(leftDeadzone.getSizeY());
 			leftShapeCombo.setSelectedIndex(leftDeadzone instanceof Deadzone.Square ? 0 : 1);
 			setAxis(Axis.leftStickX, leftXSpinner);
 			setAxis(Axis.leftStickY, leftYSpinner);
 		}
 		Deadzone rightDeadzone = config.getRightDeadzone();
 		if (rightDeadzone != null) {
-			setValue(rightXSpinner, rightDeadzone.getSizeX());
-			setValue(rightYSpinner, rightDeadzone.getSizeY());
+			rightXSpinner.setValue(rightDeadzone.getSizeX());
+			rightYSpinner.setValue(rightDeadzone.getSizeY());
 			rightShapeCombo.setSelectedIndex(rightDeadzone instanceof Deadzone.Square ? 0 : 1);
 			setAxis(Axis.rightStickX, rightXSpinner);
 			setAxis(Axis.rightStickY, rightYSpinner);
@@ -112,12 +113,12 @@ public class DeadzoneDialog extends JDialog {
 		saveButton.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
 				Deadzone leftDeadzone = leftShapeCombo.getSelectedIndex() == 0 ? new Deadzone.Square() : new Deadzone.Round();
-				leftDeadzone.setSizeX(getDeflection(leftXSpinner));
-				leftDeadzone.setSizeY(getDeflection(leftYSpinner));
+				leftDeadzone.setSizeX((Float)leftXSpinner.getValue());
+				leftDeadzone.setSizeY((Float)leftYSpinner.getValue());
 				config.setLeftDeadzone(leftDeadzone);
 				Deadzone rightDeadzone = rightShapeCombo.getSelectedIndex() == 0 ? new Deadzone.Square() : new Deadzone.Round();
-				rightDeadzone.setSizeX(getDeflection(rightXSpinner));
-				rightDeadzone.setSizeY(getDeflection(rightYSpinner));
+				rightDeadzone.setSizeX((Float)rightXSpinner.getValue());
+				rightDeadzone.setSizeY((Float)rightYSpinner.getValue());
 				config.setRightDeadzone(rightDeadzone);
 				owner.getConfigTab().getConfigEditor().saveItem(true);
 				try {
@@ -131,21 +132,11 @@ public class DeadzoneDialog extends JDialog {
 		});
 	}
 
-	private float getDeflection (JSpinner spinner) {
-		int value = (Integer)spinner.getValue();
-		if (value == 0) return 0;
-		return (value + 128) / 256f * 2 - 1;
-	}
-
-	private void setValue (JSpinner spinner, float value) {
-		spinner.setValue((int)((value + 1) / 2 * 256f - 128));
-	}
-
 	private void setAxis (Axis axis, JSpinner spinner) {
 		JPanel panel = axis.getStick() == Stick.left ? leftStickPanel : rightStickPanel;
 		String title = axis.getStick() == Stick.left ? "Left Stick" : "Right Stick";
 		try {
-			device.set(axis, getDeflection(spinner));
+			device.set(axis, (Float)spinner.getValue());
 			panel.setBorder(BorderFactory.createTitledBorder(title));
 		} catch (IOException ex) {
 			if (DEBUG) debug("Error setting axis: " + axis, ex);
@@ -208,7 +199,7 @@ public class DeadzoneDialog extends JDialog {
 					leftXSpinner = new JSpinner();
 					leftStickPanel.add(leftXSpinner, new GridBagConstraints(1, 1, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
 						GridBagConstraints.NONE, new Insets(6, 6, 0, 6), 0, 0));
-					leftXSpinner.setModel(new SpinnerNumberModel(0, -128, 128, 1));
+					leftXSpinner.setModel(Util.newFloatSpinnerModel(0, -128, 128, 1));
 				}
 				{
 					JLabel label = new JLabel("Y axis:");
@@ -219,7 +210,7 @@ public class DeadzoneDialog extends JDialog {
 					leftYSpinner = new JSpinner();
 					leftStickPanel.add(leftYSpinner, new GridBagConstraints(1, 2, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
 						GridBagConstraints.NONE, new Insets(6, 6, 4, 6), 0, 0));
-					leftYSpinner.setModel(new SpinnerNumberModel(0, -128, 128, 1));
+					leftYSpinner.setModel(Util.newFloatSpinnerModel(0, -128, 128, 1));
 				}
 			}
 			{
@@ -247,7 +238,7 @@ public class DeadzoneDialog extends JDialog {
 					rightXSpinner = new JSpinner();
 					rightStickPanel.add(rightXSpinner, new GridBagConstraints(1, 1, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
 						GridBagConstraints.NONE, new Insets(6, 6, 0, 6), 0, 0));
-					rightXSpinner.setModel(new SpinnerNumberModel(0, -128, 128, 1));
+					rightXSpinner.setModel(Util.newFloatSpinnerModel(0, -128, 128, 1));
 				}
 				{
 					JLabel label = new JLabel("Y axis:");
@@ -258,7 +249,7 @@ public class DeadzoneDialog extends JDialog {
 					rightYSpinner = new JSpinner();
 					rightStickPanel.add(rightYSpinner, new GridBagConstraints(1, 2, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
 						GridBagConstraints.NONE, new Insets(6, 6, 4, 6), 0, 0));
-					rightYSpinner.setModel(new SpinnerNumberModel(0, -128, 128, 1));
+					rightYSpinner.setModel(Util.newFloatSpinnerModel(0, -128, 128, 1));
 				}
 			}
 		}

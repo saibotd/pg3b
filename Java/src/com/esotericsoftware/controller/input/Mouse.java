@@ -132,7 +132,7 @@ public class Mouse implements InputDevice {
 
 	public Input getLastInput () {
 		if (lastButton != 0) return new MouseInput(lastButton);
-		if (lastMouseWheel != 0) return new MouseInput(true);
+		if (currentMouseWheel != 0) return new MouseInput(true);
 		if (currentDeltaX != 0) return new MouseInput("x");
 		if (currentDeltaY != 0) return new MouseInput("y");
 		return null;
@@ -180,6 +180,10 @@ public class Mouse implements InputDevice {
 			return 0;
 		}
 
+		public float getOtherState () {
+			return 0;
+		}
+
 		public Mouse getInputDevice () {
 			return instance;
 		}
@@ -192,8 +196,8 @@ public class Mouse implements InputDevice {
 			return axis != null;
 		}
 
-		public String getAxis () {
-			return axis;
+		public boolean isAxisX () {
+			return axis != null && axis.equals("x");
 		}
 
 		public String toString () {

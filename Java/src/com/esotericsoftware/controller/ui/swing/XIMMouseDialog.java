@@ -10,17 +10,15 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import javax.swing.BorderFactory;
-import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
-import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
 
-import com.esotericsoftware.controller.device.Device;
 import com.esotericsoftware.controller.ui.Config;
+import com.esotericsoftware.controller.util.Util;
 import com.esotericsoftware.controller.xim.XIMMouseTranslation;
 
 public class XIMMouseDialog extends JDialog {
@@ -75,10 +73,6 @@ public class XIMMouseDialog extends JDialog {
 		});
 	}
 
-	private SpinnerNumberModel newFloatModel (float value, float minimum, float maximum, float stepSize) {
-		return new SpinnerNumberModel(new Float(value), new Float(minimum), new Float(maximum), new Float(stepSize));
-	}
-
 	private void initializeLayout () {
 		getContentPane().setLayout(new GridBagLayout());
 		{
@@ -96,13 +90,13 @@ public class XIMMouseDialog extends JDialog {
 				yxRatioSpinner = new JSpinner();
 				panel.add(yxRatioSpinner, new GridBagConstraints(1, 6, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
 					GridBagConstraints.HORIZONTAL, new Insets(0, 0, 6, 0), 0, 0));
-				yxRatioSpinner.setModel(newFloatModel(1f, -3, 3, 0.05f));
+				yxRatioSpinner.setModel(Util.newFloatSpinnerModel(1f, -3, 3, 0.05f));
 			}
 			{
 				translationExponentSpinner = new JSpinner();
 				panel.add(translationExponentSpinner, new GridBagConstraints(1, 9, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
 					GridBagConstraints.HORIZONTAL, new Insets(0, 0, 6, 0), 0, 0));
-				translationExponentSpinner.setModel(newFloatModel(0.75f, -2, 2, 0.05f));
+				translationExponentSpinner.setModel(Util.newFloatSpinnerModel(0.75f, -2, 2, 0.05f));
 			}
 			{
 				sensitivitySpinner = new JSpinner();
@@ -119,13 +113,13 @@ public class XIMMouseDialog extends JDialog {
 				diagonalDampenSpinner = new JSpinner();
 				panel.add(diagonalDampenSpinner, new GridBagConstraints(1, 11, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
 					GridBagConstraints.HORIZONTAL, new Insets(0, 0, 6, 0), 0, 0));
-				diagonalDampenSpinner.setModel(newFloatModel(0f, 0, 1, 0.05f));
+				diagonalDampenSpinner.setModel(Util.newFloatSpinnerModel(0f, 0, 1, 0.05f));
 			}
 			{
 				smoothnessSpinner = new JSpinner();
 				panel.add(smoothnessSpinner, new GridBagConstraints(1, 12, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
 					GridBagConstraints.HORIZONTAL, new Insets(0, 0, 6, 0), 0, 0));
-				smoothnessSpinner.setModel(newFloatModel(0.3f, 0, 1, 0.05f));
+				smoothnessSpinner.setModel(Util.newFloatSpinnerModel(0.3f, 0, 1, 0.05f));
 			}
 			{
 				JLabel label = new JLabel("Sensitivity:");

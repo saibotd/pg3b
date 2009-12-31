@@ -7,7 +7,6 @@ import java.awt.KeyEventDispatcher;
 import java.awt.KeyboardFocusManager;
 import java.awt.event.KeyEvent;
 
-import com.esotericsoftware.controller.ui.InputTrigger;
 import com.esotericsoftware.controller.util.Listeners;
 
 /**
@@ -94,7 +93,6 @@ public class Keyboard implements InputDevice {
 		if (lastKeyCode == -1) return null;
 		KeyboardInput input = new KeyboardInput();
 		input.keyCode = lastKeyCode;
-		input.keyName = KeyEvent.getKeyText(lastKeyCode);
 		return input;
 	}
 
@@ -104,10 +102,14 @@ public class Keyboard implements InputDevice {
 
 	static public class KeyboardInput implements Input {
 		private int keyCode;
-		private String keyName;
+		private String name;
 
 		public float getState () {
 			return instance.isPressed(keyCode) ? 1 : 0;
+		}
+
+		public float getOtherState () {
+			return 0;
 		}
 
 		public Keyboard getInputDevice () {
@@ -122,8 +124,21 @@ public class Keyboard implements InputDevice {
 			return false;
 		}
 
+		public boolean isAxisX () {
+			return false;
+		}
+
+		public void setKeyCode (int keyCode) {
+			this.keyCode = keyCode;
+		}
+
+		public int getKeyCode () {
+			return keyCode;
+		}
+
 		public String toString () {
-			return keyName;
+			if (name == null) name = KeyEvent.getKeyText(keyCode);
+			return name;
 		}
 	}
 

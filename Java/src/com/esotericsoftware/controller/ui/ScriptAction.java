@@ -48,6 +48,9 @@ public class ScriptAction implements Action {
 	}
 
 	public void reset (Config config, Trigger trigger) {
+		context = null;
+		wasActive = false;
+
 		Script script = getScript();
 		if (script == null) return;
 
@@ -57,11 +60,11 @@ public class ScriptAction implements Action {
 		context = getContext(config, trigger, this);
 		pnuts.run(context);
 		execute(pnuts, context, "init", 0);
-
-		if (TRACE) trace("Script action reset: " + this);
 	}
 
 	public Object execute (Config config, Trigger trigger) {
+		if (context == null) return null;
+
 		Script script = getScript();
 		if (script == null) return null;
 

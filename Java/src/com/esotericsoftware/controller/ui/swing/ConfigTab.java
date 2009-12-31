@@ -24,18 +24,15 @@ public class ConfigTab extends JPanel {
 	}
 
 	public void showConfigEditor () {
-		JToggleButton activateButton = configEditor.getActivateButton();
-		activateButton.setEnabled(true);
-		if (activeConfig != null) owner.setActiveConfig(activeConfig);
+		if (activeConfig != null) activeConfig.setActive(true);
 		activeConfig = null;
 
 		cardLayout.show(this, "config");
 	}
 
 	public void showInputTriggerPanel (Config config, InputTrigger input) {
-		activeConfig = owner.getActiveConfig();
-		owner.setActiveConfig(null);
-		configEditor.getActivateButton().setEnabled(false);
+		activeConfig = Config.getActive();
+		if (activeConfig != null) activeConfig.setActive(false);
 
 		inputTriggerPanel.setTrigger(config, input);
 		cardLayout.show(this, "inputTrigger");

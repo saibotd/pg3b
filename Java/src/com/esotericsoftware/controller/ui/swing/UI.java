@@ -67,7 +67,6 @@ import com.esotericsoftware.controller.pg3b.ControllerType;
 import com.esotericsoftware.controller.pg3b.PG3B;
 import com.esotericsoftware.controller.pg3b.PG3BConfig;
 import com.esotericsoftware.controller.ui.Config;
-import com.esotericsoftware.controller.ui.ConfigPoller;
 import com.esotericsoftware.controller.ui.Diagnostics;
 import com.esotericsoftware.controller.ui.InputTrigger;
 import com.esotericsoftware.controller.ui.Settings;
@@ -79,14 +78,13 @@ import com.esotericsoftware.controller.xim.XIM;
 import com.esotericsoftware.minlog.Log;
 
 public class UI extends JFrame {
-	static public final String version = "0.1.13";
+	static public final String version = "0.1.15";
 	static public UI instance;
 
 	static private Settings settings = Settings.get();
 
 	private Device device;
 	private XboxController controller;
-	private ConfigPoller configPoller;
 
 	private JMenu pg3bMenu, ximMenu;
 	private JMenuBar menuBar;
@@ -293,12 +291,6 @@ public class UI extends JFrame {
 		return tabs;
 	}
 
-	public Config getActiveConfig () {
-		ConfigPoller configPoller = this.configPoller;
-		if (configPoller == null) return null;
-		return configPoller.getConfig();
-	}
-
 	private void initializeEvents () {
 		disconnectDeviceMenuItem.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
@@ -419,8 +411,9 @@ public class UI extends JFrame {
 
 		KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(new KeyEventDispatcher() {
 			public boolean dispatchKeyEvent (KeyEvent event) {
-				if (configPoller != null) {
-					if (event.isControlDown() && event.getKeyCode() == KeyEvent.VK_F4) setActiveConfig(null);
+				Config config = Config.getActive();
+				if (config != null) {
+					if (event.isControlDown() && event.getKeyCode() == KeyEvent.VK_F4) config.setActive(false);
 				}
 				if (disableKeyboard) event.consume();
 				return false;
@@ -535,40 +528,33 @@ public class UI extends JFrame {
 		});
 	}
 
-	public void setActiveConfig (Config config) {
-		if (configPoller == null && config == null) return;
-		if (configPoller != null && config != null && configPoller.getConfig() == config) return;
+	public void updateActiveConfig () {
+		Config config = Config.getActive();
 		configTab.getConfigEditor().getActivateButton().setSelected(config != null);
-
-		if (configPoller != null) configPoller.setActive(false);
-		configPoller = null;
-
 		statusBar.setConfig(config);
 
 		if (config == null) {
 			getGlassPane().setVisible(false);
 			disableKeyboard = false;
 			Mouse.instance.release();
-			return;
-		}
-
-		configPoller = new ConfigPoller(config);
-		configPoller.setActive(true);
-
-		if (settings.activationDisablesInput) {
-			// Disable mouse and/or keyboard.
-			for (Trigger trigger : config.getTriggers()) {
-				if (trigger instanceof InputTrigger) {
-					Input input = ((InputTrigger)trigger).getInput();
-					if (input instanceof Mouse.MouseInput || input instanceof Keyboard.KeyboardInput) {
-						getGlassPane().setVisible(true);
-						Mouse.instance.grab(UI.this);
-						disableKeyboard = true;
-						return;
+		} else {
+			if (settings.activationDisablesInput) {
+				// Disable mouse and/or keyboard.
+				for (Trigger trigger : config.getTriggers()) {
+					if (trigger instanceof InputTrigger) {
+						Input input = ((InputTrigger)trigger).getInput();
+						if (input instanceof Mouse.MouseInput || input instanceof Keyboard.KeyboardInput) {
+							getGlassPane().setVisible(true);
+							Mouse.instance.grab(UI.this);
+							disableKeyboard = true;
+							break;
+						}
 					}
 				}
 			}
 		}
+
+		configTab.getConfigEditor().setSelectedItem(config);
 	}
 
 	protected void processWindowEvent (WindowEvent event) {

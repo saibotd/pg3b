@@ -330,7 +330,7 @@ abstract public class Device {
 		if (deadzone == null)
 			deflection = new float[] {targetX, targetY};
 		else
-			deflection = deadzone.getDeflection(targetX, targetY);
+			deflection = deadzone.getOutput(targetX, targetY);
 
 		Axis axisX = stick.getAxisX();
 		int indexX = axisX.ordinal();

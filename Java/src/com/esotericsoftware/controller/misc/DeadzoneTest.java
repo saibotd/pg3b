@@ -12,6 +12,7 @@ import java.awt.event.ActionListener;
 import java.util.Hashtable;
 
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -26,14 +27,18 @@ public class DeadzoneTest extends JFrame {
 	float xState, yState;
 	float deadzoneX = 0.3f, deadzoneY = 0.3f;
 	int sizeX = (int)(255 * deadzoneX), sizeY = (int)(255 * deadzoneX);
+	JCheckBox inputCheckbox;
 
 	public DeadzoneTest () {
 		super("DeadzoneTest");
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
+		JPanel panel = new JPanel(new BorderLayout());
+		getContentPane().add(panel, BorderLayout.CENTER);
+
 		final CardLayout cardLayout = new CardLayout();
 		final JPanel centerPanel = new JPanel(cardLayout);
-		getContentPane().add(centerPanel, BorderLayout.CENTER);
+		panel.add(centerPanel, BorderLayout.CENTER);
 		centerPanel.setPreferredSize(new Dimension(512, 512));
 
 		Hashtable labels = new Hashtable();
@@ -58,7 +63,7 @@ public class DeadzoneTest extends JFrame {
 		});
 
 		final JSlider xSlider = new JSlider(JSlider.HORIZONTAL, -256, 256, 0);
-		getContentPane().add(xSlider, BorderLayout.SOUTH);
+		panel.add(xSlider, BorderLayout.SOUTH);
 		xSlider.setLabelTable(labels);
 		xSlider.setPaintLabels(true);
 		xSlider.setMajorTickSpacing(32);
@@ -74,7 +79,7 @@ public class DeadzoneTest extends JFrame {
 		getContentPane().add(deadzonePanel, BorderLayout.WEST);
 
 		final JSlider deadzoneSliderX = new JSlider(JSlider.VERTICAL, 0, 100, 33);
-		deadzonePanel.add(deadzoneSliderX, BorderLayout.WEST);
+		deadzonePanel.add(deadzoneSliderX);
 		deadzoneSliderX.setInverted(true);
 		deadzoneSliderX.createStandardLabels(25);
 		deadzoneSliderX.setPaintLabels(true);
@@ -88,7 +93,7 @@ public class DeadzoneTest extends JFrame {
 		});
 
 		final JSlider deadzoneSliderY = new JSlider(JSlider.VERTICAL, 0, 100, 33);
-		deadzonePanel.add(deadzoneSliderY, BorderLayout.WEST);
+		deadzonePanel.add(deadzoneSliderY);
 		deadzoneSliderY.setInverted(true);
 		deadzoneSliderY.createStandardLabels(25);
 		deadzoneSliderY.setPaintLabels(true);
@@ -101,12 +106,23 @@ public class DeadzoneTest extends JFrame {
 			}
 		});
 
+		JPanel northPanel = new JPanel(new GridLayout());
+		getContentPane().add(northPanel, BorderLayout.NORTH);
+
 		final JComboBox combo = new JComboBox();
+		northPanel.add(combo);
 		combo.setModel(new DefaultComboBoxModel(new Object[] {"round", "square"}));
-		getContentPane().add(combo, BorderLayout.NORTH);
 		combo.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
 				cardLayout.show(centerPanel, (String)combo.getSelectedItem());
+			}
+		});
+
+		inputCheckbox = new JCheckBox("Input");
+		northPanel.add(inputCheckbox);
+		inputCheckbox.addActionListener(new ActionListener() {
+			public void actionPerformed (ActionEvent event) {
+				centerPanel.repaint();
 			}
 		});
 
@@ -133,7 +149,7 @@ public class DeadzoneTest extends JFrame {
 			g.fillRect(0, 0, 512, 512);
 
 			g.setColor(Color.green);
-			if (true) {
+			if (false) {
 				// Draws all edge points.
 				for (int i = -255; i < 256; i++)
 					drawDeflection(g, i / 255f, 1);
@@ -163,8 +179,15 @@ public class DeadzoneTest extends JFrame {
 		public void drawDeflection (Graphics g, float x, float y) {
 			deadzone.setSizeX(deadzoneX);
 			deadzone.setSizeY(deadzoneY);
-			float[] deflection = deadzone.getDeflection(x, y);
+			float[] deflection;
+			if (inputCheckbox.isSelected())
+				deflection = deadzone.getInput(x, y);
+			else
+				deflection = deadzone.getOutput(x, y);
 			int r = 5, d = r * 2;
+			g.setColor(Color.blue);
+			g.fillRect((int)(x * 256) + 256 - r, (int)(y * 256) + 256 - r, d, d);
+			g.setColor(Color.red);
 			g.fillRect((int)(deflection[0] * 256) + 256 - r, (int)(deflection[1] * 256) + 256 - r, d, d);
 		}
 	}
