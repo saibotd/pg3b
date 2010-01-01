@@ -83,7 +83,7 @@ public class ConfigEditor extends EditorPanel<Config> {
 			owner.updateActiveConfig();
 		} else {
 			for (Trigger trigger : config.getTriggers())
-				triggersTableModel.addRow(new Object[] {trigger, trigger.getAction(), trigger.getDescription()});
+				triggersTableModel.addRow(new Object[] {trigger.getName(), trigger, trigger.getAction()});
 			setSelectedTrigger(lastSelectedTriggerIndex);
 
 			if (!config.getName().equals(settings.selectedConfig)) {
@@ -277,7 +277,7 @@ public class ConfigEditor extends EditorPanel<Config> {
 					}
 				};
 				scroll.setViewportView(triggersTable);
-				triggersTableModel = new DefaultTableModel(new String[][] {}, new String[] {"Trigger", "Action", "Description"});
+				triggersTableModel = new DefaultTableModel(new String[][] {}, new String[] {"Name", "Trigger", "Action"});
 				triggersTable.setModel(triggersTableModel);
 				triggersTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 				triggersTable.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {

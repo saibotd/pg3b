@@ -21,6 +21,7 @@ import com.esotericsoftware.controller.ui.swing.UI;
  */
 public class Config extends Editable {
 	static private PollerThread thread;
+	static private Object lock = new Object();
 
 	private List<Trigger> triggers = new ArrayList();
 	private Deadzone leftDeadzone, rightDeadzone;
@@ -92,22 +93,25 @@ public class Config extends Editable {
 	 * If true, starts a thread to check the triggers and executes their actions as needed. If false, stops checking the triggers
 	 * and shuts down any running thread pool.
 	 */
-	public synchronized void setActive (boolean active) {
-		if (active) {
-			if (thread != null && thread.running) {
-				if (thread.config.equals(this)) return;
-				thread.running = false;
-			}
-			thread = new PollerThread(this);
-			thread.start();
-			if (INFO) info("Activated config: " + this);
-		} else {
-			if (thread != null && thread.running && thread.config.equals(this)) {
-				thread.running = false;
-				thread = null;
+	public void setActive (boolean active) {
+		synchronized (lock) {
+			if (active) {
+				if (thread != null && thread.running && thread.config.equals(this)) return;
+				stop();
+				thread = new PollerThread(this);
+				thread.start();
+				if (INFO) info("Activated config: " + this);
+			} else {
+				if (thread != null && thread.running && thread.config.equals(this)) stop();
 			}
 		}
+	}
 
+	static private void stop () {
+		if (thread != null && thread.running) {
+			thread.running = false;
+			thread = null;
+		}
 	}
 
 	static public Config getActive () {
@@ -117,8 +121,8 @@ public class Config extends Editable {
 	}
 
 	static private class PollerThread extends Thread {
-		private final Config config;
-		private volatile boolean running = true;
+		final Config config;
+		volatile boolean running = true;
 		private boolean hasError;
 
 		public PollerThread (Config config) {
@@ -191,6 +195,7 @@ public class Config extends Editable {
 				if (ERROR) error("Error checking config triggers.", ex);
 				hasError = true;
 			} finally {
+				running = false;
 				if (device != null) {
 					try {
 						device.applyChanges();

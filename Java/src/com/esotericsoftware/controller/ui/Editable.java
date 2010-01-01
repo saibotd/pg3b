@@ -22,6 +22,7 @@ import com.esotericsoftware.controller.input.Keyboard;
 import com.esotericsoftware.controller.input.Mouse;
 import com.esotericsoftware.controller.input.XInputXboxController;
 import com.esotericsoftware.controller.input.Keyboard.KeyboardInput;
+import com.esotericsoftware.controller.ui.DeviceAction.Direction;
 import com.esotericsoftware.controller.ui.swing.EditorPanel;
 import com.esotericsoftware.controller.xim.XIMMouseTranslation;
 
@@ -49,14 +50,56 @@ public class Editable implements Cloneable {
 
 		yamlConfig.setScalarSerializer(KeyboardInput.class, new ScalarSerializer<KeyboardInput>() {
 			public KeyboardInput read (String value) {
-				int spaceIndex = value.lastIndexOf(' ');
 				KeyboardInput input = new KeyboardInput();
-				input.setKeyCode(Integer.parseInt(value.substring(spaceIndex + 1)));
+				input.setKeyCode(Keyboard.getKeyCode(value));
 				return input;
 			}
 
 			public String write (KeyboardInput input) {
-				return input + " " + input.getKeyCode();
+				return Keyboard.getName(input.getKeyCode()).toLowerCase();
+			}
+		});
+
+		yamlConfig.setScalarSerializer(DeviceAction.class, new ScalarSerializer<DeviceAction>() {
+			public DeviceAction read (String value) {
+				DeviceAction action = new DeviceAction();
+				int spaceIndex = value.indexOf(' ');
+				if (spaceIndex != -1) {
+					action.setTarget(Device.getTarget(value.substring(0, spaceIndex)));
+					action.setDirection(Direction.valueOf(value.substring(spaceIndex + 1)));
+				} else
+					action.setTarget(Device.getTarget(value));
+				return action;
+			}
+
+			public String write (DeviceAction action) {
+				String value = action.getTarget().name();
+				if (action.getDirection() != Direction.both) value += " " + action.getDirection();
+				return value;
+			}
+		});
+
+		yamlConfig.setScalarSerializer(ScriptAction.class, new ScalarSerializer<ScriptAction>() {
+			public ScriptAction read (String value) {
+				ScriptAction action = new ScriptAction();
+				action.setScriptName(value);
+				return action;
+			}
+
+			public String write (ScriptAction action) {
+				return action.getScriptName();
+			}
+		});
+
+		yamlConfig.setScalarSerializer(ScriptAction.class, new ScalarSerializer<ScriptAction>() {
+			public ScriptAction read (String value) {
+				ScriptAction action = new ScriptAction();
+				action.setScriptName(value);
+				return action;
+			}
+
+			public String write (ScriptAction action) {
+				return action.getScriptName();
 			}
 		});
 

@@ -36,6 +36,7 @@ public class Listeners<T> {
 		if (listener == null) throw new IllegalArgumentException("listener cannot be null.");
 		T[] listeners = this.listeners;
 		int n = listeners.length;
+		if (n == 0) return;
 		T[] newListeners = (T[])Array.newInstance(listenerClass, n - 1);
 		for (int i = 0, ii = 0; i < n; i++) {
 			T copyListener = listeners[i];

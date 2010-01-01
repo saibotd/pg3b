@@ -63,7 +63,7 @@ public class InputTriggerPanel extends JPanel {
 	private JLabel triggerLabel;
 	private JRadioButton targetRadio, scriptRadio;
 	private JButton saveButton, cancelButton, deadzoneButton;
-	private JTextField descriptionText;
+	private JTextField nameText;
 	private JComboBox targetCombo, targetDirectionCombo, scriptCombo;
 	private JCheckBox altCheckBox, ctrlCheckBox, shiftCheckBox, anyCheckBox, noneCheckBox;
 	private DefaultComboBoxModel scriptComboModel, targetComboModel, targetDirectionComboModel;
@@ -110,7 +110,7 @@ public class InputTriggerPanel extends JPanel {
 
 			triggerLabel.setText("Click to set trigger...");
 			triggerLabel.setFont(triggerLabel.getFont().deriveFont(Font.ITALIC));
-			descriptionText.setText("");
+			nameText.setText("");
 			targetRadio.setSelected(true);
 			shiftCheckBox.setSelected(false);
 			ctrlCheckBox.setSelected(false);
@@ -128,7 +128,7 @@ public class InputTriggerPanel extends JPanel {
 			titlePanel.setBorder(BorderFactory.createTitledBorder("Edit Trigger"));
 
 			triggerLabel.setFont(triggerLabel.getFont().deriveFont(Font.PLAIN));
-			descriptionText.setText(trigger.getDescription());
+			nameText.setText(trigger.getName());
 			shiftCheckBox.setSelected(trigger.getShift());
 			ctrlCheckBox.setSelected(trigger.getCtrl());
 			altCheckBox.setSelected(trigger.getAlt());
@@ -141,7 +141,6 @@ public class InputTriggerPanel extends JPanel {
 			invertTriggerCheckBox.setSelected(trigger.getInvert());
 			Input input = trigger.getInput();
 			axisButtonPanel.setVisible(input.isAxis() && !(input instanceof MouseInput));
-			axisButtonPanel.setVisible(true);
 			setTriggerText(trigger);
 
 			Action action = trigger.getAction();
@@ -333,7 +332,7 @@ public class InputTriggerPanel extends JPanel {
 			public void actionPerformed (ActionEvent event) {
 				owner.getConfigTab().showConfigEditor();
 
-				trigger.setDescription(descriptionText.getText());
+				trigger.setName(nameText.getText());
 				trigger.setCtrl(ctrlCheckBox.isSelected());
 				trigger.setAlt(altCheckBox.isSelected());
 				trigger.setShift(shiftCheckBox.isSelected());
@@ -402,13 +401,13 @@ public class InputTriggerPanel extends JPanel {
 			new Insets(0, 0, 0, 0), 0, 0));
 		titlePanel.setBorder(BorderFactory.createTitledBorder("New Trigger"));
 		{
-			JLabel label = new JLabel("Description:");
+			JLabel label = new JLabel("Name:");
 			titlePanel.add(label, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE,
 				new Insets(0, 6, 6, 0), 0, 0));
 		}
 		{
-			descriptionText = new JTextField();
-			titlePanel.add(descriptionText, new GridBagConstraints(2, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER,
+			nameText = new JTextField();
+			titlePanel.add(nameText, new GridBagConstraints(2, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER,
 				GridBagConstraints.HORIZONTAL, new Insets(0, 6, 6, 6), 0, 0));
 		}
 		{
@@ -508,7 +507,7 @@ public class InputTriggerPanel extends JPanel {
 			titlePanel.add(triggerLabel, new GridBagConstraints(2, 1, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER,
 				GridBagConstraints.HORIZONTAL, new Insets(0, 6, 6, 6), 0, 0));
 			triggerLabel.setOpaque(true);
-			triggerLabel.setBorder(descriptionText.getBorder());
+			triggerLabel.setBorder(nameText.getBorder());
 			triggerLabel.setFocusable(true);
 		}
 		{

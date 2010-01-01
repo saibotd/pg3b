@@ -53,11 +53,19 @@ public class DeviceAction implements Action {
 	public void reset (Config config, Trigger trigger) {
 	}
 
-	public Object execute (Config config, Trigger trigger) {
+	public Object execute (Config config, Trigger trigger, boolean isActive, Object object) {
 		Device device = UI.instance.getDevice();
 		if (device == null) return null;
-		Object object = trigger.getPayload();
-		float payload = object instanceof Float ? (Float)object : 1;
+		float payload;
+		if (object instanceof Float)
+			payload = (Float)object;
+		else if (object instanceof Integer)
+			payload = (Integer)object;
+		else if (object instanceof Boolean)
+			payload = (Boolean)object ? 1 : 0;
+		else {
+			payload = object != null ? 1 : 0;
+		}
 		switch (direction) {
 		case up:
 			if (payload > 0) payload = -payload;

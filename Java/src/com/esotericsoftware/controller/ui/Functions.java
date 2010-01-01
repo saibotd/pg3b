@@ -3,7 +3,10 @@ package com.esotericsoftware.controller.ui;
 
 import static com.esotericsoftware.minlog.Log.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.TimerTask;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -28,16 +31,23 @@ import com.esotericsoftware.controller.util.Util;
  * App specific Pnuts functions.
  */
 public class Functions {
+	static private ArrayList<PnutsFunction> functions = new ArrayList(32);
+
+	static public List<PnutsFunction> getAll () {
+		return functions;
+	}
+
 	static public abstract class BaseFunction extends PnutsFunction {
 		private final int minArgs;
 		private final int maxArgs;
 		private final String toString;
 
 		public BaseFunction (String name, int minArgs, int maxArgs, String argNames) {
-			super(name.intern());
+			super(name);
 			this.minArgs = minArgs;
 			this.maxArgs = maxArgs;
 			toString = "function " + name + "(" + argNames + ")";
+			functions.add(this);
 		}
 
 		protected Object exec (Object[] args, Context context) {
@@ -50,10 +60,6 @@ public class Functions {
 
 		abstract protected Object invoke (Object[] args, Context context);
 
-		protected float getFloat (Object object) {
-			return Float.valueOf(object.toString()).floatValue();
-		}
-
 		public boolean defined (int argCount) {
 			return argCount >= minArgs && argCount <= maxArgs;
 		}
@@ -65,7 +71,7 @@ public class Functions {
 
 	static public BaseFunction sleep = new BaseFunction("sleep", 1, 1, "millis") {
 		protected Object invoke (Object[] args, Context context) {
-			long sleepMillis = (Integer)args[0];
+			long sleepMillis = (long)toDouble(args[0]);
 			long endTime = System.nanoTime() + sleepMillis * 1000000;
 			if (sleepMillis > 100) {
 				try {
@@ -127,22 +133,22 @@ public class Functions {
 					System.out.println(name);
 				return null;
 			case 1:
-				note = (Integer)args[0];
+				note = (int)toDouble(args[0]);
 				break;
 			case 2:
 				instrumentName = (String)args[0];
-				note = (Integer)args[1];
+				note = (int)toDouble(args[1]);
 				break;
 			case 3:
 				instrumentName = (String)args[0];
-				note = (Integer)args[1];
-				duration = (Integer)args[2];
+				note = (int)toDouble(args[1]);
+				duration = (int)toDouble(args[2]);
 				break;
 			case 4:
 				instrumentName = (String)args[0];
-				note = (Integer)args[1];
-				duration = (Integer)args[2];
-				pitch = getFloat(args[3]);
+				note = (int)toDouble(args[1]);
+				duration = (int)toDouble(args[2]);
+				pitch = (float)toDouble(args[3]);
 				break;
 			}
 
@@ -206,6 +212,7 @@ public class Functions {
 				config = (Config)args[0];
 			else
 				config = (Config)getConfig.invoke(args, context);
+			if (config == null) throw new IllegalArgumentException("Config not found with name: " + args[0]);
 			config.setActive(true);
 			return null;
 		}
@@ -253,7 +260,7 @@ public class Functions {
 	static public BaseFunction interval = new BaseFunction("interval", 2, 2, "name, delay") {
 		protected Object invoke (Object[] args, Context context) {
 			String name = (String)args[0];
-			long delay = (Integer)args[1];
+			long delay = (long)toDouble(args[1]);
 
 			Long startTime = nameToStartTime.get(name);
 			if (startTime == null || System.currentTimeMillis() - startTime >= delay) {
@@ -283,6 +290,33 @@ public class Functions {
 			object = object != null ? null : Boolean.TRUE;
 			pkg.set(valueName, object);
 			return object != null;
+		}
+	};
+
+	static public BaseFunction target = new BaseFunction("target", 1, 1, "trigger") {
+		protected Object invoke (Object[] args, Context context) {
+			Config config = Config.getActive();
+
+			Trigger trigger = null;
+			if (args[0] instanceof Trigger)
+				trigger = (Trigger)args[0];
+			else if (args[0] instanceof String) {
+				String name = (String)args[0];
+				List<Trigger> triggers = config.getTriggers();
+				for (Iterator iter = triggers.iterator(); iter.hasNext();) {
+					Trigger configTrigger = (Trigger)iter.next();
+					String configTriggerName = configTrigger.getName();
+					if (configTriggerName != null && configTriggerName.equalsIgnoreCase(name)) {
+						trigger = configTrigger;
+						break;
+					}
+				}
+			}
+			if (trigger == null) throw new IllegalArgumentException("Trigger not found with name: " + args[0]);
+			Action action = trigger.getAction();
+			if (!(action instanceof DeviceAction))
+				throw new IllegalArgumentException("Trigger must have a device action: " + trigger);
+			return ((DeviceAction)action).getTarget();
 		}
 	};
 
@@ -317,4 +351,17 @@ public class Functions {
 			return null;
 		}
 	};
+
+	static double toDouble (Object value) {
+		if (value instanceof Integer) return (Integer)value;
+		if (value instanceof Float) return (Integer)value;
+		if (value instanceof Double) return (Double)value;
+		if (value instanceof Long) return (Long)value;
+		if (value instanceof Short) return (Short)value;
+		if (value instanceof Byte) return (Byte)value;
+		if (value instanceof Character) return (Character)value;
+		if (value instanceof Boolean) return (Boolean)value ? 1 : 0;
+		if (value instanceof String) return Double.valueOf((String)value);
+		return value != null ? 1 : 0;
+	}
 }

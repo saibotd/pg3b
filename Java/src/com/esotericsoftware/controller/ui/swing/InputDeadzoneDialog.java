@@ -61,6 +61,7 @@ public class InputDeadzoneDialog extends JDialog {
 				Deadzone deadzone = shapeCombo.getSelectedIndex() == 0 ? new Deadzone.Square() : new Deadzone.Round();
 				deadzone.setSizeX((Float)xSpinner.getValue());
 				deadzone.setSizeY((Float)ySpinner.getValue());
+				if (deadzone.getSizeX() == 0 && deadzone.getSizeY() == 0) deadzone = null;
 				trigger.setDeadzone(deadzone);
 				dispose();
 			}

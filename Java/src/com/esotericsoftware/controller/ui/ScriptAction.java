@@ -1,8 +1,6 @@
 
 package com.esotericsoftware.controller.ui;
 
-import static com.esotericsoftware.minlog.Log.*;
-
 import java.io.PrintWriter;
 import java.util.List;
 
@@ -47,7 +45,7 @@ public class ScriptAction implements Action {
 		this.scriptName = scriptName;
 	}
 
-	public void reset (Config config, Trigger trigger) {
+	public synchronized void reset (Config config, Trigger trigger) {
 		context = null;
 		wasActive = false;
 
@@ -62,7 +60,7 @@ public class ScriptAction implements Action {
 		execute(pnuts, context, "init", 0);
 	}
 
-	public Object execute (Config config, Trigger trigger) {
+	public synchronized Object execute (Config config, Trigger trigger, boolean isActive, Object payload) {
 		if (context == null) return null;
 
 		Script script = getScript();
@@ -71,8 +69,7 @@ public class ScriptAction implements Action {
 		Pnuts pnuts = script.getPnuts();
 		if (pnuts == null) return null;
 
-		Object payload = trigger.getPayload();
-		if (trigger.isActive()) {
+		if (isActive) {
 			if (!wasActive) {
 				wasActive = true;
 				return execute(pnuts, context, "activate", payload);
@@ -82,6 +79,7 @@ public class ScriptAction implements Action {
 		} else {
 			if (wasActive) {
 				wasActive = false;
+				execute(pnuts, context, "continuous", payload);
 				return execute(pnuts, context, "deactivate", payload);
 			}
 		}
@@ -112,26 +110,12 @@ public class ScriptAction implements Action {
 	 */
 	static public Context getContext (Config config, Trigger trigger, Action action) {
 		Package pkg = new Package(null);
+		for (PnutsFunction function : Functions.getAll())
+			pkg.set(function.getName(), function);
 		pkg.set(CONSTANT_CONFIG, config);
 		pkg.set(CONSTANT_TRIGGER, trigger);
 		pkg.set(CONSTANT_ACTION, action);
 		pkg.set(CONSTANT_PAYLOAD, 0);
-
-		pkg.set(Functions.sleep.getName(), Functions.sleep);
-		pkg.set(Functions.play.getName(), Functions.play);
-		pkg.set(Functions.beep.getName(), Functions.beep);
-		pkg.set(Functions.get.getName(), Functions.get);
-		pkg.set(Functions.set.getName(), Functions.set);
-		pkg.set(Functions.toggle.getName(), Functions.toggle);
-		pkg.set(Functions.fork.getName(), Functions.fork);
-		pkg.set(Functions.isCtrlDown.getName(), Functions.isCtrlDown);
-		pkg.set(Functions.isAltDown.getName(), Functions.isAltDown);
-		pkg.set(Functions.isShiftDown.getName(), Functions.isShiftDown);
-		pkg.set(Functions.millis.getName(), Functions.millis);
-		pkg.set(Functions.nanos.getName(), Functions.nanos);
-		pkg.set(Functions.interval.getName(), Functions.interval);
-		pkg.set(Functions.getConfig.getName(), Functions.getConfig);
-		pkg.set(Functions.setConfig.getName(), Functions.setConfig);
 
 		Context context = new Context(pkg);
 		context.setWriter(new PrintWriter(System.out, true));
@@ -141,14 +125,14 @@ public class ScriptAction implements Action {
 	}
 
 	/**
-	 * Executes the specified function, if it exists. If the function is "activate" or "deactivate" and does not exist, the entire
-	 * script is executed.
+	 * Executes the specified function, if it exists.
 	 */
 	static public Object execute (Pnuts pnuts, Context context, String functionName, Object payload) {
-		context.getCurrentPackage().set(CONSTANT_PAYLOAD, payload);
-		Object function = context.resolveSymbol(functionName);
-		if (function instanceof PnutsFunction) return ((PnutsFunction)function).call(new Object[0], context);
-		if (functionName == FUNCTION_ACTIVATE || functionName == FUNCTION_DEACTIVATE) return pnuts.run(context);
-		return null;
+		synchronized (context) {
+			context.getCurrentPackage().set(CONSTANT_PAYLOAD, payload);
+			Object function = context.resolveSymbol(functionName);
+			if (function instanceof PnutsFunction) return ((PnutsFunction)function).call(new Object[0], context);
+			return null;
+		}
 	}
 }

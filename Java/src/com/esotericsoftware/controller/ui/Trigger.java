@@ -5,15 +5,15 @@ package com.esotericsoftware.controller.ui;
  * Decides when an {@link Action} should be executed.
  */
 abstract public class Trigger {
-	private String description;
+	private String name;
 	private Action action;
 
-	public String getDescription () {
-		return description;
+	public String getName () {
+		return name;
 	}
 
-	public void setDescription (String description) {
-		this.description = description == null || description.length() == 0 ? null : description;
+	public void setName (String name) {
+		this.name = name == null || name.length() == 0 ? null : name;
 	}
 
 	public Action getAction () {
@@ -25,7 +25,7 @@ abstract public class Trigger {
 	}
 
 	public Object execute (Config config) {
-		return action.execute(config, this);
+		return action.execute(config, this, isActive(), getPayload());
 	}
 
 	/**

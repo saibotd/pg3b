@@ -78,7 +78,7 @@ import com.esotericsoftware.controller.xim.XIM;
 import com.esotericsoftware.minlog.Log;
 
 public class UI extends JFrame {
-	static public final String version = "0.1.15";
+	static public final String version = "0.1.16";
 	static public UI instance;
 
 	static private Settings settings = Settings.get();
@@ -135,6 +135,7 @@ public class UI extends JFrame {
 
 		controllerPanel.setDevice(null);
 		statusBar.setDevice(null);
+		scriptEditor.setDevice(null);
 		controllerPanel.setController(null);
 		statusBar.setController(null);
 
@@ -221,6 +222,7 @@ public class UI extends JFrame {
 			public void run () {
 				controllerPanel.setDevice(device);
 				statusBar.setDevice(device);
+				scriptEditor.setDevice(device);
 				configTab.getConfigEditor().setDevice(device);
 
 				disconnectDeviceMenuItem.setEnabled(device != null);

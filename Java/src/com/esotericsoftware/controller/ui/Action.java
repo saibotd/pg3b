@@ -10,9 +10,11 @@ public interface Action {
 	/**
 	 * @param config The config that the trigger that executed this action belongs to.
 	 * @param trigger The trigger that executed this action.
+	 * @param isActive True if the trigger that executed this action should be considered active.
+	 * @param payload The payload of the trigger that executed this action.
 	 * @return Returns a non-null result if the action was executed.
 	 */
-	public Object execute (Config config, Trigger trigger);
+	public Object execute (Config config, Trigger trigger, boolean isActive, Object payload);
 
 	/**
 	 * Returns true if this action is able to be executed.

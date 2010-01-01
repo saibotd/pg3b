@@ -115,12 +115,12 @@ public class XInputXboxController extends XboxController {
 		if ((diff & BUTTON_X) != 0) notifyListeners(Button.x, (buttons & BUTTON_X) == BUTTON_X);
 		if ((diff & BUTTON_Y) != 0) notifyListeners(Button.y, (buttons & BUTTON_Y) == BUTTON_Y);
 
-		if (leftTrigger != oldLeftTrigger) notifyListeners(Axis.leftTrigger, leftTrigger);
-		if (rightTrigger != oldRightTrigger) notifyListeners(Axis.rightTrigger, rightTrigger);
-		if (thumbLX != oldThumbLX) notifyListeners(Axis.leftStickX, thumbLX);
-		if (thumbLY != oldThumbLY) notifyListeners(Axis.leftStickY, thumbLY);
-		if (thumbRX != oldThumbRX) notifyListeners(Axis.rightStickX, thumbRX);
-		if (thumbRY != oldThumbRY) notifyListeners(Axis.rightStickY, thumbRY);
+		if (leftTrigger != oldLeftTrigger) notifyListeners(Axis.leftTrigger, leftTrigger / 255f);
+		if (rightTrigger != oldRightTrigger) notifyListeners(Axis.rightTrigger, rightTrigger / 255f);
+		if (thumbLX != oldThumbLX) notifyListeners(Axis.leftStickX, thumbLX / 32767f);
+		if (thumbLY != oldThumbLY) notifyListeners(Axis.leftStickY, thumbLY / 32767f);
+		if (thumbRX != oldThumbRX) notifyListeners(Axis.rightStickX, thumbRX / 32767f);
+		if (thumbRY != oldThumbRY) notifyListeners(Axis.rightStickY, thumbRY / 32767f);
 
 		if (!wasConnected && isConnected)
 			notifyConnected();

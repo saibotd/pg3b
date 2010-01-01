@@ -125,7 +125,9 @@ public class DeviceDeadzoneDialog extends JDialog {
 					device.reset();
 				} catch (IOException ignored) {
 				}
+				if (leftDeadzone.getSizeX() == 0 && leftDeadzone.getSizeY() == 0) leftDeadzone = null;
 				device.setDeadzone(Stick.left, leftDeadzone);
+				if (rightDeadzone.getSizeX() == 0 && rightDeadzone.getSizeY() == 0) rightDeadzone = null;
 				device.setDeadzone(Stick.right, rightDeadzone);
 				dispose();
 			}
@@ -198,8 +200,8 @@ public class DeviceDeadzoneDialog extends JDialog {
 				{
 					leftXSpinner = new JSpinner();
 					leftStickPanel.add(leftXSpinner, new GridBagConstraints(1, 1, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
-						GridBagConstraints.NONE, new Insets(6, 6, 0, 6), 0, 0));
-					leftXSpinner.setModel(Util.newFloatSpinnerModel(0, -128, 128, 1));
+						GridBagConstraints.BOTH, new Insets(6, 6, 0, 6), 0, 0));
+					leftXSpinner.setModel(Util.newFloatSpinnerModel(0, -1, 1, 0.05f));
 				}
 				{
 					JLabel label = new JLabel("Y axis:");
@@ -209,8 +211,8 @@ public class DeviceDeadzoneDialog extends JDialog {
 				{
 					leftYSpinner = new JSpinner();
 					leftStickPanel.add(leftYSpinner, new GridBagConstraints(1, 2, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
-						GridBagConstraints.NONE, new Insets(6, 6, 4, 6), 0, 0));
-					leftYSpinner.setModel(Util.newFloatSpinnerModel(0, -128, 128, 1));
+						GridBagConstraints.BOTH, new Insets(6, 6, 4, 6), 0, 0));
+					leftYSpinner.setModel(Util.newFloatSpinnerModel(0, -1, 1, 0.05f));
 				}
 			}
 			{
@@ -237,8 +239,8 @@ public class DeviceDeadzoneDialog extends JDialog {
 				{
 					rightXSpinner = new JSpinner();
 					rightStickPanel.add(rightXSpinner, new GridBagConstraints(1, 1, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
-						GridBagConstraints.NONE, new Insets(6, 6, 0, 6), 0, 0));
-					rightXSpinner.setModel(Util.newFloatSpinnerModel(0, -128, 128, 1));
+						GridBagConstraints.BOTH, new Insets(6, 6, 0, 6), 0, 0));
+					rightXSpinner.setModel(Util.newFloatSpinnerModel(0, -1, 1, 0.05f));
 				}
 				{
 					JLabel label = new JLabel("Y axis:");
@@ -248,8 +250,8 @@ public class DeviceDeadzoneDialog extends JDialog {
 				{
 					rightYSpinner = new JSpinner();
 					rightStickPanel.add(rightYSpinner, new GridBagConstraints(1, 2, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
-						GridBagConstraints.NONE, new Insets(6, 6, 4, 6), 0, 0));
-					rightYSpinner.setModel(Util.newFloatSpinnerModel(0, -128, 128, 1));
+						GridBagConstraints.BOTH, new Insets(6, 6, 4, 6), 0, 0));
+					rightYSpinner.setModel(Util.newFloatSpinnerModel(0, -1, 1, 0.05f));
 				}
 			}
 		}

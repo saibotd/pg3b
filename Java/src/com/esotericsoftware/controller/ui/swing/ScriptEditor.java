@@ -32,6 +32,7 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
+import javax.swing.JToggleButton;
 import javax.swing.JToolTip;
 import javax.swing.KeyStroke;
 import javax.swing.event.CaretEvent;
@@ -63,6 +64,8 @@ import pnuts.lang.ParseException;
 import pnuts.lang.Pnuts;
 import pnuts.lang.PnutsException;
 
+import com.esotericsoftware.controller.device.Axis;
+import com.esotericsoftware.controller.device.Button;
 import com.esotericsoftware.controller.device.Device;
 import com.esotericsoftware.controller.ui.Action;
 import com.esotericsoftware.controller.ui.Config;
@@ -78,13 +81,16 @@ public class ScriptEditor extends EditorPanel<Script> {
 	private HashMap<File, Integer> fileToPosition = new HashMap();
 	private TimerTask compileTask;
 	private Object highlightTag;
+	private RecordListener recordListener = new RecordListener();
 
 	private RSyntaxTextArea codeText;
 	private RTextScrollPane codeScroll;
 	private SquiggleUnderlineHighlightPainter errorPainter = new SquiggleUnderlineHighlightPainter(Color.red);
 	private AutoCompletion autoCompletion;
 	private JButton executeButton;
+	private JToggleButton recordButton;
 	private JLabel errorLabel;
+	private Device device;
 
 	public ScriptEditor (UI owner) {
 		super(owner, Script.class, new File("scripts"), ".script");
@@ -214,64 +220,23 @@ public class ScriptEditor extends EditorPanel<Script> {
 		super.saveItem(item, force);
 		errorLabel.setText("");
 
-		ConfigEditor configEditor = owner.getConfigTab().getConfigEditor();
-		for (Config config : configEditor.getItems()) {
-			for (Trigger trigger : config.getTriggers()) {
-				if (trigger.getAction() instanceof ScriptAction) {
-					ScriptAction action = (ScriptAction)trigger.getAction();
-					if (action.getScript() == item) action.reset(config, trigger);
+		if (Config.getActive() != null) {
+			// Try to reset the saved trigger in the active config.
+			ConfigEditor configEditor = owner.getConfigTab().getConfigEditor();
+			for (Config config : configEditor.getItems()) {
+				for (Trigger trigger : config.getTriggers()) {
+					if (trigger.getAction() instanceof ScriptAction) {
+						ScriptAction action = (ScriptAction)trigger.getAction();
+						if (action.getScript() == item) {
+							try {
+								action.reset(config, trigger);
+							} catch (Exception ignored) {
+							}
+						}
+					}
 				}
 			}
 		}
-	}
-
-	private void initializeEvents () {
-		codeText.addCaretListener(new CaretListener() {
-			public void caretUpdate (CaretEvent event) {
-				if (codeText.getText().length() > 0) fileToPosition.put(getSelectedItem().getFile(), event.getDot());
-			}
-		});
-
-		codeText.addParser(new AbstractParser() {
-			public ParseResult parse (RSyntaxDocument doc, String style) {
-				if (highlightTag != null) {
-					codeText.getHighlighter().removeHighlight(highlightTag);
-					highlightTag = null;
-				}
-				DefaultParseResult result = new DefaultParseResult(this);
-				result.setParsedLines(0, codeText.getLineCount() - 1);
-				if (getSelectedItem() == null) return result;
-				try {
-					Pnuts.parse(codeText.getText());
-				} catch (ParseException ex) {
-					if (DEBUG) debug("Error during script compilation.", ex);
-					try {
-						String message = ex.getMessage();
-						int line = ex.getErrorLine() - 1;
-						int offset = codeText.getLineStartOffset(line) + ex.getErrorColumn() - 1;
-						int length = codeText.getLineEndOffset(line) - offset;
-						result.addNotice(new DefaultParserNotice(this, message, line, offset, length));
-						displayErrorMessage(message);
-					} catch (BadLocationException ex2) {
-						throw new RuntimeException(ex2);
-					}
-				}
-				return result;
-			}
-		});
-
-		executeButton.addMouseListener(new MouseAdapter() {
-			public void mousePressed (MouseEvent event) {
-				execute();
-			}
-		});
-
-		codeText.getInputMap(WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.CTRL_MASK), "execute");
-		codeText.getActionMap().put("execute", new AbstractAction() {
-			public void actionPerformed (ActionEvent event) {
-				execute();
-			}
-		});
 	}
 
 	private void execute () {
@@ -310,7 +275,7 @@ public class ScriptEditor extends EditorPanel<Script> {
 						}
 					});
 				} catch (final PnutsException ex) {
-					if (DEBUG) debug("Error during script execution.", ex);
+					if (DEBUG) debug("Error during script execution: " + getSelectedItem(), ex);
 					final String message;
 					if (ex.getThrowable() != null)
 						message = ex.getThrowable().getClass().getSimpleName() + ": " + ex.getThrowable().getMessage();
@@ -329,7 +294,7 @@ public class ScriptEditor extends EditorPanel<Script> {
 						}
 					});
 				} catch (final Exception ex) {
-					if (DEBUG) debug("Error during script compilation.", ex);
+					if (DEBUG) debug("Error during script compilation: " + getSelectedItem(), ex);
 					final String message = ex.getMessage();
 					EventQueue.invokeLater(new Runnable() {
 						public void run () {
@@ -347,6 +312,160 @@ public class ScriptEditor extends EditorPanel<Script> {
 		errorLabel.setText(message);
 		errorLabel.setToolTipText(message);
 	}
+
+	public void setDevice (Device device) {
+		if (this.device != null) this.device.removeListener(recordListener);
+		this.device = device;
+		recordButton.setEnabled(device != null && getSelectedItem() != null);
+		recordButton.setSelected(false);
+	}
+
+	private void initializeEvents () {
+		codeText.addCaretListener(new CaretListener() {
+			public void caretUpdate (CaretEvent event) {
+				Script script = getSelectedItem();
+				if (script == null) return;
+				if (codeText.getText().length() > 0) fileToPosition.put(script.getFile(), event.getDot());
+			}
+		});
+
+		codeText.addParser(new AbstractParser() {
+			public ParseResult parse (RSyntaxDocument doc, String style) {
+				if (highlightTag != null) {
+					codeText.getHighlighter().removeHighlight(highlightTag);
+					highlightTag = null;
+				}
+				DefaultParseResult result = new DefaultParseResult(this);
+				result.setParsedLines(0, codeText.getLineCount() - 1);
+				if (getSelectedItem() == null) return result;
+				try {
+					Pnuts.parse(codeText.getText());
+				} catch (ParseException ex) {
+					if (DEBUG) debug("Error during script compilation: " + getSelectedItem(), ex);
+					try {
+						String message = ex.getMessage();
+						int line = ex.getErrorLine() - 1;
+						int offset = codeText.getLineStartOffset(line) + ex.getErrorColumn() - 1;
+						int length = codeText.getLineEndOffset(line) - offset;
+						result.addNotice(new DefaultParserNotice(this, message, line, offset, length));
+						displayErrorMessage(message);
+					} catch (BadLocationException ex2) {
+						throw new RuntimeException(ex2);
+					}
+				}
+				return result;
+			}
+		});
+
+		executeButton.addMouseListener(new MouseAdapter() {
+			public void mousePressed (MouseEvent event) {
+				execute();
+			}
+		});
+
+		recordButton.addActionListener(new ActionListener() {
+			public void actionPerformed (ActionEvent event) {
+				if (recordButton.isSelected()) {
+					recordListener.lastTime = -1;
+					device.addListener(recordListener);
+				} else
+					device.removeListener(recordListener);
+			}
+		});
+
+		codeText.getInputMap(WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.CTRL_MASK), "execute");
+		codeText.getActionMap().put("execute", new AbstractAction() {
+			public void actionPerformed (ActionEvent event) {
+				execute();
+			}
+		});
+	}
+
+	private void initializeLayout () {
+		{
+			codeText = new RSyntaxTextArea();
+			codeText.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_JAVA);
+			codeText.setHighlightCurrentLine(false);
+			codeText.setCloseCurlyBraces(false);
+			codeText.setCaretColor(Color.black);
+			codeText.setBackground(Color.white);
+			codeText.setSelectionColor(new Color(0xb8ddff));
+			codeText.setTextAntiAliasHint("VALUE_TEXT_ANTIALIAS_ON");
+			{
+				codeScroll = new RTextScrollPane(codeText);
+				getContentPanel().add(
+					codeScroll,
+					new GridBagConstraints(0, 0, 2, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0,
+						0, 0), 0, 0));
+			}
+		}
+		{
+			errorLabel = new JLabel() {
+				public JToolTip createToolTip () {
+					return new JMultilineTooltip(640);
+				}
+			};
+			getContentPanel().add(
+				errorLabel,
+				new GridBagConstraints(0, 1, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
+					new Insets(0, 6, 6, 0), 0, 0));
+		}
+		{
+			executeButton = new JButton("Execute");
+			getContentPanel().add(
+				executeButton,
+				new GridBagConstraints(1, 1, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE,
+					new Insets(6, 6, 6, 0), 0, 0));
+		}
+		{
+			recordButton = new JToggleButton("Record");
+			getContentPanel().add(
+				recordButton,
+				new GridBagConstraints(0, 1, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE,
+					new Insets(6, 6, 6, 0), 0, 0));
+		}
+
+		Util.enableWhenModelHasSelection(getSelectionModel(), new Runnable() {
+			public void run () {
+				recordButton.setEnabled(device != null && recordButton.isEnabled());
+			}
+		}, recordButton, codeText, executeButton);
+	}
+
+	private class RecordListener extends Device.Listener {
+		long lastTime;
+
+		public void axisChanged (final Axis axis, final float state) {
+			sleep();
+			EventQueue.invokeLater(new Runnable() {
+				public void run () {
+					codeText.append("device.set(\"" + axis.name() + "\", " + state + ")\n");
+				}
+			});
+		}
+
+		public void buttonChanged (final Button button, final boolean pressed) {
+			sleep();
+			EventQueue.invokeLater(new Runnable() {
+				public void run () {
+					codeText.append("device.set(\"" + button.name() + "\", " + pressed + ")\n");
+				}
+			});
+		}
+
+		private void sleep () {
+			long time = System.currentTimeMillis();
+			final long sleep = time - lastTime;
+			if (lastTime != -1 && sleep > 0) {
+				EventQueue.invokeLater(new Runnable() {
+					public void run () {
+						codeText.append("sleep(" + sleep + ")\n");
+					}
+				});
+			}
+			lastTime = time;
+		}
+	};
 
 	private void setFontSize (float size) {
 		try {
@@ -400,46 +519,6 @@ public class ScriptEditor extends EditorPanel<Script> {
 		} catch (Exception ex) {
 			if (WARN) warn("Error setting fonts.", ex);
 		}
-	}
-
-	private void initializeLayout () {
-		{
-			codeText = new RSyntaxTextArea();
-			codeText.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_JAVA);
-			codeText.setHighlightCurrentLine(false);
-			codeText.setCloseCurlyBraces(false);
-			codeText.setCaretColor(Color.black);
-			codeText.setBackground(Color.white);
-			codeText.setSelectionColor(new Color(0xb8ddff));
-			codeText.setTextAntiAliasHint("VALUE_TEXT_ANTIALIAS_ON");
-			{
-				codeScroll = new RTextScrollPane(codeText);
-				getContentPanel().add(
-					codeScroll,
-					new GridBagConstraints(0, 0, 2, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0,
-						0, 0), 0, 0));
-			}
-		}
-		{
-			errorLabel = new JLabel() {
-				public JToolTip createToolTip () {
-					return new JMultilineTooltip(640);
-				}
-			};
-			getContentPanel().add(
-				errorLabel,
-				new GridBagConstraints(0, 1, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
-					new Insets(0, 6, 6, 0), 0, 0));
-		}
-		{
-			executeButton = new JButton("Execute");
-			getContentPanel().add(
-				executeButton,
-				new GridBagConstraints(1, 1, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE,
-					new Insets(6, 6, 6, 0), 0, 0));
-		}
-
-		Util.enableWhenModelHasSelection(getSelectionModel(), codeText, executeButton);
 	}
 
 	static class CellRenderer extends CompletionCellRenderer {

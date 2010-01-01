@@ -6,6 +6,9 @@ import static java.awt.event.KeyEvent.*;
 import java.awt.KeyEventDispatcher;
 import java.awt.KeyboardFocusManager;
 import java.awt.event.KeyEvent;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.util.HashMap;
 
 import com.esotericsoftware.controller.util.Listeners;
 
@@ -14,6 +17,26 @@ import com.esotericsoftware.controller.util.Listeners;
  */
 public class Keyboard implements InputDevice {
 	static public final Keyboard instance = new Keyboard();
+
+	static private final HashMap<Integer, String> codeToName = new HashMap();
+	static private final HashMap<String, Integer> nameToCode = new HashMap();
+	static {
+		int fieldModifiers = Modifier.PUBLIC | Modifier.STATIC | Modifier.FINAL;
+		Field[] fields = KeyEvent.class.getDeclaredFields();
+		for (int i = 0; i < fields.length; i++) {
+			Field field = fields[i];
+			try {
+				if (field.getModifiers() == fieldModifiers && field.getType() == Integer.TYPE && field.getName().startsWith("VK_")) {
+					int keyCode = field.getInt(null);
+					if (keyCode == 0) continue;
+					String name = KeyEvent.getKeyText(keyCode);
+					codeToName.put(keyCode, name);
+					nameToCode.put(name.toLowerCase(), keyCode);
+				}
+			} catch (IllegalAccessException ignored) {
+			}
+		}
+	}
 
 	private boolean[] keys = new boolean[256];
 	private Listeners<Listener> listeners = new Listeners(Listener.class);
@@ -26,7 +49,7 @@ public class Keyboard implements InputDevice {
 				switch (event.getID()) {
 				case KeyEvent.KEY_PRESSED: {
 					int keyCode = event.getKeyCode();
-					if (keyCode > keys.length) break;
+					if (keyCode == 0 || keyCode > keys.length) break;
 					lastKeyCode = keyCode;
 					keys[keyCode] = true;
 					for (int i = 0, n = listeners.length; i < n; i++)
@@ -100,9 +123,20 @@ public class Keyboard implements InputDevice {
 		return "Keyboard";
 	}
 
+	static public String getName (int keyCode) {
+		String name = codeToName.get(keyCode);
+		if (name == null) return "<unknown>";
+		return name;
+	}
+
+	static public int getKeyCode (String name) {
+		Integer keyCode = nameToCode.get(name.toLowerCase());
+		if (keyCode == null) return 0;
+		return keyCode;
+	}
+
 	static public class KeyboardInput implements Input {
 		private int keyCode;
-		private String name;
 
 		public float getState () {
 			return instance.isPressed(keyCode) ? 1 : 0;
@@ -137,8 +171,7 @@ public class Keyboard implements InputDevice {
 		}
 
 		public String toString () {
-			if (name == null) name = KeyEvent.getKeyText(keyCode);
-			return name;
+			return getName(keyCode);
 		}
 	}
 
