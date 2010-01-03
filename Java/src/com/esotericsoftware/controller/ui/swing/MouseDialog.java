@@ -18,50 +18,60 @@ import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
 
 import com.esotericsoftware.controller.ui.Config;
+import com.esotericsoftware.controller.ui.MouseTranslation;
 import com.esotericsoftware.controller.util.Util;
 import com.esotericsoftware.controller.xim.XIMMouseTranslation;
 
-public class XIMMouseDialog extends JDialog {
+public class MouseDialog extends JDialog {
 	private final UI owner;
-	private Config config;
-	private XIMMouseTranslation translation;
+	private Runnable saveRunnable;
+	private MouseTranslation translation;
 
 	private JSpinner yxRatioSpinner, smoothnessSpinner, diagonalDampenSpinner, sensitivitySpinner, translationExponentSpinner;
 	private JButton saveButton, cancelButton;
 
-	public XIMMouseDialog (UI owner, Config config) {
-		super(owner, "Mouse", true);
+	public MouseDialog (UI owner, MouseTranslation translation) {
+		super(owner, "Mouse Translation", true);
 		this.owner = owner;
 
-		this.config = config;
+		if (translation == null) translation = new XIMMouseTranslation();
+		this.translation = translation;
 
 		initializeLayout();
 		initializeEvents();
 
 		setLocationRelativeTo(owner);
 
-		XIMMouseTranslation translation = (XIMMouseTranslation)config.getMouseTranslation();
-		if (translation != null) {
-			this.translation = translation;
-			yxRatioSpinner.setValue(translation.getYXRatio());
-			smoothnessSpinner.setValue(translation.getSmoothness());
-			diagonalDampenSpinner.setValue(translation.getDiagonalDampen());
-			sensitivitySpinner.setValue(translation.getSensitivity());
-			translationExponentSpinner.setValue(translation.getTranslationExponent());
-		} else
-			this.translation = new XIMMouseTranslation();
+		if (translation instanceof XIMMouseTranslation) {
+			XIMMouseTranslation ximTranslation = (XIMMouseTranslation)translation;
+			yxRatioSpinner.setValue(ximTranslation.getYXRatio());
+			smoothnessSpinner.setValue(ximTranslation.getSmoothness());
+			diagonalDampenSpinner.setValue(ximTranslation.getDiagonalDampen());
+			sensitivitySpinner.setValue(ximTranslation.getSensitivity());
+			translationExponentSpinner.setValue(ximTranslation.getTranslationExponent());
+		}
+	}
+
+	public void setSaveRunnable (Runnable saveRunnable) {
+		this.saveRunnable = saveRunnable;
+	}
+
+	public MouseTranslation getMouseTranslation () {
+		return translation;
 	}
 
 	private void initializeEvents () {
 		saveButton.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
-				translation.setYXRatio((Float)yxRatioSpinner.getValue());
-				translation.setSmoothness((Float)smoothnessSpinner.getValue());
-				translation.setDiagonalDampen((Float)diagonalDampenSpinner.getValue());
-				translation.setSensitivity((Integer)sensitivitySpinner.getValue());
-				translation.setTranslationExponent((Float)translationExponentSpinner.getValue());
-				config.setMouseTranslation(translation);
-				owner.getConfigTab().getConfigEditor().saveItem(true);
+				if (translation instanceof XIMMouseTranslation) {
+					XIMMouseTranslation ximTranslation = (XIMMouseTranslation)translation;
+					ximTranslation.setYXRatio((Float)yxRatioSpinner.getValue());
+					ximTranslation.setSmoothness((Float)smoothnessSpinner.getValue());
+					ximTranslation.setDiagonalDampen((Float)diagonalDampenSpinner.getValue());
+					ximTranslation.setSensitivity((Integer)sensitivitySpinner.getValue());
+					ximTranslation.setTranslationExponent((Float)translationExponentSpinner.getValue());
+				}
+				if (saveRunnable != null) saveRunnable.run();
 				dispose();
 			}
 		});

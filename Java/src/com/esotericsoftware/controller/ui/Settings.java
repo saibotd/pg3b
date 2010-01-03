@@ -30,7 +30,7 @@ public class Settings {
 	public String selectedConfig;
 	public int logLevel = LEVEL_INFO;
 	public int windowState = JFrame.NORMAL;
-	public Rectangle windowSize = new Rectangle(-1, -1, 720, 814);
+	public Rectangle windowSize = new Rectangle(-1, -1, 770, 814);
 	public float dividerLocation = 0.66f;
 	public boolean ximConnected;
 	public boolean activationDisablesInput = true;

@@ -5,6 +5,7 @@ import static com.esotericsoftware.minlog.Log.*;
 
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.EventQueue;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
@@ -87,15 +88,19 @@ public class EditorPanel<T extends Editable> extends JPanel {
 			}
 
 			protected void updated () {
-				Component focused = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-				T selectedItem = getSelectedItem();
-				isListAdjusting = true;
-				listModel.removeAllElements();
-				for (T item : getItems())
-					listModel.addElement(item);
-				isListAdjusting = false;
-				setSelectedFile(selectedItem == null ? null : selectedItem.getFile());
-				if (focused != null) focused.requestFocus();
+				EventQueue.invokeLater(new Runnable() {
+					public void run () {
+						Component focused = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+						T selectedItem = getSelectedItem();
+						isListAdjusting = true;
+						listModel.removeAllElements();
+						for (T item : getItems())
+							listModel.addElement(item);
+						isListAdjusting = false;
+						setSelectedFile(selectedItem == null ? null : selectedItem.getFile());
+						if (focused != null) focused.requestFocus();
+					}
+				});
 			}
 		};
 		monitor.scan(rootDir, 3000);
@@ -329,6 +334,12 @@ public class EditorPanel<T extends Editable> extends JPanel {
 				listModel = new DefaultComboBoxModel();
 				list.setModel(listModel);
 				list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+				list.addMouseListener(new MouseAdapter() {
+					public void mousePressed (MouseEvent event) {
+						if (event.getButton() == 1) return;
+						list.setSelectedIndex(list.locationToIndex(event.getPoint()));
+					}
+				});
 			}
 		}
 		{

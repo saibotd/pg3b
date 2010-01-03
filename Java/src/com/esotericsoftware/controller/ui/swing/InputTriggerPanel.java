@@ -2,6 +2,7 @@
 package com.esotericsoftware.controller.ui.swing;
 
 import java.awt.AWTEvent;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -20,14 +21,18 @@ import java.util.TimerTask;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.DefaultListCellRenderer;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
 
 import com.esotericsoftware.controller.device.Axis;
 import com.esotericsoftware.controller.device.Button;
@@ -43,43 +48,45 @@ import com.esotericsoftware.controller.ui.Action;
 import com.esotericsoftware.controller.ui.Config;
 import com.esotericsoftware.controller.ui.DeviceAction;
 import com.esotericsoftware.controller.ui.InputTrigger;
+import com.esotericsoftware.controller.ui.MouseAction;
+import com.esotericsoftware.controller.ui.MouseTranslation;
 import com.esotericsoftware.controller.ui.Script;
 import com.esotericsoftware.controller.ui.ScriptAction;
 import com.esotericsoftware.controller.ui.DeviceAction.Direction;
 import com.esotericsoftware.controller.ui.swing.XboxControllerPanel.Listener;
 import com.esotericsoftware.controller.util.Util;
+import com.esotericsoftware.controller.xim.XIMMouseTranslation;
 
 public class InputTriggerPanel extends JPanel {
 	private UI owner;
 	private Config config;
 	private InputTrigger trigger;
-	private JCheckBox invertTriggerCheckBox;
-	private JLabel label;
 	private boolean isNewTrigger;
 	private TimerTask monitorControllersTask;
 	private float startMouseX, startMouseY;
+	private Target highlighted;
+	MouseTranslation translation;
 
-	private JPanel titlePanel, axisButtonPanel;
+	private JPanel titlePanel, axisButtonPanel, targetPanel;
 	private JLabel triggerLabel;
-	private JRadioButton targetRadio, scriptRadio;
-	private JButton saveButton, cancelButton, deadzoneButton;
-	private JTextField nameText;
+	private JRadioButton targetRadio, scriptRadio, mouseRadio;
+	private JButton saveButton, cancelButton, deadzoneButton, mouseButton;
 	private JComboBox targetCombo, targetDirectionCombo, scriptCombo;
-	private JCheckBox altCheckBox, ctrlCheckBox, shiftCheckBox, anyCheckBox, noneCheckBox;
+	private JCheckBox altCheckBox, ctrlCheckBox, shiftCheckBox, anyCheckBox, noneCheckBox, invertTriggerCheckBox;
 	private DefaultComboBoxModel scriptComboModel, targetComboModel, targetDirectionComboModel;
 
 	private Listener controllerPanelListener = new Listener() {
 		public void axisChanged (Axis axis, float state) {
 			if (!isVisible()) return;
 			if (Math.abs(state) > 0.25f) {
-				targetCombo.setSelectedItem(axis);
+				targetCombo.setSelectedItem(new TargetItem(axis));
 				targetDirectionCombo.setSelectedIndex(state < 0 ? 0 : 1);
 			}
 		}
 
 		public void buttonChanged (Button button, boolean pressed) {
 			if (!isVisible()) return;
-			if (pressed) targetCombo.setSelectedItem(button);
+			if (pressed) targetCombo.setSelectedItem(new TargetItem(button));
 		}
 	};
 
@@ -95,6 +102,15 @@ public class InputTriggerPanel extends JPanel {
 	public void setTrigger (Config config, InputTrigger trigger) {
 		this.config = config;
 
+		targetComboModel.removeAllElements();
+		Target[] targets = new Target[] {Button.a, Button.b, Button.x, Button.y,
+
+		Button.up, Button.down, Button.left, Button.right, Axis.leftTrigger, Axis.rightTrigger, Button.leftShoulder,
+			Button.rightShoulder, Axis.leftStickX, Axis.leftStickY, Axis.rightStickX, Axis.rightStickY, Button.leftStick,
+			Button.rightStick, Button.start, Button.back, Button.guide};
+		for (Target target : targets)
+			targetComboModel.addElement(new TargetItem(target, config.getTargetName(target)));
+
 		Util.setEnabled(true, targetRadio, targetCombo, scriptRadio, scriptCombo);
 
 		scriptComboModel.removeAllElements();
@@ -108,9 +124,10 @@ public class InputTriggerPanel extends JPanel {
 			isNewTrigger = true;
 			titlePanel.setBorder(BorderFactory.createTitledBorder("New Trigger"));
 
+			translation = new XIMMouseTranslation();
+
 			triggerLabel.setText("Click to set trigger...");
 			triggerLabel.setFont(triggerLabel.getFont().deriveFont(Font.ITALIC));
-			nameText.setText("");
 			targetRadio.setSelected(true);
 			shiftCheckBox.setSelected(false);
 			ctrlCheckBox.setSelected(false);
@@ -118,7 +135,6 @@ public class InputTriggerPanel extends JPanel {
 			anyCheckBox.setSelected(true);
 			noneCheckBox.setSelected(false);
 			invertTriggerCheckBox.setSelected(false);
-			axisButtonPanel.setVisible(false);
 
 			saveButton.setEnabled(false);
 		} else {
@@ -128,7 +144,6 @@ public class InputTriggerPanel extends JPanel {
 			titlePanel.setBorder(BorderFactory.createTitledBorder("Edit Trigger"));
 
 			triggerLabel.setFont(triggerLabel.getFont().deriveFont(Font.PLAIN));
-			nameText.setText(trigger.getName());
 			shiftCheckBox.setSelected(trigger.getShift());
 			ctrlCheckBox.setSelected(trigger.getCtrl());
 			altCheckBox.setSelected(trigger.getAlt());
@@ -147,11 +162,14 @@ public class InputTriggerPanel extends JPanel {
 			if (action instanceof ScriptAction) {
 				scriptRadio.setSelected(true);
 				scriptCombo.setSelectedItem(((ScriptAction)action).getScriptName());
+			} else if (action instanceof MouseAction) {
+				mouseRadio.doClick();
+				translation = ((MouseAction)action).getMouseTranslation();
 			} else if (action instanceof DeviceAction) {
 				DeviceAction deviceAction = ((DeviceAction)action);
 				targetRadio.setSelected(true);
 				Target target = deviceAction.getTarget();
-				if (target != null) targetCombo.setSelectedItem(target);
+				if (target != null) targetCombo.setSelectedItem(new TargetItem(target));
 				Direction direction = deviceAction.getDirection();
 				switch (direction) {
 				case up:
@@ -163,14 +181,14 @@ public class InputTriggerPanel extends JPanel {
 					targetDirectionCombo.setSelectedIndex(1);
 					break;
 				}
-
-				saveButton.setEnabled(true);
 			} else {
 				// Unknown action, can't change it.
 				Util.setEnabled(false, targetRadio, targetCombo, scriptRadio, scriptCombo, invertTriggerCheckBox);
 				targetRadio.setSelected(false);
 				scriptRadio.setSelected(false);
 			}
+
+			saveButton.setEnabled(true);
 		}
 	}
 
@@ -247,7 +265,7 @@ public class InputTriggerPanel extends JPanel {
 		Input input = trigger.getInput();
 		if (input == null || input.isAxis()) return;
 
-		Target target = (Target)targetCombo.getSelectedItem();
+		Target target = getSelectedTarget();
 		if (target instanceof Axis) {
 			switch ((Axis)target) {
 			case leftStickX:
@@ -268,7 +286,90 @@ public class InputTriggerPanel extends JPanel {
 		}
 	}
 
+	private Target getSelectedTarget () {
+		TargetItem item = (TargetItem)targetCombo.getSelectedItem();
+		if (item == null) return null;
+		return item.target;
+	}
+
+	private void setHighlighted (Target target, int directionIndex) {
+		XboxControllerPanel controllerPanel = owner.getControllerPanel();
+		if (highlighted != null) controllerPanel.setHighlighted(highlighted, 0);
+		highlighted = null;
+		if (target == null) return;
+		highlighted = target;
+		if (highlighted != null) {
+			if (targetDirectionCombo.isVisible())
+				controllerPanel.setHighlighted(highlighted, directionIndex == 0 ? -1 : 1);
+			else {
+				controllerPanel.setHighlighted(highlighted, 1);
+				controllerPanel.setHighlighted(highlighted, -1);
+			}
+		}
+	}
+
 	private void initializeEvents () {
+		mouseButton.addActionListener(new ActionListener() {
+			public void actionPerformed (ActionEvent event) {
+				mouseRadio.setSelected(true);
+				targetCombo.setSelectedItem(null);
+				scriptCombo.setSelectedItem(null);
+				new MouseDialog(owner, translation).setVisible(true);
+			}
+		});
+
+		// Highlight controller target.
+		MouseAdapter targetHighlightListener = new MouseAdapter() {
+			public void mouseEntered (MouseEvent event) {
+				setHighlighted(getSelectedTarget(), targetDirectionCombo.getSelectedIndex());
+			}
+
+			public void mouseExited (MouseEvent event) {
+				setHighlighted(null, 0);
+			}
+		};
+		targetCombo.addMouseListener(targetHighlightListener);
+		for (Component component : targetCombo.getComponents())
+			component.addMouseListener(targetHighlightListener);
+		targetDirectionCombo.addMouseListener(targetHighlightListener);
+		for (Component component : targetDirectionCombo.getComponents())
+			component.addMouseListener(targetHighlightListener);
+		targetRadio.addMouseListener(targetHighlightListener);
+		for (Component component : targetRadio.getComponents())
+			component.addMouseListener(targetHighlightListener);
+		targetPanel.addMouseListener(targetHighlightListener);
+
+		targetCombo.setRenderer(new DefaultListCellRenderer() {
+			public Component getListCellRendererComponent (JList list, Object value, int index, boolean isSelected,
+				boolean cellHasFocus) {
+				if (isSelected) setHighlighted(((TargetItem)value).target, targetDirectionCombo.getSelectedIndex());
+				return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+			}
+		});
+
+		targetDirectionCombo.setRenderer(new DefaultListCellRenderer() {
+			public Component getListCellRendererComponent (JList list, Object value, int index, boolean isSelected,
+				boolean cellHasFocus) {
+				if (isSelected) setHighlighted(getSelectedTarget(), index);
+				return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+			}
+		});
+
+		PopupMenuListener highlightPopupListener = new PopupMenuListener() {
+			public void popupMenuWillBecomeVisible (PopupMenuEvent e) {
+			}
+
+			public void popupMenuWillBecomeInvisible (PopupMenuEvent e) {
+				setHighlighted(null, 0);
+			}
+
+			public void popupMenuCanceled (PopupMenuEvent e) {
+			}
+		};
+		targetCombo.addPopupMenuListener(highlightPopupListener);
+		targetDirectionCombo.addPopupMenuListener(highlightPopupListener);
+		//
+
 		scriptCombo.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
 				if (scriptCombo.getSelectedItem() == null) return;
@@ -280,6 +381,15 @@ public class InputTriggerPanel extends JPanel {
 			public void actionPerformed (ActionEvent event) {
 				if (targetCombo.getSelectedItem() == null) return;
 				targetRadio.setSelected(true);
+				scriptCombo.setSelectedItem(null);
+				updateTargetDirection();
+			}
+		});
+
+		mouseRadio.addActionListener(new ActionListener() {
+			public void actionPerformed (ActionEvent event) {
+				if (!mouseRadio.isSelected()) return;
+				targetCombo.setSelectedItem(null);
 				scriptCombo.setSelectedItem(null);
 				updateTargetDirection();
 			}
@@ -332,14 +442,13 @@ public class InputTriggerPanel extends JPanel {
 			public void actionPerformed (ActionEvent event) {
 				owner.getConfigTab().showConfigEditor();
 
-				trigger.setName(nameText.getText());
 				trigger.setCtrl(ctrlCheckBox.isSelected());
 				trigger.setAlt(altCheckBox.isSelected());
 				trigger.setShift(shiftCheckBox.isSelected());
 				trigger.setNoModifiers(noneCheckBox.isSelected());
 				trigger.setInvert(invertTriggerCheckBox.isSelected());
 				if (targetRadio.isSelected()) {
-					DeviceAction action = new DeviceAction((Target)targetCombo.getSelectedItem());
+					DeviceAction action = new DeviceAction(getSelectedTarget());
 					trigger.setAction(action);
 					if (targetDirectionCombo.isVisible())
 						action.setDirection(Direction.valueOf(((String)targetDirectionCombo.getSelectedItem()).toLowerCase()));
@@ -350,6 +459,10 @@ public class InputTriggerPanel extends JPanel {
 						trigger.setAction(new ScriptAction(owner.getScriptEditor().newItem().getName()));
 					else
 						trigger.setAction(new ScriptAction((String)scriptCombo.getSelectedItem()));
+				} else if (mouseRadio.isSelected()) {
+					MouseAction action = new MouseAction();
+					action.setMouseTranslation(translation);
+					trigger.setAction(action);
 				}
 
 				if (isNewTrigger) config.getTriggers().add(trigger);
@@ -401,16 +514,6 @@ public class InputTriggerPanel extends JPanel {
 			new Insets(0, 0, 0, 0), 0, 0));
 		titlePanel.setBorder(BorderFactory.createTitledBorder("New Trigger"));
 		{
-			JLabel label = new JLabel("Name:");
-			titlePanel.add(label, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE,
-				new Insets(0, 6, 6, 0), 0, 0));
-		}
-		{
-			nameText = new JTextField();
-			titlePanel.add(nameText, new GridBagConstraints(2, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER,
-				GridBagConstraints.HORIZONTAL, new Insets(0, 6, 6, 6), 0, 0));
-		}
-		{
 			JLabel label = new JLabel("Trigger:");
 			titlePanel.add(label, new GridBagConstraints(1, 1, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE,
 				new Insets(0, 6, 6, 0), 0, 0));
@@ -419,6 +522,19 @@ public class InputTriggerPanel extends JPanel {
 			JLabel label = new JLabel("Action:");
 			titlePanel.add(label, new GridBagConstraints(1, 4, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHEAST,
 				GridBagConstraints.NONE, new Insets(4, 6, 6, 0), 0, 0));
+		}
+		{
+			JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 6, 0));
+			titlePanel.add(panel, new GridBagConstraints(2, 6, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
+				new Insets(0, 0, 6, 6), 0, 0));
+			{
+				mouseRadio = new JRadioButton("Mouse Translation");
+				panel.add(mouseRadio);
+			}
+			{
+				mouseButton = new JButton("Edit");
+				panel.add(mouseButton);
+			}
 		}
 		{
 			JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 6, 0));
@@ -436,25 +552,22 @@ public class InputTriggerPanel extends JPanel {
 			}
 		}
 		{
-			JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 6, 0));
-			titlePanel.add(panel, new GridBagConstraints(2, 4, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
-				new Insets(0, 0, 6, 6), 0, 0));
+			targetPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 6, 0));
+			titlePanel.add(targetPanel, new GridBagConstraints(2, 4, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
+				GridBagConstraints.NONE, new Insets(0, 0, 6, 6), 0, 0));
 			{
 				targetRadio = new JRadioButton("Device");
-				panel.add(targetRadio);
+				targetPanel.add(targetRadio);
 			}
 			{
 				targetCombo = new JComboBox();
-				panel.add(targetCombo);
-				targetComboModel = new DefaultComboBoxModel(new Object[] {Button.a, Button.b, Button.x, Button.y, Button.up,
-					Button.down, Button.left, Button.right, Button.leftShoulder, Button.rightShoulder, Button.leftStick,
-					Button.rightStick, Button.start, Button.back, Button.guide, Axis.leftStickX, Axis.leftStickY, Axis.rightStickX,
-					Axis.rightStickY, Axis.leftTrigger, Axis.rightTrigger});
+				targetPanel.add(targetCombo);
+				targetComboModel = new DefaultComboBoxModel();
 				targetCombo.setModel(targetComboModel);
 			}
 			{
 				targetDirectionCombo = new JComboBox();
-				panel.add(targetDirectionCombo);
+				targetPanel.add(targetDirectionCombo);
 				targetDirectionComboModel = new DefaultComboBoxModel();
 				targetDirectionComboModel.addElement("Left");
 				targetDirectionComboModel.addElement("Right");
@@ -463,13 +576,11 @@ public class InputTriggerPanel extends JPanel {
 			}
 		}
 		{
-			JPanel bottomPanel = new JPanel();
-			GridBagLayout jPanel1Layout = new GridBagLayout();
-			titlePanel.add(bottomPanel, new GridBagConstraints(1, 6, 2, 1, 0.0, 0.0, GridBagConstraints.EAST,
+			JPanel bottomPanel = new JPanel(new GridBagLayout());
+			titlePanel.add(bottomPanel, new GridBagConstraints(1, 7, 2, 1, 0.0, 0.0, GridBagConstraints.EAST,
 				GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
-			bottomPanel.setLayout(jPanel1Layout);
 			{
-				JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 6, 6));
+				JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 6, 0));
 				bottomPanel.add(panel, new GridBagConstraints(1, 0, 1, 1, 1.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE,
 					new Insets(0, 0, 0, 0), 0, 0));
 				{
@@ -482,19 +593,18 @@ public class InputTriggerPanel extends JPanel {
 				}
 			}
 			{
-				axisButtonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 6, 6));
+				axisButtonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 6, 0));
 				axisButtonPanel.setVisible(false);
 				bottomPanel.add(axisButtonPanel, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER,
 					GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+				axisButtonPanel.setVisible(false);
 				{
-					deadzoneButton = new JButton();
+					deadzoneButton = new JButton("Deadzone");
 					axisButtonPanel.add(deadzoneButton);
-					deadzoneButton.setText("Deadzone");
 				}
 				{
-					invertTriggerCheckBox = new JCheckBox();
+					invertTriggerCheckBox = new JCheckBox("Invert axis");
 					axisButtonPanel.add(invertTriggerCheckBox);
-					invertTriggerCheckBox.setText("Invert axis");
 				}
 			}
 		}
@@ -507,7 +617,7 @@ public class InputTriggerPanel extends JPanel {
 			titlePanel.add(triggerLabel, new GridBagConstraints(2, 1, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER,
 				GridBagConstraints.HORIZONTAL, new Insets(0, 6, 6, 6), 0, 0));
 			triggerLabel.setOpaque(true);
-			triggerLabel.setBorder(nameText.getBorder());
+			triggerLabel.setBorder(new JTextField().getBorder());
 			triggerLabel.setFocusable(true);
 		}
 		{
@@ -552,5 +662,43 @@ public class InputTriggerPanel extends JPanel {
 		ButtonGroup group = new ButtonGroup();
 		group.add(targetRadio);
 		group.add(scriptRadio);
+		group.add(mouseRadio);
+	}
+
+	static private class TargetItem {
+		public final Target target;
+		public final String name;
+
+		public TargetItem (Target target, String name) {
+			this.target = target;
+			this.name = name;
+		}
+
+		public TargetItem (Target target) {
+			this.target = target;
+			this.name = null;
+		}
+
+		public int hashCode () {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + ((target == null) ? 0 : target.hashCode());
+			return result;
+		}
+
+		public boolean equals (Object obj) {
+			if (this == obj) return true;
+			if (obj == null) return false;
+			if (getClass() != obj.getClass()) return false;
+			TargetItem other = (TargetItem)obj;
+			if (target == null) {
+				if (other.target != null) return false;
+			} else if (!target.equals(other.target)) return false;
+			return true;
+		}
+
+		public String toString () {
+			return name;
+		}
 	}
 }

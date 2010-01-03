@@ -8,12 +8,16 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import com.esotericsoftware.controller.device.Deadzone;
 import com.esotericsoftware.controller.device.Device;
 import com.esotericsoftware.controller.device.Stick;
+import com.esotericsoftware.controller.device.Target;
 import com.esotericsoftware.controller.ui.swing.UI;
 
 /**
@@ -26,6 +30,7 @@ public class Config extends Editable {
 	private List<Trigger> triggers = new ArrayList();
 	private Deadzone leftDeadzone, rightDeadzone;
 	private MouseTranslation mouseTranslation;
+	private Map<String, String> targetNames = new HashMap();
 
 	public Config () {
 	}
@@ -64,6 +69,24 @@ public class Config extends Editable {
 
 	public void setMouseTranslation (MouseTranslation mouseTranslation) {
 		this.mouseTranslation = mouseTranslation;
+	}
+
+	public Map<String, String> getTargetNames () {
+		return targetNames;
+	}
+
+	/**
+	 * @param targetNames Map from target name to alternate name.
+	 */
+	public void setTargetNames (Map<String, String> targetNames) {
+		this.targetNames = targetNames;
+	}
+
+	public String getTargetName (Target target) {
+		if (target == null) throw new IllegalArgumentException("target cannot be null.");
+		String name = targetNames.get(target.name());
+		if (name == null || name.length() == 0) name = target.toString();
+		return name;
 	}
 
 	public int hashCode () {
@@ -142,8 +165,8 @@ public class Config extends Editable {
 				if (device != null) {
 					device.setDeadzone(Stick.left, config.getLeftDeadzone());
 					device.setDeadzone(Stick.right, config.getRightDeadzone());
+					device.setTargetNames(config.getTargetNames());
 				}
-				MouseTranslation mouseTranslation = config.getMouseTranslation();
 				List<Trigger> triggers = config.getTriggers();
 				// Multiple triggers may use the same poller. Obtain a distinct list to avoid polling the same one twice.
 				HashSet<Poller> pollers = new HashSet();
@@ -163,6 +186,7 @@ public class Config extends Editable {
 
 					if (device != null) device.collectChanges();
 
+					MouseTranslation mouseTranslation = config.getMouseTranslation();
 					if (mouseTranslation != null) mouseTranslation.update(device);
 
 					for (Poller poller : pollers)

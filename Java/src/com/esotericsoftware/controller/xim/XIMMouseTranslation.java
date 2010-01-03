@@ -109,19 +109,20 @@ public class XIMMouseTranslation implements MouseTranslation {
 		timer += delta;
 		if (timer < 1000 / UPDATE_FREQUENCY) return;
 		timer = 0;
-		apply(device, Stick.left);
-		apply(device, Stick.right);
-	}
 
-	private void apply (Device device, Stick stick) {
 		if (device == null) {
 			getDeflection(0, 0);
 			return;
 		}
-		float[] mouseDelta = device.getMouseDelta(stick);
+		Stick stick = device.getMouseDeltaStick();
+		if (stick == null) {
+			getDeflection(0, 0);
+			return;
+		}
+		float[] mouseDelta = device.getMouseDelta();
 		float[] deflection = getDeflection(mouseDelta[0], mouseDelta[1]);
 		try {
-			device.set(Stick.left, deflection[0], deflection[1]);
+			device.set(stick, deflection[0], deflection[1]);
 		} catch (IOException ex) {
 			ex.printStackTrace();
 		}

@@ -41,7 +41,15 @@ public enum Axis implements Target {
 	}
 
 	public boolean isTrigger () {
-		return this == leftTrigger || this == Axis.rightTrigger;
+		return this == leftTrigger || this == rightTrigger;
+	}
+
+	public boolean isX () {
+		return this == leftStickX || this == rightStickX;
+	}
+
+	public boolean isY () {
+		return this == leftStickY || this == rightStickY;
 	}
 
 	public String getAlias () {

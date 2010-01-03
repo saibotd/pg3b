@@ -108,6 +108,10 @@ public class DeviceAction implements Action {
 	}
 
 	static public enum Direction {
-		up, down, left, right, both
+		up, down, left, right, both;
+
+		public boolean isNegative () {
+			return this == up || this == left;
+		}
 	}
 }

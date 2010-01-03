@@ -49,12 +49,6 @@
 	</params>
 	<desc>Convenience method to store a value in a package.</desc>
 </keyword>
-<keyword name="target" type="function" returnType="Target">
-	<params>
-		<param type="Trigger or String" name="trigger"><desc>The trigger for which to find the target.</desc></param>
-	</params>
-	<desc>Returns the device target for the trigger with the specified name. The trigger must have a device action (eg, not a script action).</desc>
-</keyword>
 <keyword name="getConfig" type="function" returnType="Config">
 	<params>
 		<param type="String" name="name"><desc>The name of the config to look up.</desc></param>

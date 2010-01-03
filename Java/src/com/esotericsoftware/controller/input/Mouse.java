@@ -108,6 +108,11 @@ public class Mouse implements InputDevice {
 
 	public void grab (JFrame grabbedFrame) {
 		this.grabbedFrame = grabbedFrame;
+		if (grabbedFrame != null && robot != null) {
+			x = grabbedFrame.getX() + grabbedFrame.getWidth() / 2;
+			y = grabbedFrame.getY() + grabbedFrame.getHeight() / 2;
+			robot.mouseMove(x, y);
+		}
 	}
 
 	public void release () {

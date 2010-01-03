@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
+import java.util.LinkedHashMap;
 
 import net.sourceforge.yamlbeans.YamlConfig;
 import net.sourceforge.yamlbeans.YamlReader;
@@ -37,16 +38,6 @@ public class Editable implements Cloneable {
 		yamlConfig.writeConfig.setAutoAnchor(false);
 		yamlConfig.writeConfig.setWriteRootTags(false);
 		// yamlConfig.writeConfig.setWriteDefaultValues(true);
-
-		yamlConfig.setScalarSerializer(Target.class, new ScalarSerializer<Target>() {
-			public Target read (String value) {
-				return Device.getTarget(value);
-			}
-
-			public String write (Target target) {
-				return target.toString();
-			}
-		});
 
 		yamlConfig.setScalarSerializer(KeyboardInput.class, new ScalarSerializer<KeyboardInput>() {
 			public KeyboardInput read (String value) {
@@ -111,9 +102,11 @@ public class Editable implements Cloneable {
 		yamlConfig.setClassTag("xboxcontroller-jinput", JInputXboxController.ControllerInput.class);
 		yamlConfig.setClassTag("round", Deadzone.Round.class);
 		yamlConfig.setClassTag("square", Deadzone.Square.class);
+		yamlConfig.setClassTag("mouse-settings", MouseAction.class);
 		yamlConfig.setClassTag("xim-translation", XIMMouseTranslation.class);
 
 		yamlConfig.setPropertyElementType(Config.class, "triggers", InputTrigger.class);
+		yamlConfig.setPropertyDefaultType(Config.class, "targetNames", LinkedHashMap.class);
 		yamlConfig.setPropertyDefaultType(Trigger.class, "action", DeviceAction.class);
 		yamlConfig.setPropertyDefaultType(InputTrigger.class, "input", Keyboard.KeyboardInput.class);
 	}

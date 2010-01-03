@@ -5,6 +5,7 @@ import static com.esotericsoftware.minlog.Log.*;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.EventQueue;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
@@ -41,25 +42,26 @@ import javax.swing.table.TableColumnModel;
 import com.esotericsoftware.controller.device.Device;
 import com.esotericsoftware.controller.ui.Action;
 import com.esotericsoftware.controller.ui.Config;
+import com.esotericsoftware.controller.ui.DeviceAction;
 import com.esotericsoftware.controller.ui.InputTrigger;
 import com.esotericsoftware.controller.ui.Script;
 import com.esotericsoftware.controller.ui.ScriptAction;
 import com.esotericsoftware.controller.ui.Settings;
 import com.esotericsoftware.controller.ui.Trigger;
+import com.esotericsoftware.controller.ui.DeviceAction.Direction;
 import com.esotericsoftware.controller.util.FileChooser;
 import com.esotericsoftware.controller.util.Util;
 import com.esotericsoftware.minlog.Log;
 
 public class ConfigEditor extends EditorPanel<Config> {
 	private int lastSelectedTriggerIndex;
+	private Device device;
 
 	private JTable triggersTable;
 	private DefaultTableModel triggersTableModel;
 	private JButton newTriggerButton, deleteTriggerButton, editTriggerButton;
-	private JButton deadzonesButton, mouseButton;
+	private JButton deadzonesButton, mouseButton, targetsButton;
 	private JToggleButton activateButton;
-
-	private Device device;
 
 	public ConfigEditor (UI owner) {
 		super(owner, Config.class, new File("config"), ".config");
@@ -67,14 +69,18 @@ public class ConfigEditor extends EditorPanel<Config> {
 		initializeLayout();
 		initializeEvents();
 
-		List<Config> items = getItems();
-		for (Config config : items) {
-			if (config.getName().equals(settings.selectedConfig)) {
-				setSelectedItem(config);
-				break;
+		EventQueue.invokeLater(new Runnable() {
+			public void run () {
+				List<Config> items = getItems();
+				for (Config config : items) {
+					if (config.getName().equals(settings.selectedConfig)) {
+						setSelectedItem(config);
+						break;
+					}
+				}
+				if (getSelectedItem() == null && items.size() > 0) setSelectedItem(items.get(0));
 			}
-		}
-		if (getSelectedItem() == null && items.size() > 0) setSelectedItem(items.get(0));
+		});
 	}
 
 	protected void updateFieldsFromItem (Config config) {
@@ -83,7 +89,7 @@ public class ConfigEditor extends EditorPanel<Config> {
 			owner.updateActiveConfig();
 		} else {
 			for (Trigger trigger : config.getTriggers())
-				triggersTableModel.addRow(new Object[] {trigger.getName(), trigger, trigger.getAction()});
+				triggersTableModel.addRow(new Object[] {trigger, trigger.getAction()});
 			setSelectedTrigger(lastSelectedTriggerIndex);
 
 			if (!config.getName().equals(settings.selectedConfig)) {
@@ -92,7 +98,6 @@ public class ConfigEditor extends EditorPanel<Config> {
 			}
 		}
 		activateButton.setEnabled(config != null);
-		// BOZO
 		if (config != null && activateButton.isSelected()) config.setActive(true);
 	}
 
@@ -167,6 +172,35 @@ public class ConfigEditor extends EditorPanel<Config> {
 	}
 
 	private void initializeEvents () {
+		// MouseAdapter highlightListener = new MouseAdapter() {
+		// private Target highlighted;
+		//
+		// public void mouseMoved (MouseEvent event) {
+		// int row = triggersTable.rowAtPoint(event.getPoint());
+		// XboxControllerPanel controllerPanel = owner.getControllerPanel();
+		// if (highlighted != null) controllerPanel.setHighlighted(highlighted, 0);
+		// Config config = getSelectedItem();
+		// Action action = config.getTriggers().get(row).getAction();
+		// if (action instanceof DeviceAction) {
+		// DeviceAction deviceAction = (DeviceAction)action;
+		// highlighted = deviceAction.getTarget();
+		// if (deviceAction.getDirection() != Direction.both)
+		// controllerPanel.setHighlighted(highlighted, deviceAction.getDirection().isNegative() ? -1 : 1);
+		// else {
+		// controllerPanel.setHighlighted(highlighted, 1);
+		// controllerPanel.setHighlighted(highlighted, -1);
+		// }
+		// }
+		// }
+		//
+		// public void mouseExited (MouseEvent event) {
+		// XboxControllerPanel controllerPanel = owner.getControllerPanel();
+		// if (highlighted != null) controllerPanel.setHighlighted(highlighted, 0);
+		// }
+		// };
+		// triggersTable.addMouseListener(highlightListener);
+		// triggersTable.addMouseMotionListener(highlightListener);
+
 		activateButton.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
 				if (activateButton.isSelected()) {
@@ -240,7 +274,7 @@ public class ConfigEditor extends EditorPanel<Config> {
 				if (script == null) return;
 
 				JPopupMenu popupMenu = new JPopupMenu();
-				popupMenu.add(new JMenuItem("Goto Script...")).addActionListener(new ActionListener() {
+				popupMenu.add(new JMenuItem("Go to Script")).addActionListener(new ActionListener() {
 					public void actionPerformed (ActionEvent event) {
 						owner.getScriptEditor().setSelectedItem(script);
 						owner.getTabs().setSelectedComponent(owner.getScriptEditor());
@@ -258,7 +292,21 @@ public class ConfigEditor extends EditorPanel<Config> {
 
 		mouseButton.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
-				new XIMMouseDialog(owner, getSelectedItem()).setVisible(true);
+				final Config config = getSelectedItem();
+				final MouseDialog mouseDialog = new MouseDialog(owner, config.getMouseTranslation());
+				mouseDialog.setSaveRunnable(new Runnable() {
+					public void run () {
+						config.setMouseTranslation(mouseDialog.getMouseTranslation());
+						owner.getConfigTab().getConfigEditor().saveItem(true);
+					}
+				});
+				mouseDialog.setVisible(true);
+			}
+		});
+
+		targetsButton.addActionListener(new ActionListener() {
+			public void actionPerformed (ActionEvent event) {
+				new TargetsDialog(owner, getSelectedItem()).setVisible(true);
 			}
 		});
 	}
@@ -277,32 +325,50 @@ public class ConfigEditor extends EditorPanel<Config> {
 					}
 				};
 				scroll.setViewportView(triggersTable);
-				triggersTableModel = new DefaultTableModel(new String[][] {}, new String[] {"Name", "Trigger", "Action"});
+				triggersTableModel = new DefaultTableModel(new String[][] {}, new String[] {"Trigger", "Action"});
 				triggersTable.setModel(triggersTableModel);
 				triggersTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 				triggersTable.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
 					public Component getTableCellRendererComponent (JTable table, Object value, boolean isSelected, boolean hasFocus,
 						int row, int column) {
 						hasFocus = false; // Disable cell focus.
+						Config config = getSelectedItem();
+						if (column == 1 && value instanceof DeviceAction) {
+							DeviceAction deviceAction = (DeviceAction)value;
+							StringBuilder buffer = new StringBuilder();
+							buffer.append("Device: ");
+							buffer.append(config.getTargetName(deviceAction.getTarget()));
+							if (deviceAction.getDirection() != Direction.both) {
+								buffer.append(' ');
+								buffer.append(deviceAction.getDirection());
+							}
+							value = buffer;
+						}
 						JLabel label = (JLabel)super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 						label.setBorder(new EmptyBorder(new Insets(0, 4, 0, 0))); // Padding.
 						label.setForeground(isSelected ? table.getSelectionForeground() : null);
 						// Highlight invalid triggers and actions.
 						if (column == 0) {
-							Trigger trigger = getSelectedItem().getTriggers().get(row);
+							Trigger trigger = config.getTriggers().get(row);
 							if (!trigger.isValid()) label.setForeground(Color.red);
 						} else if (column == 1) {
-							Action action = getSelectedItem().getTriggers().get(row).getAction();
+							Action action = config.getTriggers().get(row).getAction();
 							if (action == null || !action.isValid()) label.setForeground(Color.red);
 						}
 						return label;
 					}
 				});
+				triggersTable.addMouseListener(new MouseAdapter() {
+					public void mousePressed (MouseEvent event) {
+						if (event.getButton() == 1) return;
+						int rowIndex = triggersTable.rowAtPoint(event.getPoint());
+						triggersTable.getSelectionModel().setSelectionInterval(rowIndex, rowIndex);
+					}
+				});
 				triggersTable.setRowHeight(triggersTable.getRowHeight() + 9);
 				TableColumnModel columnModel = triggersTable.getColumnModel();
-				columnModel.getColumn(0).setPreferredWidth(340);
-				columnModel.getColumn(1).setPreferredWidth(340);
-				columnModel.getColumn(2).setPreferredWidth(320);
+				columnModel.getColumn(0).setPreferredWidth(500);
+				columnModel.getColumn(1).setPreferredWidth(500);
 			}
 		}
 		{
@@ -322,13 +388,18 @@ public class ConfigEditor extends EditorPanel<Config> {
 						GridBagConstraints.NONE, new Insets(0, 0, 0, 6), 0, 0));
 				}
 				{
+					mouseButton = new JButton("Mouse");
+					leftPanel.add(mouseButton, new GridBagConstraints(-1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER,
+						GridBagConstraints.NONE, new Insets(0, 0, 0, 6), 0, 0));
+				}
+				{
 					deadzonesButton = new JButton("Deadzones");
 					leftPanel.add(deadzonesButton, new GridBagConstraints(-1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER,
 						GridBagConstraints.NONE, new Insets(0, 0, 0, 6), 0, 0));
 				}
 				{
-					mouseButton = new JButton("Mouse");
-					leftPanel.add(mouseButton, new GridBagConstraints(-1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER,
+					targetsButton = new JButton("Targets");
+					leftPanel.add(targetsButton, new GridBagConstraints(-1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER,
 						GridBagConstraints.NONE, new Insets(0, 0, 0, 6), 0, 0));
 				}
 			}
@@ -356,7 +427,7 @@ public class ConfigEditor extends EditorPanel<Config> {
 			public void run () {
 				deadzonesButton.setEnabled(device != null && deadzonesButton.isEnabled());
 			}
-		}, triggersTable, newTriggerButton, deadzonesButton);
+		}, triggersTable, newTriggerButton, deadzonesButton, mouseButton, targetsButton);
 		Util.enableWhenModelHasSelection(triggersTable.getSelectionModel(), deleteTriggerButton);
 	}
 

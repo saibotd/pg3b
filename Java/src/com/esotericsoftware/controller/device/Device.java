@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import com.esotericsoftware.controller.util.Listeners;
 
@@ -44,8 +46,9 @@ abstract public class Device {
 
 	private final Listeners<Listener> listeners = new Listeners(Listener.class);
 	private final Deadzone[] stickToDeadzone = new Deadzone[Stick.values().length];
-	private float[] stickToMouseDeltaX = new float[Stick.values().length];
-	private float[] stickToMouseDeltaY = new float[Stick.values().length];
+	private float mouseDeltaX, mouseDeltaY;
+	private Stick mouseDeltaStick;
+	private Map<String, Target> alternateNameToTarget = new HashMap();
 
 	public Device () {
 		super();
@@ -90,6 +93,7 @@ abstract public class Device {
 	 */
 	public void set (Axis axis, float state) throws IOException {
 		if (axis == null) throw new IllegalArgumentException("axis cannot be null.");
+
 		if (axis.isTrigger()) {
 			if (state < 0)
 				state = 0;
@@ -161,18 +165,30 @@ abstract public class Device {
 	 * Sets the button or axis state. If the target is an axis, it will be to 0 (false) or 1 (true).
 	 * @throws IOException When communication with the device fails.
 	 */
-	public void set (String target, boolean pressed) throws IOException {
-		if (target == null) throw new IllegalArgumentException("target cannot be null.");
-		set(getTarget(target), pressed);
+	public void set (String targetName, boolean pressed) throws IOException {
+		if (targetName == null) throw new IllegalArgumentException("targetName cannot be null.");
+		String name = targetName.trim().toLowerCase();
+		Target target = nameToTarget.get(name);
+		if (target == null) {
+			target = alternateNameToTarget.get(name);
+			if (target == null) throw new IllegalArgumentException("Unknown target: " + targetName);
+		}
+		set(target, pressed);
 	}
 
 	/**
 	 * Sets the button or axis state. If the target is a button, it will be to not pressed (zero) or pressed (nonzero).
 	 * @throws IOException When communication with the device fails.
 	 */
-	public void set (String target, float state) throws IOException {
-		if (target == null) throw new IllegalArgumentException("target cannot be null.");
-		set(getTarget(target), state);
+	public void set (String targetName, float state) throws IOException {
+		if (targetName == null) throw new IllegalArgumentException("targetName cannot be null.");
+		String name = targetName.trim().toLowerCase();
+		Target target = nameToTarget.get(name);
+		if (target == null) {
+			target = alternateNameToTarget.get(name);
+			if (target == null) throw new IllegalArgumentException("Unknown target: " + targetName);
+		}
+		set(target, state);
 	}
 
 	/**
@@ -217,7 +233,7 @@ abstract public class Device {
 	}
 
 	/**
-	 * Returns the last state of the button or axis as set by the device. If the taret is a button, either 0 (not pressed) or 1
+	 * Returns the last state of the button or axis as set by the device. If the target is a button, either 0 (not pressed) or 1
 	 * (pressed) is returned.
 	 */
 	public float get (Target target) {
@@ -231,11 +247,18 @@ abstract public class Device {
 	}
 
 	/**
-	 * Returns the last state of the button or axis as set by the device. If the taret is a button, either 0 (not pressed) or 1
+	 * Returns the last state of the button or axis as set by the device. If the target is a button, either 0 (not pressed) or 1
 	 * (pressed) is returned.
 	 */
-	public float get (String target) {
-		return get(getTarget(target));
+	public float get (String targetName) {
+		if (targetName == null) throw new IllegalArgumentException("targetName cannot be null.");
+		String name = targetName.trim().toLowerCase();
+		Target target = nameToTarget.get(name);
+		if (target == null) {
+			target = alternateNameToTarget.get(name);
+			if (target == null) throw new IllegalArgumentException("Unknown target: " + targetName);
+		}
+		return get(target);
 	}
 
 	/**
@@ -266,22 +289,38 @@ abstract public class Device {
 			listeners[i].deviceReset();
 	}
 
+	/**
+	 * Sets alternate names for targets.
+	 * @param names Map from target name to alternate name.
+	 */
+	public void setTargetNames (Map<String, String> names) {
+		if (names == null) throw new IllegalArgumentException("names cannot be null.");
+		alternateNameToTarget.clear();
+		for (Entry<String, String> entry : names.entrySet()) {
+			if (entry.getKey() == null || entry.getKey().length() == 0) continue;
+			alternateNameToTarget.put(entry.getValue().toLowerCase(), getTarget(entry.getKey()));
+		}
+	}
+
 	public void setDeadzone (Stick stick, Deadzone deadzone) {
 		if (stick == null) throw new IllegalArgumentException("stick cannot be null.");
 		stickToDeadzone[stick.ordinal()] = deadzone;
 	}
 
 	public void addMouseDelta (Stick stick, float mouseDeltaX, float mouseDeltaY) {
-		int ordinal = stick.ordinal();
-		stickToMouseDeltaX[ordinal] += mouseDeltaX;
-		stickToMouseDeltaY[ordinal] += mouseDeltaY;
+		mouseDeltaStick = stick;
+		this.mouseDeltaX += mouseDeltaX;
+		this.mouseDeltaY += mouseDeltaY;
 	}
 
-	public float[] getMouseDelta (Stick stick) {
-		int ordinal = stick.ordinal();
-		float[] mouseDelta = new float[] {stickToMouseDeltaX[ordinal], stickToMouseDeltaY[ordinal]};
-		stickToMouseDeltaX[ordinal] = 0;
-		stickToMouseDeltaY[ordinal] = 0;
+	public Stick getMouseDeltaStick () {
+		return mouseDeltaStick;
+	}
+
+	public float[] getMouseDelta () {
+		float[] mouseDelta = new float[] {mouseDeltaX, mouseDeltaY};
+		mouseDeltaX = 0;
+		mouseDeltaY = 0;
 		return mouseDelta;
 	}
 

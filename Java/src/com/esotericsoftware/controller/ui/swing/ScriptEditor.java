@@ -205,7 +205,7 @@ public class ScriptEditor extends EditorPanel<Script> {
 		if (configs.isEmpty()) return null;
 		JPopupMenu popupMenu = new JPopupMenu();
 		for (final Config config : configs.keySet()) {
-			popupMenu.add(new JMenuItem("Goto " + config + "...")).addActionListener(new ActionListener() {
+			popupMenu.add(new JMenuItem("Go to " + config + "...")).addActionListener(new ActionListener() {
 				public void actionPerformed (ActionEvent event) {
 					configEditor.setSelectedItem(config);
 					configEditor.setSelectedTrigger(configs.get(config));
@@ -219,6 +219,10 @@ public class ScriptEditor extends EditorPanel<Script> {
 	public void saveItem (Script item, boolean force) {
 		super.saveItem(item, force);
 		errorLabel.setText("");
+		if (highlightTag != null) {
+			codeText.getHighlighter().removeHighlight(highlightTag);
+			highlightTag = null;
+		}
 
 		if (Config.getActive() != null) {
 			// Try to reset the saved trigger in the active config.

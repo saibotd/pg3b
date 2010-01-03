@@ -188,9 +188,10 @@ public class Functions {
 				play.invoke(new Object[] {"Muted Guitar", 60, 100, 1}, context);
 				return null;
 			case 1:
-				int pitch = (Boolean)args[0] ? 1 : -1;
+				boolean on = toBoolean(args[0]);
+				int pitch = on ? 1 : -1;
 				play.invoke(new Object[] {"Muted Guitar", 60, 100, pitch}, context);
-				return null;
+				return on;
 			}
 			return null;
 		}
@@ -293,33 +294,6 @@ public class Functions {
 		}
 	};
 
-	static public BaseFunction target = new BaseFunction("target", 1, 1, "trigger") {
-		protected Object invoke (Object[] args, Context context) {
-			Config config = Config.getActive();
-
-			Trigger trigger = null;
-			if (args[0] instanceof Trigger)
-				trigger = (Trigger)args[0];
-			else if (args[0] instanceof String) {
-				String name = (String)args[0];
-				List<Trigger> triggers = config.getTriggers();
-				for (Iterator iter = triggers.iterator(); iter.hasNext();) {
-					Trigger configTrigger = (Trigger)iter.next();
-					String configTriggerName = configTrigger.getName();
-					if (configTriggerName != null && configTriggerName.equalsIgnoreCase(name)) {
-						trigger = configTrigger;
-						break;
-					}
-				}
-			}
-			if (trigger == null) throw new IllegalArgumentException("Trigger not found with name: " + args[0]);
-			Action action = trigger.getAction();
-			if (!(action instanceof DeviceAction))
-				throw new IllegalArgumentException("Trigger must have a device action: " + trigger);
-			return ((DeviceAction)action).getTarget();
-		}
-	};
-
 	static public BaseFunction isCtrlDown = new BaseFunction("isCtrlDown", 0, 0, "") {
 		protected Object invoke (Object[] args, Context context) {
 			return Keyboard.instance.isCtrlDown();
@@ -363,5 +337,18 @@ public class Functions {
 		if (value instanceof Boolean) return (Boolean)value ? 1 : 0;
 		if (value instanceof String) return Double.valueOf((String)value);
 		return value != null ? 1 : 0;
+	}
+
+	static boolean toBoolean (Object value) {
+		if (value instanceof Boolean) return (Boolean)value;
+		if (value instanceof Integer) return (Integer)value != 0;
+		if (value instanceof Float) return (Integer)value != 0;
+		if (value instanceof Double) return (Double)value != 0;
+		if (value instanceof Long) return (Long)value != 0;
+		if (value instanceof Short) return (Short)value != 0;
+		if (value instanceof Byte) return (Byte)value != 0;
+		if (value instanceof Character) return (Character)value != 0;
+		if (value instanceof String) return ((String)value).equalsIgnoreCase("true");
+		return value != null;
 	}
 }

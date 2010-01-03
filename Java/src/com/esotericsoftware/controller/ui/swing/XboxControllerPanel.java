@@ -11,7 +11,9 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Timer;
@@ -55,6 +57,7 @@ public class XboxControllerPanel extends JPanel {
 	private Listeners<Listener> listeners = new Listeners(Listener.class);
 	private TimerTask pollControllerTask;
 	private boolean isOver;
+	private HashMap<Target, ArrayList<Float>> higlighted = new HashMap();
 
 	private JInputXboxController.Listener controllerListener = new JInputXboxController.Listener() {
 		public void buttonChanged (Button button, boolean pressed) {
@@ -81,6 +84,9 @@ public class XboxControllerPanel extends JPanel {
 	};
 
 	public XboxControllerPanel () {
+		for (Target target : Device.getTargets())
+			higlighted.put(target, new ArrayList());
+
 		setMinimumSize(new Dimension(497, 328));
 		setMaximumSize(new Dimension(497, 328));
 		setPreferredSize(new Dimension(497, 328));
@@ -387,8 +393,25 @@ public class XboxControllerPanel extends JPanel {
 		g.setColor(Color.black);
 		drawTrigger(g, Axis.leftTrigger, leftTrigger);
 		drawTrigger(g, Axis.rightTrigger, rightTrigger);
-		drawStickArrows(g, Stick.left, leftStickX, leftStickY);
-		drawStickArrows(g, Stick.right, rightStickX, rightStickY);
+		drawStickArrows(g, Stick.left, leftStickX, leftStickY, false);
+		drawStickArrows(g, Stick.right, rightStickX, rightStickY, false);
+
+		for (Entry<Target, ArrayList<Float>> entry : higlighted.entrySet()) {
+			Target target = entry.getKey();
+			ArrayList<Float> values = entry.getValue();
+			if (target instanceof Button || ((Axis)target).isTrigger()) {
+				if (!values.isEmpty()) packedImages.get(target.name()).draw(g, 0, 0);
+			} else {
+				Axis axis = (Axis)target;
+				if (axis.isX()) {
+					for (float value : values)
+						drawStickArrows(g, axis.getStick(), value, 0, true);
+				} else {
+					for (float value : values)
+						drawStickArrows(g, axis.getStick(), 0, value, true);
+				}
+			}
+		}
 
 		g.setFont(g.getFont().deriveFont(Font.BOLD, 12f));
 		if (controller != null)
@@ -424,6 +447,15 @@ public class XboxControllerPanel extends JPanel {
 		return 0;
 	}
 
+	public void setHighlighted (Target target, float value) {
+		ArrayList<Float> values = higlighted.get(target);
+		if (value == 0)
+			values.clear();
+		else
+			values.add(value);
+		repaint();
+	}
+
 	private void drawStatusText (Graphics g, int x, int y, String text, Boolean status) {
 		if (status == null) return;
 		g.drawString(text, x + 34, y + 21);
@@ -436,7 +468,7 @@ public class XboxControllerPanel extends JPanel {
 		drawString(g, toPercent(value), axis == Axis.leftTrigger ? 104 : 392, 32);
 	}
 
-	private void drawStickArrows (Graphics g, Stick stick, float valueX, float valueY) {
+	private void drawStickArrows (Graphics g, Stick stick, float valueX, float valueY, boolean isHighlight) {
 		int x = stick == Stick.left ? 0 : 268;
 		int y = stick == Stick.left ? 129 : 213;
 		if ((int)(valueY * 100) != 0) {
@@ -447,7 +479,7 @@ public class XboxControllerPanel extends JPanel {
 					.getHeight() - 18) * (1 - Math.abs(valueY))));
 				packedImages.get("upArrow-white").draw(g, x, y);
 				g.setClip(null);
-				drawString(g, toPercent(valueY), x + 62, y + 27);
+				if (!isHighlight) drawString(g, toPercent(valueY), x + 62, y + 27);
 			} else if (valueY > 0) {
 				PackedImage arrowImage = packedImages.get("downArrow-green");
 				arrowImage.draw(g, x, y);
@@ -456,7 +488,7 @@ public class XboxControllerPanel extends JPanel {
 					.getHeight());
 				packedImages.get("downArrow-white").draw(g, x, y);
 				g.setClip(null);
-				drawString(g, toPercent(valueY), x + 62, y + 27 + 77);
+				if (!isHighlight) drawString(g, toPercent(valueY), x + 62, y + 27 + 77);
 			}
 		}
 		if ((int)(valueX * 100) != 0) {
@@ -467,7 +499,7 @@ public class XboxControllerPanel extends JPanel {
 					.abs(valueX))), arrowImage.image.getHeight());
 				packedImages.get("leftArrow-white").draw(g, x, y);
 				g.setClip(null);
-				drawString(g, toPercent(valueX), x + 62 - 44, y + 27 + 39);
+				if (!isHighlight) drawString(g, toPercent(valueX), x + 62 - 44, y + 27 + 39);
 			} else if (valueX > 0) {
 				PackedImage arrowImage = packedImages.get("rightArrow-green");
 				arrowImage.draw(g, x, y);
@@ -476,7 +508,7 @@ public class XboxControllerPanel extends JPanel {
 					.getHeight());
 				packedImages.get("rightArrow-white").draw(g, x, y);
 				g.setClip(null);
-				drawString(g, toPercent(valueX), x + 62 + 43, y + 27 + 39);
+				if (!isHighlight) drawString(g, toPercent(valueX), x + 62 + 43, y + 27 + 39);
 			}
 		}
 	}
