@@ -36,7 +36,7 @@ abstract public class Device {
 		targets = Collections.unmodifiableList(targets);
 	}
 
-	protected boolean collectingChanges;
+	protected Thread collectingChangesThread;
 
 	private boolean[] buttonStates = new boolean[Button.values().length];
 	private float[] axisStates = new float[Axis.values().length];
@@ -75,13 +75,14 @@ abstract public class Device {
 
 		synchronized (this) {
 			int ordinal = button.ordinal();
-			if (collectingChanges) {
+			if (collectingChangesThread == Thread.currentThread()) {
 				buttonStates[ordinal] = pressed;
 				return;
 			}
 			if (buttonStates[ordinal] == pressed) return;
 			setButton(button, pressed);
 			buttonStates[ordinal] = pressed;
+			snapshotButtonStates[ordinal] = pressed;
 		}
 
 		notifyButtonChanged(button, pressed);
@@ -106,7 +107,7 @@ abstract public class Device {
 
 		synchronized (this) {
 			int ordinal = axis.ordinal();
-			if (collectingChanges) {
+			if (collectingChangesThread == Thread.currentThread()) {
 				axisStates[ordinal] = state;
 				return;
 			}
@@ -114,6 +115,7 @@ abstract public class Device {
 			setAxis(axis, state);
 			axisDeflections[ordinal] = state;
 			axisStates[ordinal] = state;
+			snapshotAxisStates[ordinal] = state;
 		}
 
 		notifyAxisChanged(axis, state);
@@ -281,7 +283,7 @@ abstract public class Device {
 			axisStates[i] = 0;
 			axisDeflections[i] = 0;
 		}
-		if (collectingChanges) collectChanges();
+		if (collectingChangesThread != null) collect();
 
 		if (DEBUG) debug("Device reset.");
 		Listener[] listeners = this.listeners.toArray();
@@ -325,21 +327,23 @@ abstract public class Device {
 	}
 
 	/**
-	 * Changes made to the device will not actually be applied until {@link #applyChanges()} is called.
+	 * Changes made to the device in the current thread will not actually be applied until {@link #apply()} is called.
+	 * @throws IOException When communication with the device fails.
 	 */
-	public synchronized void collectChanges () {
-		collectingChanges = true;
+	public synchronized void collect () throws IOException {
+		apply();
+		collectingChangesThread = Thread.currentThread();
 		System.arraycopy(buttonStates, 0, snapshotButtonStates, 0, buttonStates.length);
 		System.arraycopy(axisStates, 0, snapshotAxisStates, 0, axisStates.length);
 	}
 
 	/**
-	 * Applies changes to the device made since {@link #collectChanges()} was called.
+	 * Applies changes to the device made since {@link #collect()} was called.
 	 * @throws IOException When communication with the device fails.
 	 */
-	public synchronized void applyChanges () throws IOException {
-		if (!collectingChanges) return;
-		collectingChanges = false;
+	public synchronized void apply () throws IOException {
+		if (collectingChangesThread == null) return;
+		collectingChangesThread = null;
 
 		boolean[] targetButtonStates = buttonStates;
 		buttonStates = snapshotButtonStates;

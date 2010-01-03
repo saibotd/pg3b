@@ -125,7 +125,7 @@ public class XIM extends Device {
 				second = value & 0xFF;
 			}
 			buttonStateBuffer.put(index / 2, (short)(first + (second << 8)));
-			if (!collectingChanges) checkResult(setState(stateByteBuffer, 200));
+			if (collectingChangesThread != Thread.currentThread()) checkResult(setState(stateByteBuffer, 200));
 		}
 	}
 
@@ -133,7 +133,7 @@ public class XIM extends Device {
 		int index = axisToIndex[axis.ordinal()];
 		synchronized (this) {
 			axisStateBuffer.put(index, (short)(32767 * state));
-			if (!collectingChanges) checkResult(setState(stateByteBuffer, 200));
+			if (collectingChangesThread != Thread.currentThread()) checkResult(setState(stateByteBuffer, 200));
 		}
 	}
 

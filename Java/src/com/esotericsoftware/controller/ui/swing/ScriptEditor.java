@@ -253,23 +253,21 @@ public class ScriptEditor extends EditorPanel<Script> {
 		new Thread("Execute") {
 			public void run () {
 				try {
+					Context context = ScriptAction.getContext(null, null, null);
+					Pnuts pnuts = Pnuts.parse(new StringReader(codeText.getText()));
+					pnuts.run(context);
+					ScriptAction.execute(pnuts, context, ScriptAction.FUNCTION_INIT, 0);
+					ScriptAction.execute(pnuts, context, ScriptAction.FUNCTION_ACTIVATE, 1);
 					Device device = owner.getDevice();
-					if (device != null) device.collectChanges();
 					try {
-						Context context = ScriptAction.getContext(null, null, null);
-						Pnuts pnuts = Pnuts.parse(new StringReader(codeText.getText()));
-						pnuts.run(context);
-						ScriptAction.execute(pnuts, context, ScriptAction.FUNCTION_INIT, 0);
-						ScriptAction.execute(pnuts, context, ScriptAction.FUNCTION_ACTIVATE, 1);
+						if (device != null) device.collect();
 						ScriptAction.execute(pnuts, context, ScriptAction.FUNCTION_CONTINUOUS, 1);
 						ScriptAction.execute(pnuts, context, ScriptAction.FUNCTION_DEACTIVATE, 0);
 					} finally {
-						if (device != null) {
-							try {
-								device.applyChanges();
-							} catch (IOException ex) {
-								if (Log.ERROR) error("Error applying device changes.", ex);
-							}
+						try {
+							if (device != null) device.apply();
+						} catch (IOException ex) {
+							if (Log.ERROR) error("Error applying device changes.", ex);
 						}
 					}
 					EventQueue.invokeLater(new Runnable() {

@@ -12,7 +12,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import com.esotericsoftware.controller.device.Deadzone;
 import com.esotericsoftware.controller.device.Device;
@@ -180,14 +179,11 @@ public class Config extends Editable {
 				// Poll initially to clear any values.
 				for (Poller poller : pollers)
 					poller.poll();
+				// Triggers are applied in activation order so those that manipulate the same targets work correctly.
 				ArrayList<Trigger> activeTriggers = new ArrayList();
+				ArrayList<Trigger> deactivateTriggers = new ArrayList();
 				while (running) {
 					Thread.yield();
-
-					if (device != null) device.collectChanges();
-
-					MouseTranslation mouseTranslation = config.getMouseTranslation();
-					if (mouseTranslation != null) mouseTranslation.update(device);
 
 					for (Poller poller : pollers)
 						poller.poll();
@@ -199,21 +195,32 @@ public class Config extends Editable {
 							if (!wasActive) {
 								if (TRACE) debug("Trigger \"" + trigger + "\" is active with state: " + trigger.getPayload());
 								activeTriggers.add(trigger);
+								// Execute "activate" function outside apply/collect.
 								execute(trigger);
 							}
 						} else {
 							if (wasActive) {
 								if (TRACE) debug("Trigger \"" + trigger + "\" is inactive with state: " + trigger.getPayload());
 								activeTriggers.remove(trigger);
-								execute(trigger);
+								// Execute "deactivate" function inside apply/collect.
+								deactivateTriggers.add(trigger);
 							}
 						}
 					}
-					// Triggers are applied continuously in activation order so those that manipulate the same targets work correctly.
-					for (Trigger trigger : activeTriggers)
-						execute(trigger);
 
-					if (device != null) device.applyChanges();
+					if (device != null) device.collect();
+
+					for (int i = 0, n = deactivateTriggers.size(); i < n; i++)
+						execute(deactivateTriggers.get(i));
+					deactivateTriggers.clear();
+
+					for (int i = 0, n = activeTriggers.size(); i < n; i++)
+						execute(activeTriggers.get(i));
+
+					MouseTranslation mouseTranslation = config.getMouseTranslation();
+					if (mouseTranslation != null) mouseTranslation.update(device);
+
+					if (device != null) device.apply();
 				}
 			} catch (Exception ex) {
 				if (ERROR) error("Error checking config triggers.", ex);
@@ -222,7 +229,7 @@ public class Config extends Editable {
 				running = false;
 				if (device != null) {
 					try {
-						device.applyChanges();
+						device.apply();
 					} catch (IOException ignored) {
 					}
 				}
