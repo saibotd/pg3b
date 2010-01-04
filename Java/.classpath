@@ -30,6 +30,6 @@
 			<attribute name="javadoc_location" value="http://minlog.googlecode.com/svn/api/"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry combineaccessrules="false" kind="src" path="/yamlbeans-old"/>
+	<classpathentry kind="lib" path="lib/yamlbeans-1.3.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
