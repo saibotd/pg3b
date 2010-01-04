@@ -55,4 +55,11 @@ public class Util {
 	static public SpinnerNumberModel newFloatSpinnerModel (float value, float minimum, float maximum, float stepSize) {
 		return new SpinnerNumberModel(new Float(value), new Float(minimum), new Float(maximum), new Float(stepSize));
 	}
+
+	static public void sleep (int millis) {
+		try {
+			Thread.sleep(millis);
+		} catch (InterruptedException ignored) {
+		}
+	}
 }
