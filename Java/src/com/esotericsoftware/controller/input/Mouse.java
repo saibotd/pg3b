@@ -55,7 +55,7 @@ public class Mouse implements InputDevice {
 					lastDeltaX += x - lastX;
 					lastDeltaY += y - lastY;
 					for (int i = 0, n = listeners.length; i < n; i++)
-						listeners[i].mouseMoved(Mouse.this, x - lastX, y - lastY);
+						listeners[i].mouseMoved(x - lastX, y - lastY);
 					if (grabbedFrame != null && robot != null) {
 						// Note this is not perfect. Another window can be focused if the mouse is moved and clicked extremely fast.
 						x = grabbedFrame.getX() + grabbedFrame.getWidth() / 2;
@@ -67,18 +67,18 @@ public class Mouse implements InputDevice {
 					lastButton = event.getButton();
 					buttons[lastButton] = true;
 					for (int i = 0, n = listeners.length; i < n; i++)
-						listeners[i].mouseDown(Mouse.this, lastButton);
+						listeners[i].mouseDown(lastButton);
 					break;
 				case MouseEvent.MOUSE_RELEASED:
 					int button = event.getButton();
 					buttons[button] = false;
 					for (int i = 0, n = listeners.length; i < n; i++)
-						listeners[i].mouseUp(Mouse.this, button);
+						listeners[i].mouseUp(button);
 					break;
 				case MouseEvent.MOUSE_WHEEL:
 					lastMouseWheel = ((MouseWheelEvent)event).getWheelRotation();
 					for (int i = 0, n = listeners.length; i < n; i++)
-						listeners[i].mouseWheel(Mouse.this, lastMouseWheel);
+						listeners[i].mouseWheel(lastMouseWheel);
 					break;
 				}
 			}
@@ -217,16 +217,16 @@ public class Mouse implements InputDevice {
 	}
 
 	static public class Listener {
-		public void mouseDown (Mouse mouse, int button) {
+		public void mouseDown (int button) {
 		}
 
-		public void mouseUp (Mouse mouse, int button) {
+		public void mouseUp (int button) {
 		}
 
-		public void mouseMoved (Mouse mouse, int deltaX, int deltaY) {
+		public void mouseMoved (int deltaX, int deltaY) {
 		}
 
-		public void mouseWheel (Mouse mouse, int delta) {
+		public void mouseWheel (int delta) {
 		}
 	}
 }
