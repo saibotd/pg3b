@@ -10,6 +10,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.LinkedHashMap;
 
 import net.sourceforge.yamlbeans.YamlConfig;
+import net.sourceforge.yamlbeans.YamlException;
 import net.sourceforge.yamlbeans.YamlReader;
 import net.sourceforge.yamlbeans.YamlWriter;
 import net.sourceforge.yamlbeans.scalar.ScalarSerializer;
@@ -104,6 +105,7 @@ public class Editable implements Cloneable {
 		yamlConfig.setClassTag("square", Deadzone.Square.class);
 		yamlConfig.setClassTag("mouse-settings", MouseAction.class);
 		yamlConfig.setClassTag("xim-translation", XIMMouseTranslation.class);
+		yamlConfig.setClassTag("text-mode", TextModeAction.class);
 
 		yamlConfig.setPropertyElementType(Config.class, "triggers", InputTrigger.class);
 		yamlConfig.setPropertyDefaultType(Config.class, "targetNames", LinkedHashMap.class);
@@ -147,8 +149,9 @@ public class Editable implements Cloneable {
 		YamlWriter yamlWriter = new YamlWriter(writer, yamlConfig);
 		try {
 			yamlWriter.write(this);
-		} finally {
 			yamlWriter.close();
+		} finally {
+			writer.close();
 		}
 	}
 

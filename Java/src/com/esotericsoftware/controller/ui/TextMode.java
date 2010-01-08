@@ -14,7 +14,6 @@ import com.esotericsoftware.controller.device.Button;
 import com.esotericsoftware.controller.device.Device;
 import com.esotericsoftware.controller.device.Target;
 import com.esotericsoftware.controller.input.Keyboard;
-import com.esotericsoftware.controller.input.Keyboard.Listener;
 import com.esotericsoftware.controller.ui.swing.UI;
 import com.esotericsoftware.controller.util.Listeners;
 import com.esotericsoftware.controller.util.Util;
@@ -26,7 +25,7 @@ public class TextMode {
 	static private final HashMap<Character, Location> charToLocation = new HashMap();
 	static private final LinkedList presses = new LinkedList();
 	static private boolean enabled;
-	static private int currentPage, currentX = 1, currentY = 1;
+	static private int currentPage, currentX, currentY;
 	static private Listeners<Listener> listeners = new Listeners(Listeners.class);
 
 	static {
@@ -95,19 +94,25 @@ public class TextMode {
 				if (!enabled) return;
 				switch (c) {
 				case VK_RIGHT:
+					if (DEBUG) info("Queued text input: <right>");
 					presses.add(Button.rightShoulder);
 					presses.notifyAll();
 					return;
 				case VK_LEFT:
+					if (DEBUG) info("Queued text input: <left>");
 					presses.add(Button.leftShoulder);
 					presses.notifyAll();
 					return;
 				case VK_CAPS_LOCK:
+					if (DEBUG) info("Queued text input: <capslock>");
 					presses.add(Button.leftStick);
 					presses.notifyAll();
 					return;
 				case VK_ESCAPE:
-					presses.clear();
+					if (!presses.isEmpty()) {
+						if (DEBUG) info("Text input queue cleared.");
+						presses.clear();
+					}
 					setEnabled(false);
 					return;
 				}
@@ -130,7 +135,8 @@ public class TextMode {
 			if (enabled) {
 				presses.clear();
 				currentPage = 0;
-				currentX = currentY = 1;
+				currentX = 1;
+				currentY = 0;
 				Keyboard.instance.addListener(keyboardListener);
 				if (INFO) info("Entered text mode.");
 			} else {
@@ -148,12 +154,10 @@ public class TextMode {
 		setEnabled(true);
 		while (true) {
 			synchronized (presses) {
-				if (enabled) {
-					try {
-						presses.wait();
-					} catch (InterruptedException ex) {
-					}
-					continue;
+				if (!enabled) break;
+				try {
+					presses.wait();
+				} catch (InterruptedException ex) {
 				}
 			}
 		}
@@ -171,22 +175,28 @@ public class TextMode {
 		switch (c) {
 		case ' ':
 			presses.add(Button.y);
+			if (DEBUG) info("Queued text input: <space>");
 			return;
 		case VK_BACK_SPACE:
 			presses.add(Button.x);
+			if (DEBUG) info("Queued text input: <backspace>");
 			return;
 		case VK_DELETE:
 			presses.add(Button.rightShoulder);
 			presses.add(Button.x);
+			if (DEBUG) info("Queued text input: <delete>");
 			return;
 		case '\n':
 			presses.add(Button.start);
+			if (DEBUG) info("Queued text input: <start>");
 			setEnabled(false);
 			return;
 		}
 
 		Location location = charToLocation.get(c);
 		if (location == null) return;
+
+		if (DEBUG) info("Queued text input: " + c);
 
 		int targetX = location.x, targetY = location.y;
 		int deltaX = currentX - targetX;
@@ -239,9 +249,9 @@ public class TextMode {
 		final public int page, x, y;
 
 		public Location (int index) {
-			this.page = index / 40;
-			this.x = index / 10;
-			this.y = index % 10;
+			page = index / 40;
+			y = index / 10 % 4;
+			x = index % 10 + 1;
 		}
 	}
 

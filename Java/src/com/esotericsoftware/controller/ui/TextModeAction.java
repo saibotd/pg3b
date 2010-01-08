@@ -5,7 +5,7 @@ import com.esotericsoftware.controller.ui.swing.UI;
 
 public class TextModeAction implements Action {
 	public Object execute (Config config, Trigger trigger, boolean isActive, Object payload) {
-		TextMode.block();
+		if (isActive) TextMode.block();
 		return null;
 	}
 
@@ -15,5 +15,9 @@ public class TextModeAction implements Action {
 
 	public void reset (Config config, Trigger trigger) {
 		TextMode.setEnabled(false);
+	}
+
+	public String toString () {
+		return "Text Mode";
 	}
 }
