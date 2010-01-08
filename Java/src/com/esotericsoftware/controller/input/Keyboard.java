@@ -53,7 +53,7 @@ public class Keyboard implements InputDevice {
 					lastKeyCode = keyCode;
 					keys[keyCode] = true;
 					for (int i = 0, n = listeners.length; i < n; i++)
-						listeners[i].keyDown(keyCode);
+						listeners[i].keyDown(keyCode, event.getKeyChar());
 					break;
 				}
 				case KeyEvent.KEY_RELEASED: {
@@ -61,7 +61,7 @@ public class Keyboard implements InputDevice {
 					if (keyCode > keys.length) break;
 					keys[keyCode] = false;
 					for (int i = 0, n = listeners.length; i < n; i++)
-						listeners[i].keyUp(keyCode);
+						listeners[i].keyUp(keyCode, event.getKeyChar());
 					break;
 				}
 				case KeyEvent.KEY_TYPED:
@@ -176,10 +176,10 @@ public class Keyboard implements InputDevice {
 	}
 
 	static public class Listener {
-		public void keyDown (int keyCode) {
+		public void keyDown (int keyCode, char c) {
 		}
 
-		public void keyUp (int keyCode) {
+		public void keyUp (int keyCode, char c) {
 		}
 
 		public void keyTyped (char c) {

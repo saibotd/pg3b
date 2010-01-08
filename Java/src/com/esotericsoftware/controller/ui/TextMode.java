@@ -14,35 +14,42 @@ import com.esotericsoftware.controller.device.Button;
 import com.esotericsoftware.controller.device.Device;
 import com.esotericsoftware.controller.device.Target;
 import com.esotericsoftware.controller.input.Keyboard;
+import com.esotericsoftware.controller.input.Keyboard.Listener;
 import com.esotericsoftware.controller.ui.swing.UI;
+import com.esotericsoftware.controller.util.Listeners;
 import com.esotericsoftware.controller.util.Util;
 
 public class TextMode {
-	static private final HashMap<Integer, Location> keyCodeToLocation = new HashMap();
-	static private final HashMap<Character, Integer> charToKeyCode = new HashMap();
+	private TextMode () {
+	}
+
+	static private final HashMap<Character, Location> charToLocation = new HashMap();
+	static private final LinkedList presses = new LinkedList();
+	static private boolean enabled;
+	static private int currentPage, currentX = 1, currentY = 1;
+	static private Listeners<Listener> listeners = new Listeners(Listeners.class);
+
 	static {
-		int[] keyCodes = { //
-		VK_A, VK_B, VK_C, VK_D, VK_E, VK_F, VK_G, VK_1, VK_2, VK_3, //
-			VK_H, VK_I, VK_J, VK_K, VK_L, VK_M, VK_N, VK_4, VK_5, VK_6, //
-			VK_O, VK_P, VK_Q, VK_R, VK_S, VK_T, VK_U, VK_7, VK_8, VK_9, // 
-			VK_V, VK_W, VK_X, VK_Y, VK_Z, VK_MINUS, VK_AT, VK_UNDERSCORE, VK_0, VK_PERIOD, //
-		// ---
-		};
-		char[] chars = { //
-		'a', 'b', 'c', 'd', 'e', 'f', 'g', '1', '2', '3', //
+		char[] chars = {
+		//
+			'a', 'b', 'c', 'd', 'e', 'f', 'g', '1', '2', '3', //
 			'h', 'i', 'j', 'k', 'l', 'm', 'n', '4', '5', '6', //
 			'o', 'p', 'q', 'r', 's', 't', 'u', '7', '8', '9', // 
 			'v', 'w', 'x', 'y', 'z', '-', '@', '_', '0', '.', //
-		// ---
+			//
+			',', ';', ':', '\'', '"', '!', '?', '¡', '¿', '%', //
+			'[', ']', '{', '}', '`', '$', '£', '«', '»', '#', //
+			'<', '>', '(', ')', '€', '¥', ' ', '~', '^', '\\', // 
+			'|', '=', '*', '/', '+', ' ', ' ', ' ', '&', ' ', //
+			//
+			'â', 'ä', 'à', 'å', 'á', ' ', 'ñ', 'œ', 'æ', 'ß', //
+			'é', 'ê', 'ë', 'è', 'Þ', 'ç', 'ý', 'ÿ', 'º', 'ª', //
+			'ï', 'î', 'ì', 'í', 'ü', 'û', 'ù', 'ú', 'µ', ' ', // 
+			'ô', 'ö', 'ò', 'ó', 'o', 'o', 'o', ' ', '×', ' ', //
 		};
-		for (int i = 0, n = keyCodes.length; i < n; i++) {
-			keyCodeToLocation.put(keyCodes[i], new Location(i));
-			charToKeyCode.put(chars[i], keyCodes[i]);
-		}
-	}
+		for (int i = 0, n = chars.length; i < n; i++)
+			if (chars[i] != ' ') charToLocation.put(chars[i], new Location(i));
 
-	static private LinkedList presses = new LinkedList();
-	static {
 		Thread thread = new Thread("TextMode") {
 			public void run () {
 				Object object;
@@ -58,6 +65,7 @@ public class TextMode {
 						object = presses.pop();
 					}
 					Device device = UI.instance.getDevice();
+					if (device == null) continue;
 					try {
 						if (object instanceof Target) {
 							device.set((Target)object, 1);
@@ -81,13 +89,36 @@ public class TextMode {
 		thread.start();
 	}
 
-	static private boolean enabled, firstPage;
-	static private int currentX = 1, currentY = 1;
-
 	static private Keyboard.Listener keyboardListener = new Keyboard.Listener() {
-		public void keyDown (int keyCode) {
+		public void keyDown (int keyCode, char c) {
 			synchronized (presses) {
-				if (enabled) moveTo(keyCode, Keyboard.instance.isShiftDown());
+				if (!enabled) return;
+				switch (c) {
+				case VK_RIGHT:
+					presses.add(Button.rightShoulder);
+					presses.notifyAll();
+					return;
+				case VK_LEFT:
+					presses.add(Button.leftShoulder);
+					presses.notifyAll();
+					return;
+				case VK_CAPS_LOCK:
+					presses.add(Button.leftStick);
+					presses.notifyAll();
+					return;
+				case VK_ESCAPE:
+					presses.clear();
+					setEnabled(false);
+					return;
+				}
+			}
+		}
+
+		public void keyTyped (char c) {
+			synchronized (presses) {
+				if (!enabled) return;
+				press(c);
+				presses.notifyAll();
 			}
 		}
 	};
@@ -96,63 +127,66 @@ public class TextMode {
 		synchronized (presses) {
 			if (TextMode.enabled == enabled) return;
 			TextMode.enabled = enabled;
-			presses.clear();
 			if (enabled) {
-				firstPage = true;
+				presses.clear();
+				currentPage = 0;
 				currentX = currentY = 1;
 				Keyboard.instance.addListener(keyboardListener);
-			} else
+				if (INFO) info("Entered text mode.");
+			} else {
 				Keyboard.instance.removeListener(keyboardListener);
+				if (INFO) info("Exited text mode.");
+			}
+			presses.notifyAll();
+		}
+	}
+
+	/**
+	 * Enables text mode and blocks until it is disabled.
+	 */
+	static public void block () {
+		setEnabled(true);
+		while (true) {
+			synchronized (presses) {
+				if (enabled) {
+					try {
+						presses.wait();
+					} catch (InterruptedException ex) {
+					}
+					continue;
+				}
+			}
 		}
 	}
 
 	static public void send (String text) {
 		synchronized (presses) {
-			for (char c : text.toCharArray()) {
-				Integer keyCode = c == ' ' ? VK_SPACE : charToKeyCode.get(c);
-				if (keyCode == null) return;
-				moveTo(keyCode, Character.isUpperCase(c));
-			}
-			moveTo(VK_ENTER, false);
+			for (char c : text.toCharArray())
+				press(c);
+			presses.notifyAll();
 		}
 	}
 
-	static private void moveTo (int keyCode, boolean shift) {
-		switch (keyCode) {
-		case VK_SPACE:
-			addPress(Button.y);
+	static private void press (char c) {
+		switch (c) {
+		case ' ':
+			presses.add(Button.y);
 			return;
 		case VK_BACK_SPACE:
-			addPress(Button.x);
+			presses.add(Button.x);
 			return;
 		case VK_DELETE:
-			addPress(Button.rightShoulder);
-			addPress(Button.x);
+			presses.add(Button.rightShoulder);
+			presses.add(Button.x);
 			return;
-		case VK_RIGHT:
-			addPress(Button.rightShoulder);
-			return;
-		case VK_LEFT:
-			addPress(Button.leftShoulder);
-			return;
-		case VK_CAPS_LOCK:
-			addPress(Button.leftStick);
-			return;
-		case VK_ENTER:
-			addPress(Button.start);
-			return;
-		case VK_ESCAPE:
+		case '\n':
+			presses.add(Button.start);
 			setEnabled(false);
 			return;
 		}
 
-		Location location = keyCodeToLocation.get(keyCode);
+		Location location = charToLocation.get(c);
 		if (location == null) return;
-
-		if (firstPage != location.firstPage) {
-			addPress(location.firstPage ? Axis.rightTrigger : Axis.leftTrigger);
-			firstPage = !firstPage;
-		}
 
 		int targetX = location.x, targetY = location.y;
 		int deltaX = currentX - targetX;
@@ -161,6 +195,7 @@ public class TextMode {
 		int incrementY = currentY - targetY > 0 ? -1 : 1;
 		while (currentX != targetX || currentY != targetY) {
 			ArrayList<Target> targets = new ArrayList(2);
+			checkPage(location.page, targets);
 			if (currentX != targetX) {
 				currentX += incrementX;
 				targets.add(incrementX > 0 ? Button.right : Button.left);
@@ -173,27 +208,48 @@ public class TextMode {
 				if (currentY < 0) currentY += 5;
 				if (currentY == 5) currentY -= 5;
 			}
-			addPress(targets);
+			presses.add(targets);
 		}
-		if (shift) addPress(Button.leftStick);
-		addPress(Button.a);
+		checkPage(location.page, null);
+		if (Character.isUpperCase(c)) presses.add(Button.leftStick);
+		presses.add(Button.a);
 	}
 
-	static private void addPress (Object object) {
-		synchronized (presses) {
-			presses.addLast(object);
-			presses.notifyAll();
-		}
+	static private void checkPage (int page, ArrayList<Target> targets) {
+		if (currentPage == page) return;
+		boolean forward = currentPage < page;
+		if (Math.abs(currentPage - page) > 1) forward = !forward;
+		currentPage = page;
+		Axis axis = forward ? Axis.rightTrigger : Axis.leftTrigger;
+		if (targets != null)
+			targets.add(axis);
+		else
+			presses.add(axis);
+	}
+
+	static public void addListener (Listener listener) {
+		listeners.addListener(listener);
+	}
+
+	static public void removeListener (Listener listener) {
+		listeners.removeListener(listener);
 	}
 
 	static private class Location {
-		final public boolean firstPage;
-		final public int x, y;
+		final public int page, x, y;
 
 		public Location (int index) {
-			this.firstPage = index < 40;
+			this.page = index / 40;
 			this.x = index / 10;
 			this.y = index % 10;
+		}
+	}
+
+	static public class Listener {
+		public void enter () {
+		}
+
+		public void exit () {
 		}
 	}
 }

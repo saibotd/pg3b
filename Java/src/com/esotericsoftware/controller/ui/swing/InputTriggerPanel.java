@@ -52,6 +52,7 @@ import com.esotericsoftware.controller.ui.MouseAction;
 import com.esotericsoftware.controller.ui.MouseTranslation;
 import com.esotericsoftware.controller.ui.Script;
 import com.esotericsoftware.controller.ui.ScriptAction;
+import com.esotericsoftware.controller.ui.TextModeAction;
 import com.esotericsoftware.controller.ui.DeviceAction.Direction;
 import com.esotericsoftware.controller.ui.swing.XboxControllerPanel.Listener;
 import com.esotericsoftware.controller.util.Util;
@@ -69,7 +70,7 @@ public class InputTriggerPanel extends JPanel {
 
 	private JPanel titlePanel, axisButtonPanel, targetPanel;
 	private JLabel triggerLabel;
-	private JRadioButton targetRadio, scriptRadio, mouseRadio;
+	private JRadioButton targetRadio, scriptRadio, mouseRadio, textModeRadio;
 	private JButton saveButton, cancelButton, deadzoneButton, mouseButton;
 	private JComboBox targetCombo, targetDirectionCombo, scriptCombo;
 	private JCheckBox altCheckBox, ctrlCheckBox, shiftCheckBox, anyCheckBox, noneCheckBox, invertTriggerCheckBox;
@@ -103,15 +104,13 @@ public class InputTriggerPanel extends JPanel {
 		this.config = config;
 
 		targetComboModel.removeAllElements();
-		Target[] targets = new Target[] {Button.a, Button.b, Button.x, Button.y,
-
-		Button.up, Button.down, Button.left, Button.right, Axis.leftTrigger, Axis.rightTrigger, Button.leftShoulder,
-			Button.rightShoulder, Axis.leftStickX, Axis.leftStickY, Axis.rightStickX, Axis.rightStickY, Button.leftStick,
-			Button.rightStick, Button.start, Button.back, Button.guide};
+		Target[] targets = new Target[] {Button.a, Button.b, Button.x, Button.y, Button.up, Button.down, Button.left, Button.right,
+			Axis.leftTrigger, Axis.rightTrigger, Button.leftShoulder, Button.rightShoulder, Axis.leftStickX, Axis.leftStickY,
+			Axis.rightStickX, Axis.rightStickY, Button.leftStick, Button.rightStick, Button.start, Button.back, Button.guide};
 		for (Target target : targets)
 			targetComboModel.addElement(new TargetItem(target, config.getTargetName(target)));
 
-		Util.setEnabled(true, targetRadio, targetCombo, scriptRadio, scriptCombo);
+		Util.setEnabled(true, targetRadio, targetCombo, scriptRadio, scriptCombo, mouseRadio, mouseButton, textModeRadio);
 
 		scriptComboModel.removeAllElements();
 		scriptComboModel.addElement("<New Script>");
@@ -165,6 +164,8 @@ public class InputTriggerPanel extends JPanel {
 			} else if (action instanceof MouseAction) {
 				mouseRadio.doClick();
 				translation = ((MouseAction)action).getMouseTranslation();
+			} else if (action instanceof TextModeAction) {
+				textModeRadio.doClick();
 			} else if (action instanceof DeviceAction) {
 				DeviceAction deviceAction = ((DeviceAction)action);
 				targetRadio.setSelected(true);
@@ -183,7 +184,8 @@ public class InputTriggerPanel extends JPanel {
 				}
 			} else {
 				// Unknown action, can't change it.
-				Util.setEnabled(false, targetRadio, targetCombo, scriptRadio, scriptCombo, invertTriggerCheckBox);
+				Util.setEnabled(false, targetRadio, targetCombo, scriptRadio, scriptCombo, invertTriggerCheckBox, mouseRadio,
+					mouseButton, textModeRadio);
 				targetRadio.setSelected(false);
 				scriptRadio.setSelected(false);
 			}
@@ -395,6 +397,15 @@ public class InputTriggerPanel extends JPanel {
 			}
 		});
 
+		textModeRadio.addActionListener(new ActionListener() {
+			public void actionPerformed (ActionEvent event) {
+				if (!textModeRadio.isSelected()) return;
+				targetCombo.setSelectedItem(null);
+				scriptCombo.setSelectedItem(null);
+				updateTargetDirection();
+			}
+		});
+
 		scriptRadio.addItemListener(new ItemListener() {
 			public void itemStateChanged (ItemEvent event) {
 				if (!scriptRadio.isSelected()) return;
@@ -463,6 +474,8 @@ public class InputTriggerPanel extends JPanel {
 					MouseAction action = new MouseAction();
 					action.setMouseTranslation(translation);
 					trigger.setAction(action);
+				} else if (textModeRadio.isSelected()) {
+					trigger.setAction(new TextModeAction());
 				}
 
 				if (isNewTrigger) config.getTriggers().add(trigger);
@@ -537,6 +550,11 @@ public class InputTriggerPanel extends JPanel {
 			}
 		}
 		{
+			textModeRadio = new JRadioButton("Text Mode");
+			titlePanel.add(textModeRadio, new GridBagConstraints(2, 7, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
+				GridBagConstraints.NONE, new Insets(0, 6, 6, 6), 0, 0));
+		}
+		{
 			JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 6, 0));
 			titlePanel.add(panel, new GridBagConstraints(2, 5, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
 				new Insets(0, 0, 6, 6), 0, 0));
@@ -577,7 +595,7 @@ public class InputTriggerPanel extends JPanel {
 		}
 		{
 			JPanel bottomPanel = new JPanel(new GridBagLayout());
-			titlePanel.add(bottomPanel, new GridBagConstraints(1, 7, 2, 1, 0.0, 0.0, GridBagConstraints.EAST,
+			titlePanel.add(bottomPanel, new GridBagConstraints(1, 8, 2, 1, 0.0, 0.0, GridBagConstraints.EAST,
 				GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
 			{
 				JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 6, 0));
@@ -663,6 +681,7 @@ public class InputTriggerPanel extends JPanel {
 		group.add(targetRadio);
 		group.add(scriptRadio);
 		group.add(mouseRadio);
+		group.add(textModeRadio);
 	}
 
 	static private class TargetItem {
