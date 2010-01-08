@@ -70,6 +70,7 @@ import com.esotericsoftware.controller.ui.Config;
 import com.esotericsoftware.controller.ui.Diagnostics;
 import com.esotericsoftware.controller.ui.InputTrigger;
 import com.esotericsoftware.controller.ui.Settings;
+import com.esotericsoftware.controller.ui.TextMode;
 import com.esotericsoftware.controller.ui.Trigger;
 import com.esotericsoftware.controller.util.LoaderDialog;
 import com.esotericsoftware.controller.util.Util;
@@ -129,6 +130,7 @@ public class UI extends JFrame {
 		pkg.set("Deadzone".intern(), Deadzone.class);
 		pkg.set("Device".intern(), PG3B.class);
 		pkg.set("Stick".intern(), Stick.class);
+		pkg.set("TextMode".intern(), TextMode.class);
 
 		initializeLayout();
 		initializeEvents();
