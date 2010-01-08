@@ -92,7 +92,7 @@ public class TextMode {
 		public void keyDown (int keyCode, char c) {
 			synchronized (presses) {
 				if (!enabled) return;
-				switch (c) {
+				switch (keyCode) {
 				case VK_RIGHT:
 					if (DEBUG) info("Queued text input: <right>");
 					presses.add(Button.rightShoulder);
@@ -108,6 +108,9 @@ public class TextMode {
 					presses.add(Button.leftStick);
 					presses.notifyAll();
 					return;
+				case VK_F4:
+					if (!Keyboard.instance.isCtrlDown()) return;
+					// Fall through.
 				case VK_ESCAPE:
 					if (!presses.isEmpty()) {
 						if (DEBUG) info("Text input queue cleared.");
