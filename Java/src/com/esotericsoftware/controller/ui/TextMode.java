@@ -24,8 +24,8 @@ public class TextMode {
 
 	static private final HashMap<Character, Location> charToLocation = new HashMap();
 	static private final LinkedList presses = new LinkedList();
-	static private boolean enabled;
-	static private int currentPage, currentX, currentY;
+	static private boolean enabled, caps;
+	static private int currentPage, currentX, currentY, charsEntered, cursorPosition;
 	static private Listeners<Listener> listeners = new Listeners(Listeners.class);
 
 	static {
@@ -41,10 +41,10 @@ public class TextMode {
 			'<', '>', '(', ')', '€', '¥', ' ', '~', '^', '\\', // 
 			'|', '=', '*', '/', '+', ' ', ' ', ' ', '&', ' ', //
 			//
-			'â', 'ä', 'à', 'å', 'á', ' ', 'ñ', 'œ', 'æ', 'ß', //
-			'é', 'ê', 'ë', 'è', 'Þ', 'ç', 'ý', 'ÿ', 'º', 'ª', //
-			'ï', 'î', 'ì', 'í', 'ü', 'û', 'ù', 'ú', 'µ', ' ', // 
-			'ô', 'ö', 'ò', 'ó', 'o', 'o', 'o', ' ', '×', ' ', //
+			'à', 'á', 'â', 'ã', 'ä', 'å', 'ñ', 'œ', 'æ', 'ß', //
+			'è', 'é', 'ê', 'ë', 'Þ', 'ç', 'ý', 'ÿ', 'º', 'ª', //
+			'ì', 'í', 'î', 'ï', 'ù', 'ú', 'ü', 'û', 'µ', '\u015D', // 
+			'ò', 'ó', 'ô', 'õ', 'ð', 'ö', 'ø', ' ', '×', ' ', //
 		};
 		for (int i = 0, n = chars.length; i < n; i++)
 			if (chars[i] != ' ') charToLocation.put(chars[i], new Location(i));
@@ -94,26 +94,49 @@ public class TextMode {
 				if (!enabled) return;
 				switch (keyCode) {
 				case VK_RIGHT:
-					if (DEBUG) info("Queued text input: <right>");
+					if (DEBUG) debug("Queued text input: <right>");
+					cursorPosition++;
+					if (cursorPosition > charsEntered) cursorPosition = 0;
 					presses.add(Button.rightShoulder);
 					presses.notifyAll();
 					return;
 				case VK_LEFT:
-					if (DEBUG) info("Queued text input: <left>");
+					if (DEBUG) debug("Queued text input: <left>");
+					cursorPosition--;
+					if (cursorPosition < 0) cursorPosition = charsEntered;
 					presses.add(Button.leftShoulder);
 					presses.notifyAll();
 					return;
-				case VK_CAPS_LOCK:
-					if (DEBUG) info("Queued text input: <capslock>");
-					presses.add(Button.leftStick);
+				case VK_HOME: {
+					if (DEBUG) debug("Queued text input: <home>");
+					int increment = cursorPosition > charsEntered / 2 ? 1 : -1;
+					Button button = increment < 0 ? Button.leftShoulder : Button.rightShoulder;
+					while (cursorPosition != 0) {
+						cursorPosition += increment;
+						if (cursorPosition > charsEntered) cursorPosition = 0;
+						presses.add(button);
+					}
 					presses.notifyAll();
 					return;
+				}
+				case VK_END: {
+					if (DEBUG) debug("Queued text input: <end>");
+					int increment = cursorPosition > charsEntered / 2 ? 1 : -1;
+					Button button = increment < 0 ? Button.leftShoulder : Button.rightShoulder;
+					while (cursorPosition != charsEntered) {
+						cursorPosition += increment;
+						if (cursorPosition < 0) cursorPosition = charsEntered;
+						presses.add(button);
+					}
+					presses.notifyAll();
+					return;
+				}
 				case VK_F4:
 					if (!Keyboard.instance.isCtrlDown()) return;
 					// Fall through.
 				case VK_ESCAPE:
 					if (!presses.isEmpty()) {
-						if (DEBUG) info("Text input queue cleared.");
+						if (DEBUG) debug("Text input queue cleared.");
 						presses.clear();
 					}
 					setEnabled(false);
@@ -140,6 +163,9 @@ public class TextMode {
 				currentPage = 0;
 				currentX = 1;
 				currentY = 0;
+				caps = false;
+				charsEntered = 0;
+				cursorPosition = 0;
 				Keyboard.instance.addListener(keyboardListener);
 				if (INFO) info("Entered text mode.");
 			} else {
@@ -178,20 +204,20 @@ public class TextMode {
 		switch (c) {
 		case ' ':
 			presses.add(Button.y);
-			if (DEBUG) info("Queued text input: <space>");
+			if (DEBUG) debug("Queued text input: <space>");
 			return;
 		case VK_BACK_SPACE:
 			presses.add(Button.x);
-			if (DEBUG) info("Queued text input: <backspace>");
+			if (DEBUG) debug("Queued text input: <backspace>");
 			return;
 		case VK_DELETE:
 			presses.add(Button.rightShoulder);
 			presses.add(Button.x);
-			if (DEBUG) info("Queued text input: <delete>");
+			if (DEBUG) debug("Queued text input: <delete>");
 			return;
 		case '\n':
 			presses.add(Button.start);
-			if (DEBUG) info("Queued text input: <start>");
+			if (DEBUG) debug("Queued text input: <start>");
 			setEnabled(false);
 			return;
 		}
@@ -199,7 +225,7 @@ public class TextMode {
 		Location location = charToLocation.get(c);
 		if (location == null) return;
 
-		if (DEBUG) info("Queued text input: " + c);
+		if (DEBUG) debug("Queued text input: " + c);
 
 		int targetX = location.x, targetY = location.y;
 		int deltaX = currentX - targetX;
@@ -224,8 +250,13 @@ public class TextMode {
 			presses.add(targets);
 		}
 		checkPage(location.page, null);
-		if (Character.isUpperCase(c)) presses.add(Button.leftStick);
+		if (caps != Character.isUpperCase(c) && Character.toUpperCase(c) != Character.toLowerCase(c)) {
+			caps = !caps;
+			presses.add(Button.leftStick);
+		}
 		presses.add(Button.a);
+		charsEntered++;
+		cursorPosition++;
 	}
 
 	static private void checkPage (int page, ArrayList<Target> targets) {
