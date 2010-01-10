@@ -1,7 +1,6 @@
 
 package com.esotericsoftware.controller.input;
 
-import com.esotericsoftware.controller.ui.InputTrigger;
 
 /**
  * Represents an input from an input device. Eg, a button press or axis movement.

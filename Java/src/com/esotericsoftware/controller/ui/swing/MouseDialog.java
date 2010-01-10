@@ -17,7 +17,6 @@ import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
 
-import com.esotericsoftware.controller.ui.Config;
 import com.esotericsoftware.controller.ui.MouseTranslation;
 import com.esotericsoftware.controller.util.Util;
 import com.esotericsoftware.controller.xim.XIMMouseTranslation;

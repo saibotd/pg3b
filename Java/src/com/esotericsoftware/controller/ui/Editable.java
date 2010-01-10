@@ -9,15 +9,8 @@ import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 import java.util.LinkedHashMap;
 
-import net.sourceforge.yamlbeans.YamlConfig;
-import net.sourceforge.yamlbeans.YamlException;
-import net.sourceforge.yamlbeans.YamlReader;
-import net.sourceforge.yamlbeans.YamlWriter;
-import net.sourceforge.yamlbeans.scalar.ScalarSerializer;
-
 import com.esotericsoftware.controller.device.Deadzone;
 import com.esotericsoftware.controller.device.Device;
-import com.esotericsoftware.controller.device.Target;
 import com.esotericsoftware.controller.input.JInputJoystick;
 import com.esotericsoftware.controller.input.JInputXboxController;
 import com.esotericsoftware.controller.input.Keyboard;
@@ -27,6 +20,10 @@ import com.esotericsoftware.controller.input.Keyboard.KeyboardInput;
 import com.esotericsoftware.controller.ui.DeviceAction.Direction;
 import com.esotericsoftware.controller.ui.swing.EditorPanel;
 import com.esotericsoftware.controller.xim.XIMMouseTranslation;
+import com.esotericsoftware.yamlbeans.YamlConfig;
+import com.esotericsoftware.yamlbeans.YamlReader;
+import com.esotericsoftware.yamlbeans.YamlWriter;
+import com.esotericsoftware.yamlbeans.scalar.ScalarSerializer;
 
 /**
  * Base class for a file-based object that can be edited and saved by an {@link EditorPanel}.

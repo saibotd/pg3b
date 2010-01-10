@@ -3,9 +3,7 @@ package com.esotericsoftware.controller.ui;
 
 import static com.esotericsoftware.minlog.Log.*;
 
-import java.awt.Dimension;
 import java.awt.Rectangle;
-import java.awt.Toolkit;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -13,11 +11,9 @@ import java.io.IOException;
 
 import javax.swing.JFrame;
 
-import net.sourceforge.yamlbeans.YamlConfig;
-import net.sourceforge.yamlbeans.YamlReader;
-import net.sourceforge.yamlbeans.YamlWriter;
-
-import com.esotericsoftware.controller.ui.swing.UI;
+import com.esotericsoftware.yamlbeans.YamlConfig;
+import com.esotericsoftware.yamlbeans.YamlReader;
+import com.esotericsoftware.yamlbeans.YamlWriter;
 
 /**
  * Stores application wide settings for the UI.

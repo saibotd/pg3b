@@ -4,7 +4,6 @@ package com.esotericsoftware.controller.ui.swing;
 import java.awt.CardLayout;
 
 import javax.swing.JPanel;
-import javax.swing.JToggleButton;
 
 import com.esotericsoftware.controller.ui.Config;
 import com.esotericsoftware.controller.ui.InputTrigger;

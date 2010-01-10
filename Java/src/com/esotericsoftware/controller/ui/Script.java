@@ -10,13 +10,10 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.io.Writer;
 
-import net.sourceforge.yamlbeans.YamlWriter;
-import pnuts.compiler.CompilerPnutsImpl;
-import pnuts.lang.Context;
-import pnuts.lang.Package;
 import pnuts.lang.ParseException;
 import pnuts.lang.Pnuts;
-import pnuts.lang.PnutsFunction;
+
+import com.esotericsoftware.yamlbeans.YamlWriter;
 
 /**
  * Stores the code for a Pnuts script.

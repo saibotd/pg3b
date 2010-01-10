@@ -17,7 +17,6 @@ import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
-import javax.swing.SpinnerNumberModel;
 
 import com.esotericsoftware.controller.device.Deadzone;
 import com.esotericsoftware.controller.ui.InputTrigger;

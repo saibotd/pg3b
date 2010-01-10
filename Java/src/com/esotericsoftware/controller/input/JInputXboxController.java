@@ -13,7 +13,6 @@ import net.java.games.input.Component.Identifier;
 
 import com.esotericsoftware.controller.device.Axis;
 import com.esotericsoftware.controller.device.Button;
-import com.esotericsoftware.controller.ui.InputTrigger;
 
 /**
  * Reads the state from an Xbox 360 controller using JInput. This works on all platforms. On Windows DirectInput will be used,
