@@ -186,6 +186,10 @@ namespace PG3B.Interface
 
         public byte[] LeftTrigger { set { UpdateCalibration(XBTarget_t.LeftTrigger, value); } }
         public byte[] RightTrigger { set { UpdateCalibration(XBTarget_t.RightTrigger, value); } }
+        public byte[] LeftStickX { set { UpdateCalibration(XBTarget_t.LeftStickX, value); } }
+        public byte[] LeftStickY { set { UpdateCalibration(XBTarget_t.LeftStickY, value); } }
+        public byte[] RightStickX { set { UpdateCalibration(XBTarget_t.RightStickX, value); } }
+        public byte[] RightStickY { set { UpdateCalibration(XBTarget_t.RightStickY, value); } }
 
         public XBoxCalibration(XBoxConnection _xboxConnection)
         {
@@ -197,11 +201,11 @@ namespace PG3B.Interface
         // type of controller.
         //
         // Byte 0: 8 Bit CRC
-        //  1 - 4: magic number "PG3B"
-        //      5: record size
-        //      6: version
-        //      7: model (XBoxGamePad_t), where 0 <= XBoxGamePad_t <= 1.
-        //      8: calibration (bitfield 2^XBoxTarget_t), where 0 <= XBoxTarget_t <= 7.
+        //  1 - 4: magic number : "PG3B"
+        //      5: record size : 9 bytes
+        //      6: version : 1
+        //      7: model : XBoxGamePad_t, where 0 <= XBoxGamePad_t <= 1.
+        //      8: calibration : bitfield 2^XBoxTarget_t, where 0 <= XBoxTarget_t <= 7.
 
         public byte[] GetConfigPage()
         {
@@ -209,23 +213,25 @@ namespace PG3B.Interface
             string magicNumber = System.Text.Encoding.ASCII.GetString(xboxConfiguration, MagicOffset, MagicNumber.Length);
             if (magicNumber != MagicNumber)
                 throw new System.IO.InvalidDataException("XBoxCalibration.GetConfigPage failed to validate magic number.");
-            if (XBoxConnection.CalculateCrc(xboxConfiguration, CrcOffset + 1, xboxConfiguration[SizeOffset] - 1) != xboxConfiguration[CrcOffset])
+            byte crc8 = XBoxConnection.CalculateCrc(xboxConfiguration, CrcOffset + 1, xboxConfiguration[SizeOffset] - 1);
+            if (crc8 != xboxConfiguration[CrcOffset])
                 throw new System.IO.InvalidDataException("XBoxCalibration.GetConfigPage failed to validate the CRC.");
 
             return xboxConfiguration;
         }
 
-        // NOTE: The concept of a "page" is used to simplify the implementation of pg3b <-> PC comms
+        // NOTE: The concept of a "page" is used to simplify the implementation of pg3b <-> PC comms,
         // and as a unit of reference for statically assigned blocks of EEPROM data.
-        // Write the calibration data to consecutive pages. Pages are nominally 32 bytes each. A
-        // calibration record is 256 bytes, or 8 pages.
+        //
+        // Calibration data is written to consecutive pages. Pages are nominally 32 bytes each. A
+        // calibration record is 256 bytes, or 8 sequential pages.
         // 
-        // Page 1: LeftStickX
-        //      9: LeftStickY
-        //     17: RightStickX
-        //     25: RightStickY
-        //     33: LeftTrigger
-        //     41: RightTrigger
+        // Pages 1 -  8: LeftStickX
+        //       9 - 16: LeftStickY
+        //      17 - 24: RightStickX
+        //      25 - 32: RightStickY
+        //      33 - 40: LeftTrigger
+        //      41 - 48: RightTrigger
 
         public void UpdateCalibration(XBTarget_t xboxTarget, byte[] calibrationData)
         {
@@ -241,6 +247,7 @@ namespace PG3B.Interface
 
             byte[] xboxConfiguration = GetConfigPage();
             xboxConfiguration[CalibrationOffset] |= (byte)(1 << (int)xboxTarget);
+            xboxConfiguration[CrcOffset] = XBoxConnection.CalculateCrc(xboxConfiguration, CrcOffset + 1, xboxConfiguration[SizeOffset] - 1);
             xboxConnection.WritePage(ConfigPage, xboxConfiguration);
         }
     }
@@ -331,7 +338,7 @@ namespace PG3B.Interface
 
         private void OpenSerialPort(string portName)
         {
-            OpenSerialPort(portName, 100);
+            OpenSerialPort(portName, 200);
         }
 
         private void OpenSerialPort(string portName, int timeout)

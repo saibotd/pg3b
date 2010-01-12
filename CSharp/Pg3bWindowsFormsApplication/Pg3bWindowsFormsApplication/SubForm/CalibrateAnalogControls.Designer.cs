@@ -115,7 +115,10 @@
             this.calibrationEnabledComboBox.FormattingEnabled = true;
             this.calibrationEnabledComboBox.Items.AddRange(new object[] {
             "Uncalibrated",
-            "Calibrated"});
+            "Calibrated",
+            "All High",
+            "All Centered",
+            "All Low"});
             this.calibrationEnabledComboBox.Location = new System.Drawing.Point(400, 474);
             this.calibrationEnabledComboBox.Name = "calibrationEnabledComboBox";
             this.calibrationEnabledComboBox.Size = new System.Drawing.Size(121, 21);

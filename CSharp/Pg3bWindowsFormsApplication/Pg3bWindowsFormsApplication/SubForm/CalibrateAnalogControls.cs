@@ -53,6 +53,8 @@ namespace Pg3bWindowsFormsApplication.SubForm
         delegate void SetThumbStick(float v);
         delegate float GetThumbStick();
 
+        delegate void SetCalibration(byte[] v);
+
         XBoxController xboxController;
         GamepadController gamepadController;
 
@@ -165,8 +167,7 @@ namespace Pg3bWindowsFormsApplication.SubForm
             calibrationEnabledComboBox.Enabled = false;
             graphButton.Enabled = false;
             calibrateButton.Enabled = false;
-
-            xboxController.CalibrationEnabled = calibrationEnabledComboBox.Text == "Calibrated";
+            xboxController.CalibrationEnabled = calibrationEnabledComboBox.Text == "Uncalibrated"? false : true;
 
             if ((calibrateControlComboBox.Text == "All" || calibrateControlComboBox.Text == "Left Trigger") && stopButton.Enabled)
                 graphTrigger("Left Trigger " + calibrationEnabledComboBox.Text, (f) => xboxController.Triggers.Left = f, () => gamepadController.Triggers.Left, null);
@@ -190,7 +191,7 @@ namespace Pg3bWindowsFormsApplication.SubForm
             xboxController.CalibrationEnabled = false;
         }
 
-        private void calibrateThumbStick(string controlName, SetThumbStick setThumbStick, GetThumbStick getThumbStick, bool isInverted)
+        private void calibrateThumbStick(string controlName, SetThumbStick setThumbStick, GetThumbStick getThumbStick, SetCalibration setCalibration, bool isInverted)
         {
             float[] actualValues = new float[byte.MaxValue + 1];
             byte[] calibrationTable = new byte[byte.MaxValue + 1];
@@ -202,7 +203,21 @@ namespace Pg3bWindowsFormsApplication.SubForm
                 setThumbStick(deflection);
                 Application.DoEvents();
                 Thread.Sleep(16);
-                actualValues[wiper] = getThumbStick();
+                switch (calibrationEnabledComboBox.Text)
+                {
+                    case "All High":
+                        actualValues[wiper] = 1.0F;
+                        break;
+                    case "All Centered":
+                        actualValues[wiper] = 0.0F;
+                        break;
+                    case "All Low":
+                        actualValues[wiper] = -1.0F;
+                        break;
+                    default:
+                        actualValues[wiper] = getThumbStick();
+                        break;
+                }
             }
 
             // Find value of array entry whose value is closest to zero
@@ -253,9 +268,10 @@ namespace Pg3bWindowsFormsApplication.SubForm
 
             graphThumbStick(controlName + " Calibrated (Simulation)", setThumbStick, getThumbStick, calibrationTable);
             writeCalibrationTable(controlName, calibrationTable, isInverted);
+            setCalibration(calibrationTable);
         }
 
-        private void calibrateTrigger(string controlName, SetTrigger setTrigger, GetTrigger getTrigger, bool isInverted)
+        private void calibrateTrigger(string controlName, SetTrigger setTrigger, GetTrigger getTrigger, SetCalibration setCalibration, bool isInverted)
         {
             float[] actualValues = new float[byte.MaxValue + 1];
             byte[] calibrationTable = new byte[byte.MaxValue + 1];
@@ -267,7 +283,21 @@ namespace Pg3bWindowsFormsApplication.SubForm
                 setTrigger(deflection);
                 Application.DoEvents();
                 Thread.Sleep(16);
-                actualValues[wiper] = getTrigger();
+                switch (calibrationEnabledComboBox.Text)
+                {
+                    case "All High":
+                        actualValues[wiper] = 1.0F;
+                        break;
+                    case "All Centered":
+                        actualValues[wiper] = 0.0F;
+                        break;
+                    case "All Low":
+                        actualValues[wiper] = 0.0F;
+                        break;
+                    default:
+                        actualValues[wiper] = getTrigger();
+                        break;
+                }
             }
 
             // Find value array entry whose value is closest to zero
@@ -302,13 +332,7 @@ namespace Pg3bWindowsFormsApplication.SubForm
 
             graphTrigger(controlName + " Calibrated (Simulation)", setTrigger, getTrigger, calibrationTable);
             writeCalibrationTable(controlName, calibrationTable, isInverted);
-            sendCalibrationTable(controlName, calibrationTable, isInverted);
-        }
-
-        private void sendCalibrationTable(string controlName, byte[] calibrationTable, bool isInverted)
-        {
-            throw new NotImplementedException();
-//          xboxController.Configuration.Calibration.LeftTrigger = calibrationTable;
+            setCalibration(calibrationTable);
         }
 
         private void writeCalibrationTable(string controlName, byte[] calibrationTable, bool isInverted)
@@ -333,19 +357,20 @@ namespace Pg3bWindowsFormsApplication.SubForm
             calibrationEnabledComboBox.Enabled = false;
             graphButton.Enabled = false;
             calibrateButton.Enabled = false;
+            xboxController.CalibrationEnabled = false;
 
             if ((calibrateControlComboBox.Text == "All" || calibrateControlComboBox.Text == "Left Trigger") && stopButton.Enabled)
-                calibrateTrigger("LT", (f) => xboxController.Triggers.Left = f, () => gamepadController.Triggers.Left, true);
+                calibrateTrigger("LT", (f) => xboxController.Triggers.Left = f, () => gamepadController.Triggers.Left, (d) => xboxController.Configuration.Calibration.LeftTrigger = d, true);
             if ((calibrateControlComboBox.Text == "All" || calibrateControlComboBox.Text == "Right Trigger") && stopButton.Enabled)
-                calibrateTrigger("RT", (f) => xboxController.Triggers.Right = f, () => gamepadController.Triggers.Right, true);
+                calibrateTrigger("RT", (f) => xboxController.Triggers.Right = f, () => gamepadController.Triggers.Right, (d) => xboxController.Configuration.Calibration.RightTrigger = d, true);
             if ((calibrateControlComboBox.Text == "All" || calibrateControlComboBox.Text == "Left ThumbStick X") && stopButton.Enabled)
-                calibrateThumbStick("LSX", (f) => xboxController.ThumbSticks.Left.X = f, () => gamepadController.ThumbSticks.Left.X, true);
+                calibrateThumbStick("LSX", (f) => xboxController.ThumbSticks.Left.X = f, () => gamepadController.ThumbSticks.Left.X, (d) => xboxController.Configuration.Calibration.LeftStickX = d, true);
             if ((calibrateControlComboBox.Text == "All" || calibrateControlComboBox.Text == "Left ThumbStick Y") && stopButton.Enabled)
-                calibrateThumbStick("LSY", (f) => xboxController.ThumbSticks.Left.Y = f, () => gamepadController.ThumbSticks.Left.Y, false);
+                calibrateThumbStick("LSY", (f) => xboxController.ThumbSticks.Left.Y = f, () => gamepadController.ThumbSticks.Left.Y, (d) => xboxController.Configuration.Calibration.LeftStickY = d, false);
             if ((calibrateControlComboBox.Text == "All" || calibrateControlComboBox.Text == "Right ThumbStick X") && stopButton.Enabled)
-                calibrateThumbStick("RSX", (f) => xboxController.ThumbSticks.Right.X = f, () => gamepadController.ThumbSticks.Right.X, true);
+                calibrateThumbStick("RSX", (f) => xboxController.ThumbSticks.Right.X = f, () => gamepadController.ThumbSticks.Right.X, (d) => xboxController.Configuration.Calibration.RightStickX = d, true);
             if ((calibrateControlComboBox.Text == "All" || calibrateControlComboBox.Text == "Right ThumbStick Y") && stopButton.Enabled)
-                calibrateThumbStick("RSY", (f) => xboxController.ThumbSticks.Right.Y = f, () => gamepadController.ThumbSticks.Right.Y, false);
+                calibrateThumbStick("RSY", (f) => xboxController.ThumbSticks.Right.Y = f, () => gamepadController.ThumbSticks.Right.Y, (d) => xboxController.Configuration.Calibration.RightStickY = d, false);
 
             calibrateButton.Enabled = true;
             graphButton.Enabled = true;
