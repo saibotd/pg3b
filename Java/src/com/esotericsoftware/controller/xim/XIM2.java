@@ -3,6 +3,7 @@ package com.esotericsoftware.controller.xim;
 
 import static com.esotericsoftware.minlog.Log.*;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -17,7 +18,7 @@ import com.esotericsoftware.controller.util.WindowsRegistry;
 /**
  * Controls the XIM2 hardware.
  */
-public class XIM extends Device {
+public class XIM2 extends Device {
 	static boolean loaded;
 	static {
 		load();
@@ -27,20 +28,69 @@ public class XIM extends Device {
 		if (loaded) return;
 		loaded = true;
 		String ximPath = WindowsRegistry.get("HKCU/Software/XIM", "");
-		if (ximPath != null) {
+		if (ximPath != null && new File(ximPath).exists()) {
 			try {
 				System.load(ximPath + "/SiUSBXp.dll");
 				System.load(ximPath + "/XIMCore.dll");
-				System.loadLibrary("xim32");
+				System.loadLibrary("xim2");
 			} catch (Throwable ex) {
-				if (ERROR) error("Error loading XIM native libraries.", ex);
+				if (ERROR) error("Error loading XIM2 native libraries.", ex);
 			}
 		} else {
 			if (ERROR) {
-				error("XIM installation path not found in registry at: HKCU/Software/XIM\n"
-					+ "Please ensure the XIM360 software is installed.");
+				error("XIM2 installation path not found in registry at: HKCU/Software/XIM\n"
+					+ "Please ensure the XIM2 software is installed.");
 			}
 		}
+	}
+
+	private ByteBuffer stateByteBuffer;
+	private ShortBuffer axisStateBuffer;
+
+	public XIM2 () throws IOException {
+		checkResult(connect());
+
+		stateByteBuffer = ByteBuffer.allocateDirect(28);
+		stateByteBuffer.order(ByteOrder.nativeOrder());
+		stateByteBuffer.position(16);
+		axisStateBuffer = stateByteBuffer.slice().order(ByteOrder.nativeOrder()).asShortBuffer();
+	}
+
+	public void setButton (Button button, boolean pressed) throws IOException {
+		int index = buttonToIndex[button.ordinal()];
+		synchronized (this) {
+			stateByteBuffer.put(index, (byte)(pressed ? 1 : 0));
+			if (collectingChangesThread != Thread.currentThread()) checkResult(setState(stateByteBuffer, 200));
+		}
+	}
+
+	public void setAxis (Axis axis, float state) throws IOException {
+		int index = axisToIndex[axis.ordinal()];
+		synchronized (this) {
+			axisStateBuffer.put(index, (short)(32767 * state));
+			if (collectingChangesThread != Thread.currentThread()) checkResult(setState(stateByteBuffer, 200));
+		}
+	}
+
+	/**
+	 * If true, the thumbsticks can be used while the XIM is running.
+	 * @throws IOException When communication with the XIM fails.
+	 */
+	public void setThumsticksEnabled (boolean enabled) throws IOException {
+		checkResult(setMode(enabled ? 1 : 0));
+	}
+
+	void checkResult (int status) throws IOException {
+		if (status == 0) return;
+		throw new IOException("Error communicating with XIM2: " + statusToMessage.get(status));
+	}
+
+	public void close () {
+		disconnect();
+	}
+
+	public String toString () {
+		return "XIM2";
 	}
 
 	static private HashMap<Integer, String> statusToMessage = new HashMap();
@@ -93,72 +143,11 @@ public class XIM extends Device {
 		axisToIndex[Axis.leftTrigger.ordinal()] = 5;
 	}
 
-	private final ByteBuffer stateByteBuffer;
-	private final ShortBuffer buttonStateBuffer, axisStateBuffer;
+	static native int connect ();
 
-	public XIM () throws IOException {
-		checkResult(connect());
+	static native void disconnect ();
 
-		stateByteBuffer = ByteBuffer.allocateDirect(28);
-		stateByteBuffer.order(ByteOrder.nativeOrder());
-		buttonStateBuffer = stateByteBuffer.asShortBuffer();
-		stateByteBuffer.position(16);
-		axisStateBuffer = stateByteBuffer.slice().order(ByteOrder.nativeOrder()).asShortBuffer();
-	}
+	static native int setMode (int mode);
 
-	public void close () {
-		disconnect();
-	}
-
-	public void setButton (Button button, boolean pressed) throws IOException {
-		int value = pressed ? 1 : 0;
-		int index = buttonToIndex[button.ordinal()];
-		synchronized (this) {
-			// Button states are stored as bytes packed into shorts.
-			short existingValue = buttonStateBuffer.get(index / 2);
-			int first, second;
-			if (index % 2 == 0) {
-				first = value & 0xFF;
-				second = existingValue >> 8;
-			} else {
-				first = existingValue & 0xFF;
-				second = value & 0xFF;
-			}
-			buttonStateBuffer.put(index / 2, (short)(first + (second << 8)));
-			if (collectingChangesThread != Thread.currentThread()) checkResult(setState(stateByteBuffer, 200));
-		}
-	}
-
-	public void setAxis (Axis axis, float state) throws IOException {
-		int index = axisToIndex[axis.ordinal()];
-		synchronized (this) {
-			axisStateBuffer.put(index, (short)(32767 * state));
-			if (collectingChangesThread != Thread.currentThread()) checkResult(setState(stateByteBuffer, 200));
-		}
-	}
-
-	/**
-	 * If true, the thumbsticks can be used while the XIM is running.
-	 * @throws IOException When communication with the XIM fails.
-	 */
-	public void setThumsticksEnabled (boolean enabled) throws IOException {
-		checkResult(setMode(enabled ? 1 : 0));
-	}
-
-	private void checkResult (int status) throws IOException {
-		if (status == 0) return;
-		throw new IOException("Error communicating with XIM: " + statusToMessage.get(status));
-	}
-
-	public String toString () {
-		return "XIM";
-	}
-
-	static private native int connect ();
-
-	static private native void disconnect ();
-
-	static private native int setMode (int mode);
-
-	static private native int setState (ByteBuffer byteBuffer, float timeout);
+	static native int setState (ByteBuffer byteBuffer, float timeout);
 }

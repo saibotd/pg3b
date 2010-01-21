@@ -30,6 +30,7 @@ import java.awt.event.WindowFocusListener;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
@@ -75,11 +76,12 @@ import com.esotericsoftware.controller.ui.Trigger;
 import com.esotericsoftware.controller.util.LoaderDialog;
 import com.esotericsoftware.controller.util.Util;
 import com.esotericsoftware.controller.util.WindowsRegistry;
-import com.esotericsoftware.controller.xim.XIM;
+import com.esotericsoftware.controller.xim.XIM1;
+import com.esotericsoftware.controller.xim.XIM2;
 import com.esotericsoftware.minlog.Log;
 
 public class UI extends JFrame {
-	static public final String version = "0.1.20";
+	static public final String version = "0.1.21";
 	static public UI instance;
 
 	static private Settings settings = Settings.get();
@@ -87,12 +89,12 @@ public class UI extends JFrame {
 	private Device device;
 	private XboxController controller;
 
-	private JMenu pg3bMenu, ximMenu;
+	private JMenu pg3bMenu, xim2Menu;
 	private JMenuBar menuBar;
-	private JMenuItem pg3bConnectMenuItem, ximConnectMenuItem, disconnectDeviceMenuItem, disconnectControllerMenuItem,
-		controllerConnectMenuItem, exitMenuItem;
+	private JMenuItem pg3bConnectMenuItem, xim1ConnectMenuItem, xim2ConnectMenuItem, disconnectDeviceMenuItem,
+		disconnectControllerMenuItem, controllerConnectMenuItem, exitMenuItem;
 	private JCheckBoxMenuItem showControllerMenuItem, showLogMenuItem, pg3bDebugEnabledMenuItem, pg3bCalibrationEnabledMenuItem,
-		activationDisablesInputMenuItem, ximThumbsticksEnabledMenuItem;
+		activationDisablesInputMenuItem, xim2ThumbsticksEnabledMenuItem;
 	private JMenuItem roundTripMenuItem, clearMenuItem, pg3bCalibrateMenuItem, pg3bSetControllerTypeMenuItem;
 
 	private XboxControllerPanel controllerPanel;
@@ -147,7 +149,8 @@ public class UI extends JFrame {
 		clearMenuItem.setEnabled(false);
 
 		if (!System.getProperty("os.name").toLowerCase().contains("windows")) {
-			ximConnectMenuItem.setEnabled(false);
+			xim1ConnectMenuItem.setEnabled(false);
+			xim2ConnectMenuItem.setEnabled(false);
 		}
 
 		controllerPanel.setVisible(settings.showController);
@@ -175,17 +178,29 @@ public class UI extends JFrame {
 							}
 						}.start("Pg3bConnect");
 
-						if (settings.ximConnected) new LoaderDialog("Connecting to XIM") {
+						if (settings.xim1Connected) new LoaderDialog("Connecting to XIM1") {
 							public void load () throws Exception {
-								setMessage("Opening XIM...");
+								setMessage("Opening XIM1...");
 								try {
-									setDevice(new XIM());
+									setDevice(new XIM1());
 								} catch (Throwable ex) {
 									setDevice(null);
-									if (DEBUG) debug("Unable to reconnect to XIM.", ex);
+									if (DEBUG) debug("Unable to reconnect to XIM1.", ex);
 								}
 							}
-						}.start("XimConnect");
+						}.start("Xim1Connect");
+
+						if (settings.xim2Connected) new LoaderDialog("Connecting to XIM2") {
+							public void load () throws Exception {
+								setMessage("Opening XIM2...");
+								try {
+									setDevice(new XIM2());
+								} catch (Throwable ex) {
+									setDevice(null);
+									if (DEBUG) debug("Unable to reconnect to XIM2.", ex);
+								}
+							}
+						}.start("Xim2Connect");
 					}
 				});
 
@@ -233,15 +248,16 @@ public class UI extends JFrame {
 				pg3bCalibrateMenuItem.setEnabled(controller != null);
 
 				menuBar.remove(pg3bMenu);
-				menuBar.remove(ximMenu);
+				menuBar.remove(xim2Menu);
 				if (device instanceof PG3B) menuBar.add(pg3bMenu);
-				if (device instanceof XIM) menuBar.add(ximMenu);
+				if (device instanceof XIM2) menuBar.add(xim2Menu);
 				menuBar.repaint();
 			}
 		});
 
 		settings.pg3bPort = device instanceof PG3B ? ((PG3B)device).getPort() : null;
-		settings.ximConnected = device instanceof XIM;
+		settings.xim1Connected = device instanceof XIM1;
+		settings.xim2Connected = device instanceof XIM2;
 		Settings.save();
 	}
 
@@ -308,23 +324,27 @@ public class UI extends JFrame {
 			}
 		});
 
-		ximConnectMenuItem.addActionListener(new ActionListener() {
+		xim2ConnectMenuItem.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
 				setDevice(null);
 				try {
-					setDevice(new XIM());
-					statusBar.setMessage("XIM connected.");
+					setDevice(new XIM2());
+					statusBar.setMessage("XIM2 connected.");
 				} catch (Throwable ex) {
 					if (ex instanceof IOException && ex.getMessage().contains("NEEDS_CALIBRATION")) {
 						final String ximPath = WindowsRegistry.get("HKCU/Software/XIM", "");
 						if (ximPath != null) {
-							if (DEBUG) debug("Running XIM calibration tool.", ex);
+							if (!new File(ximPath + "\\XIMCalibrate.exe").exists()) {
+								Util.errorDialog(UI.this, "XIM2 Error", "XIMCalibrate.exe could not be found.");
+								return;
+							}
+							if (DEBUG) debug("Running XIM2 calibration tool.", ex);
 							setVisible(false);
 							try {
 								Runtime.getRuntime().exec(ximPath + "\\XIMCalibrate.exe").waitFor();
-								if (DEBUG) debug("XIM calibration complete.", ex);
-								setDevice(new XIM());
-								statusBar.setMessage("XIM connected.");
+								if (DEBUG) debug("XIM2 calibration complete.", ex);
+								setDevice(new XIM2());
+								statusBar.setMessage("XIM2 connected.");
 								return;
 							} catch (Exception ex2) {
 								ex = ex2;
@@ -333,12 +353,29 @@ public class UI extends JFrame {
 							}
 						}
 					}
-					if (Log.ERROR) error("Error connecting to XIM.", ex);
-					statusBar.setMessage("XIM connection failed.");
+					if (Log.ERROR) error("Error connecting to XIM2.", ex);
+					statusBar.setMessage("XIM2 connection failed.");
 					if (ex instanceof IOException && ex.getMessage().contains("DEVICE_NOT_FOUND"))
-						Util.errorDialog(UI.this, "Connect Error", "The XIM device could not be found.");
+						Util.errorDialog(UI.this, "Connect Error", "The XIM2 device could not be found.");
 					else
-						Util.errorDialog(UI.this, "Connect Error", "An error occurred while attempting to connect to the XIM.");
+						Util.errorDialog(UI.this, "Connect Error", "An error occurred while attempting to connect to the XIM2.");
+				}
+			}
+		});
+
+		xim1ConnectMenuItem.addActionListener(new ActionListener() {
+			public void actionPerformed (ActionEvent event) {
+				setDevice(null);
+				try {
+					setDevice(new XIM1());
+					statusBar.setMessage("XIM1 connected.");
+				} catch (Throwable ex) {
+					if (Log.ERROR) error("Error connecting to XIM1.", ex);
+					statusBar.setMessage("XIM1 connection failed.");
+					if (ex instanceof IOException && ex.getMessage().contains("DEVICE_NOT_FOUND"))
+						Util.errorDialog(UI.this, "Connect Error", "The XIM1 device could not be found.");
+					else
+						Util.errorDialog(UI.this, "Connect Error", "An error occurred while attempting to connect to the XIM1.");
 				}
 			}
 		});
@@ -497,12 +534,12 @@ public class UI extends JFrame {
 			}
 		});
 
-		ximThumbsticksEnabledMenuItem.addActionListener(new ActionListener() {
+		xim2ThumbsticksEnabledMenuItem.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
 				try {
-					((XIM)device).setThumsticksEnabled(ximThumbsticksEnabledMenuItem.isSelected());
+					((XIM2)device).setThumsticksEnabled(xim2ThumbsticksEnabledMenuItem.isSelected());
 				} catch (IOException ex) {
-					if (Log.ERROR) error("Error setting XIM thumbsticks.", ex);
+					if (Log.ERROR) error("Error setting XIM2 thumbsticks.", ex);
 				}
 			}
 		});
@@ -642,7 +679,8 @@ public class UI extends JFrame {
 				menuBar.add(menu);
 				{
 					pg3bConnectMenuItem = menu.add(new JMenuItem("Connect to PG3B..."));
-					ximConnectMenuItem = menu.add(new JMenuItem("Connect to XIM..."));
+					xim1ConnectMenuItem = menu.add(new JMenuItem("Connect to XIM1..."));
+					xim2ConnectMenuItem = menu.add(new JMenuItem("Connect to XIM2..."));
 					disconnectDeviceMenuItem = menu.add(new JMenuItem("Disconnect Device"));
 				}
 				menu.addSeparator();
@@ -710,11 +748,11 @@ public class UI extends JFrame {
 				}
 			}
 			{
-				ximMenu = new JMenu("XIM");
-				ximMenu.setMnemonic('X');
+				xim2Menu = new JMenu("XIM2");
+				xim2Menu.setMnemonic('X');
 				{
-					ximThumbsticksEnabledMenuItem = new JCheckBoxMenuItem("Thumbsticks Enabled");
-					ximMenu.add(ximThumbsticksEnabledMenuItem);
+					xim2ThumbsticksEnabledMenuItem = new JCheckBoxMenuItem("Thumbsticks Enabled");
+					xim2Menu.add(xim2ThumbsticksEnabledMenuItem);
 				}
 			}
 		}

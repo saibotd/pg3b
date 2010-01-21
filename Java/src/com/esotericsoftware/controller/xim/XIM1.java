@@ -1,0 +1,137 @@
+
+package com.esotericsoftware.controller.xim;
+
+import static com.esotericsoftware.minlog.Log.*;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.HashMap;
+
+import com.esotericsoftware.controller.device.Axis;
+import com.esotericsoftware.controller.device.Button;
+import com.esotericsoftware.controller.device.Device;
+import com.esotericsoftware.controller.util.WindowsRegistry;
+
+/**
+ * Controls the XIM1 hardware.
+ */
+public class XIM1 extends Device {
+	static boolean loaded;
+	static {
+		load();
+	}
+
+	static void load () {
+		if (loaded) return;
+		loaded = true;
+		String ximPath = WindowsRegistry.get("HKCU/Software/XIM", "");
+		if (ximPath != null && new File(ximPath).exists()) {
+			try {
+				System.load(ximPath + "/XIMCore.dll");
+				System.loadLibrary("xim1");
+			} catch (Throwable ex) {
+				if (ERROR) error("Error loading XIM1 native libraries.", ex);
+			}
+		} else {
+			if (ERROR) {
+				error("XIM1 installation path not found in registry at: HKCU/Software/XIM\n"
+					+ "Please ensure the XIM1 software is installed.");
+			}
+		}
+	}
+
+	private ByteBuffer stateByteBuffer;
+
+	public XIM1 () throws IOException {
+		checkResult(connect());
+
+		stateByteBuffer = ByteBuffer.allocateDirect(72);
+		stateByteBuffer.order(ByteOrder.nativeOrder());
+	}
+
+	public void setButton (Button button, boolean pressed) throws IOException {
+		int index = buttonToIndex[button.ordinal()];
+		synchronized (this) {
+			stateByteBuffer.put(index, (byte)(pressed ? 1 : 0));
+			if (collectingChangesThread != Thread.currentThread()) checkResult(setState(stateByteBuffer));
+		}
+	}
+
+	public void setAxis (Axis axis, float state) throws IOException {
+		int index = axisToIndex[axis.ordinal()];
+		synchronized (this) {
+			if (axis.isTrigger())
+				stateByteBuffer.put(index, (byte)(state == 0 ? 0 : 1));
+			else
+				stateByteBuffer.put(index, (byte)(127 * state));
+			if (collectingChangesThread != Thread.currentThread()) checkResult(setState(stateByteBuffer));
+		}
+	}
+
+	void checkResult (int status) throws IOException {
+		if (status == 0) return;
+		throw new IOException("Error communicating with XIM1: " + statusToMessage.get(status));
+	}
+
+	public void close () {
+		disconnect();
+	}
+
+	public String toString () {
+		return "XIM1";
+	}
+
+	static private HashMap<Integer, String> statusToMessage = new HashMap();
+	static {
+		statusToMessage.put(0, "OK");
+		statusToMessage.put(101, "INVALID_INPUT_REFERENCE");
+		statusToMessage.put(102, "INVALID_STICK_VALUE");
+		statusToMessage.put(103, "INVALID_BUFFER");
+		statusToMessage.put(104, "INVALID_DEADZONE_TYPE");
+		statusToMessage.put(105, "HARDWARE_ALREADY_CONNECTED");
+		statusToMessage.put(106, "HARDWARE_NOT_CONNECTED");
+		statusToMessage.put(401, "DEVICE_NOT_FOUND");
+		statusToMessage.put(402, "DEVICE_CONNECTION_FAILED");
+		statusToMessage.put(403, "CONFIGURATION_FAILED");
+		statusToMessage.put(404, "READ_FAILED");
+		statusToMessage.put(405, "WRITE_FAILED");
+		statusToMessage.put(406, "TRANSFER_CORRUPTION");
+	}
+
+	static private int[] buttonToIndex = new int[Button.values().length];
+	static {
+		buttonToIndex[Button.leftShoulder.ordinal()] = 1;
+		buttonToIndex[Button.leftStick.ordinal()] = 2;
+		buttonToIndex[Button.rightShoulder.ordinal()] = 4;
+		buttonToIndex[Button.rightStick.ordinal()] = 5;
+		buttonToIndex[Button.a.ordinal()] = 6;
+		buttonToIndex[Button.b.ordinal()] = 7;
+		buttonToIndex[Button.x.ordinal()] = 8;
+		buttonToIndex[Button.y.ordinal()] = 9;
+		buttonToIndex[Button.up.ordinal()] = 10;
+		buttonToIndex[Button.down.ordinal()] = 11;
+		buttonToIndex[Button.left.ordinal()] = 12;
+		buttonToIndex[Button.right.ordinal()] = 13;
+		buttonToIndex[Button.start.ordinal()] = 14;
+		buttonToIndex[Button.back.ordinal()] = 15;
+		buttonToIndex[Button.guide.ordinal()] = 16;
+	}
+
+	static private int[] axisToIndex = new int[Axis.values().length];
+	static {
+		axisToIndex[Axis.rightStickX.ordinal()] = 17;
+		axisToIndex[Axis.rightStickY.ordinal()] = 18;
+		axisToIndex[Axis.leftStickX.ordinal()] = 19;
+		axisToIndex[Axis.leftStickY.ordinal()] = 20;
+		axisToIndex[Axis.rightTrigger.ordinal()] = 3;
+		axisToIndex[Axis.leftTrigger.ordinal()] = 0;
+	}
+
+	static native int connect ();
+
+	static native void disconnect ();
+
+	static native int setState (ByteBuffer byteBuffer);
+}

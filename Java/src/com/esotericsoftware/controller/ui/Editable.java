@@ -19,7 +19,7 @@ import com.esotericsoftware.controller.input.XInputXboxController;
 import com.esotericsoftware.controller.input.Keyboard.KeyboardInput;
 import com.esotericsoftware.controller.ui.DeviceAction.Direction;
 import com.esotericsoftware.controller.ui.swing.EditorPanel;
-import com.esotericsoftware.controller.xim.XIMMouseTranslation;
+import com.esotericsoftware.controller.xim.XIM2MouseTranslation;
 import com.esotericsoftware.yamlbeans.YamlConfig;
 import com.esotericsoftware.yamlbeans.YamlReader;
 import com.esotericsoftware.yamlbeans.YamlWriter;
@@ -101,7 +101,7 @@ public class Editable implements Cloneable {
 		yamlConfig.setClassTag("round", Deadzone.Round.class);
 		yamlConfig.setClassTag("square", Deadzone.Square.class);
 		yamlConfig.setClassTag("mouse-settings", MouseAction.class);
-		yamlConfig.setClassTag("xim-translation", XIMMouseTranslation.class);
+		yamlConfig.setClassTag("xim-translation", XIM2MouseTranslation.class);
 		yamlConfig.setClassTag("text-mode", TextModeAction.class);
 
 		yamlConfig.setPropertyElementType(Config.class, "triggers", InputTrigger.class);

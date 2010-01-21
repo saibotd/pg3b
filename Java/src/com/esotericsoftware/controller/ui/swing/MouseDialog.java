@@ -19,7 +19,7 @@ import javax.swing.SpinnerNumberModel;
 
 import com.esotericsoftware.controller.ui.MouseTranslation;
 import com.esotericsoftware.controller.util.Util;
-import com.esotericsoftware.controller.xim.XIMMouseTranslation;
+import com.esotericsoftware.controller.xim.XIM2MouseTranslation;
 
 public class MouseDialog extends JDialog {
 	private final UI owner;
@@ -33,7 +33,7 @@ public class MouseDialog extends JDialog {
 		super(owner, "Mouse Translation", true);
 		this.owner = owner;
 
-		if (translation == null) translation = new XIMMouseTranslation();
+		if (translation == null) translation = new XIM2MouseTranslation();
 		this.translation = translation;
 
 		initializeLayout();
@@ -41,8 +41,8 @@ public class MouseDialog extends JDialog {
 
 		setLocationRelativeTo(owner);
 
-		if (translation instanceof XIMMouseTranslation) {
-			XIMMouseTranslation ximTranslation = (XIMMouseTranslation)translation;
+		if (translation instanceof XIM2MouseTranslation) {
+			XIM2MouseTranslation ximTranslation = (XIM2MouseTranslation)translation;
 			yxRatioSpinner.setValue(ximTranslation.getYXRatio());
 			smoothnessSpinner.setValue(ximTranslation.getSmoothness());
 			diagonalDampenSpinner.setValue(ximTranslation.getDiagonalDampen());
@@ -62,8 +62,8 @@ public class MouseDialog extends JDialog {
 	private void initializeEvents () {
 		saveButton.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
-				if (translation instanceof XIMMouseTranslation) {
-					XIMMouseTranslation ximTranslation = (XIMMouseTranslation)translation;
+				if (translation instanceof XIM2MouseTranslation) {
+					XIM2MouseTranslation ximTranslation = (XIM2MouseTranslation)translation;
 					ximTranslation.setYXRatio((Float)yxRatioSpinner.getValue());
 					ximTranslation.setSmoothness((Float)smoothnessSpinner.getValue());
 					ximTranslation.setDiagonalDampen((Float)diagonalDampenSpinner.getValue());

@@ -17,11 +17,11 @@ import com.esotericsoftware.controller.device.Device;
 import com.esotericsoftware.controller.device.Stick;
 import com.esotericsoftware.controller.ui.MouseTranslation;
 
-public class XIMMouseTranslation implements MouseTranslation {
+public class XIM2MouseTranslation implements MouseTranslation {
 	private static final int UPDATE_FREQUENCY = 120;
 
 	static {
-		XIM.load();
+		XIM2.load();
 	}
 
 	private float smoothness, yxRatio, translationExponent, diagonalDampen;
@@ -36,7 +36,7 @@ public class XIMMouseTranslation implements MouseTranslation {
 	private transient float timer;
 	private transient long lastTime;
 
-	public XIMMouseTranslation () {
+	public XIM2MouseTranslation () {
 		byteBuffer = ByteBuffer.allocateDirect(4);
 		byteBuffer.order(ByteOrder.nativeOrder());
 		shortBuffer = byteBuffer.asShortBuffer();
@@ -95,7 +95,8 @@ public class XIMMouseTranslation implements MouseTranslation {
 		}
 		float deadzone = 0;
 		int deadzoneShape = 1;
-		computeStickValues(deltaX, deltaY, yxRatio, translationExponent, sensitivity, diagonalDampen, deadzoneShape, 0, byteBuffer);
+		computeStickValues(deltaX, deltaY, yxRatio, translationExponent, sensitivity, diagonalDampen, deadzoneShape, deadzone,
+			byteBuffer);
 		stickValues[0] = shortBuffer.get(0) / 32768f;
 		stickValues[1] = shortBuffer.get(1) / 32768f;
 		return stickValues;
@@ -135,13 +136,13 @@ public class XIMMouseTranslation implements MouseTranslation {
 		float sensitivity, float diagonalDampen, int deadZoneType, float deadzone, ByteBuffer buffer);
 
 	public static void main (String[] args) {
-		final XIMMouseTranslation translation = new XIMMouseTranslation();
+		final XIM2MouseTranslation translation = new XIM2MouseTranslation();
 		translation.setYXRatio(1);
 		translation.setTranslationExponent(0.75f);
 		translation.setDiagonalDampen(0.25f);
 		translation.setSmoothness(0.3f);
 		translation.setSensitivity(1250);
-		JFrame frame = new JFrame("XIMMouseTranslation");
+		JFrame frame = new JFrame("XIM2MouseTranslation");
 		final JLabel xLabel = new JLabel("X: 0");
 		final JLabel yLabel = new JLabel("Y: 0");
 		frame.getContentPane().setLayout(new GridLayout(2, 1));
