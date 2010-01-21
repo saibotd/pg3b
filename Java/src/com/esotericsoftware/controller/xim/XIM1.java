@@ -18,21 +18,23 @@ import com.esotericsoftware.controller.util.WindowsRegistry;
  * Controls the XIM1 hardware.
  */
 public class XIM1 extends Device {
-	static boolean loaded;
-	static {
-		load();
-	}
+	static private Boolean isValid;
 
-	static void load () {
-		if (loaded) return;
-		loaded = true;
+	static public boolean isValid (boolean forceRetry) {
+		if (isValid != null) return isValid;
 		String ximPath = WindowsRegistry.get("HKCU/Software/XIM", "");
-		if (ximPath != null && new File(ximPath).exists()) {
-			try {
-				System.load(ximPath + "/XIMCore.dll");
-				System.loadLibrary("xim1");
-			} catch (Throwable ex) {
-				if (ERROR) error("Error loading XIM1 native libraries.", ex);
+		if (ximPath != null) {
+			if (new File(ximPath).exists()) {
+				try {
+					System.load(ximPath + "\\XIMCore.dll");
+					System.loadLibrary("xim1");
+					isValid = true;
+					return true;
+				} catch (Throwable ex) {
+					if ((forceRetry && ERROR) || (!forceRetry && DEBUG)) error("Error loading XIM1 native libraries.", ex);
+				}
+			} else {
+				if (ERROR) error("Invalid XIM1 installation path in registry at: HKCU/Software/XIM\nInvalid path: " + ximPath);
 			}
 		} else {
 			if (ERROR) {
@@ -40,6 +42,8 @@ public class XIM1 extends Device {
 					+ "Please ensure the XIM1 software is installed.");
 			}
 		}
+		isValid = false;
+		return false;
 	}
 
 	private ByteBuffer stateByteBuffer;

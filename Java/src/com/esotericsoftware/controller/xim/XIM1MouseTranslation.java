@@ -20,7 +20,7 @@ public class XIM1MouseTranslation implements MouseTranslation {
 	private static final int UPDATE_FREQUENCY = 120;
 
 	static {
-		XIM1.load();
+		XIM1.isValid(false);
 	}
 
 	private float smoothness, yxRatio, translationExponent;

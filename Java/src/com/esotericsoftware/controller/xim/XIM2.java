@@ -19,22 +19,24 @@ import com.esotericsoftware.controller.util.WindowsRegistry;
  * Controls the XIM2 hardware.
  */
 public class XIM2 extends Device {
-	static boolean loaded;
-	static {
-		load();
-	}
+	static private Boolean isValid;
 
-	static void load () {
-		if (loaded) return;
-		loaded = true;
+	static public boolean isValid (boolean forceRetry) {
+		if (isValid != null) return isValid;
 		String ximPath = WindowsRegistry.get("HKCU/Software/XIM", "");
-		if (ximPath != null && new File(ximPath).exists()) {
-			try {
-				System.load(ximPath + "/SiUSBXp.dll");
-				System.load(ximPath + "/XIMCore.dll");
-				System.loadLibrary("xim2");
-			} catch (Throwable ex) {
-				if (ERROR) error("Error loading XIM2 native libraries.", ex);
+		if (ximPath != null) {
+			if (new File(ximPath).exists()) {
+				try {
+					System.load(ximPath + "\\SiUSBXp.dll");
+					System.load(ximPath + "\\XIMCore.dll");
+					System.loadLibrary("xim2");
+					isValid = true;
+					return true;
+				} catch (Throwable ex) {
+					if ((forceRetry && ERROR) || (!forceRetry && DEBUG)) error("Error loading XIM2 native libraries.", ex);
+				}
+			} else {
+				if (ERROR) error("Invalid XIM2 installation path in registry at: HKCU/Software/XIM\nInvalid path: " + ximPath);
 			}
 		} else {
 			if (ERROR) {
@@ -42,6 +44,8 @@ public class XIM2 extends Device {
 					+ "Please ensure the XIM2 software is installed.");
 			}
 		}
+		isValid = false;
+		return false;
 	}
 
 	private ByteBuffer stateByteBuffer;

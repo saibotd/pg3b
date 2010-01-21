@@ -46,6 +46,7 @@ import com.esotericsoftware.controller.input.XboxController;
 import com.esotericsoftware.controller.input.Mouse.MouseInput;
 import com.esotericsoftware.controller.ui.Action;
 import com.esotericsoftware.controller.ui.Config;
+import com.esotericsoftware.controller.ui.DefaultMouseTranslation;
 import com.esotericsoftware.controller.ui.DeviceAction;
 import com.esotericsoftware.controller.ui.InputTrigger;
 import com.esotericsoftware.controller.ui.MouseAction;
@@ -56,6 +57,9 @@ import com.esotericsoftware.controller.ui.TextModeAction;
 import com.esotericsoftware.controller.ui.DeviceAction.Direction;
 import com.esotericsoftware.controller.ui.swing.XboxControllerPanel.Listener;
 import com.esotericsoftware.controller.util.Util;
+import com.esotericsoftware.controller.xim.XIM1;
+import com.esotericsoftware.controller.xim.XIM1MouseTranslation;
+import com.esotericsoftware.controller.xim.XIM2;
 import com.esotericsoftware.controller.xim.XIM2MouseTranslation;
 
 public class InputTriggerPanel extends JPanel {
@@ -123,7 +127,12 @@ public class InputTriggerPanel extends JPanel {
 			isNewTrigger = true;
 			titlePanel.setBorder(BorderFactory.createTitledBorder("New Trigger"));
 
-			translation = new XIM2MouseTranslation();
+			if (XIM2.isValid(false))
+				translation = new XIM2MouseTranslation();
+			else if (XIM1.isValid(false))
+				translation = new XIM1MouseTranslation();
+			else
+				translation = new DefaultMouseTranslation();
 
 			triggerLabel.setText("Click to set trigger...");
 			triggerLabel.setFont(triggerLabel.getFont().deriveFont(Font.ITALIC));

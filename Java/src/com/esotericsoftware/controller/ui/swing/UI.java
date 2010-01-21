@@ -327,6 +327,11 @@ public class UI extends JFrame {
 		xim2ConnectMenuItem.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
 				setDevice(null);
+				if (!XIM2.isValid(true)) {
+					Util.errorDialog(UI.this, "XIM2 Connect Error", "The XIM2 software is not installed.");
+					statusBar.setMessage("XIM2 connection failed.");
+					return;
+				}
 				try {
 					setDevice(new XIM2());
 					statusBar.setMessage("XIM2 connected.");
@@ -335,7 +340,7 @@ public class UI extends JFrame {
 						final String ximPath = WindowsRegistry.get("HKCU/Software/XIM", "");
 						if (ximPath != null) {
 							if (!new File(ximPath + "\\XIMCalibrate.exe").exists()) {
-								Util.errorDialog(UI.this, "XIM2 Error", "XIMCalibrate.exe could not be found.");
+								Util.errorDialog(UI.this, "XIM2 Connect Error", "XIMCalibrate.exe could not be found.");
 								return;
 							}
 							if (DEBUG) debug("Running XIM2 calibration tool.", ex);
@@ -356,9 +361,9 @@ public class UI extends JFrame {
 					if (Log.ERROR) error("Error connecting to XIM2.", ex);
 					statusBar.setMessage("XIM2 connection failed.");
 					if (ex instanceof IOException && ex.getMessage().contains("DEVICE_NOT_FOUND"))
-						Util.errorDialog(UI.this, "Connect Error", "The XIM2 device could not be found.");
+						Util.errorDialog(UI.this, "XIM2 Connect Error", "The XIM2 device could not be found.");
 					else
-						Util.errorDialog(UI.this, "Connect Error", "An error occurred while attempting to connect to the XIM2.");
+						Util.errorDialog(UI.this, "XIM2 Connect Error", "An error occurred while attempting to connect to the XIM2.");
 				}
 			}
 		});
@@ -366,6 +371,11 @@ public class UI extends JFrame {
 		xim1ConnectMenuItem.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
 				setDevice(null);
+				if (!XIM1.isValid(true)) {
+					Util.errorDialog(UI.this, "XIM1 Connect Error", "The XIM1 software is not installed.");
+					statusBar.setMessage("XIM1 connection failed.");
+					return;
+				}
 				try {
 					setDevice(new XIM1());
 					statusBar.setMessage("XIM1 connected.");
@@ -373,9 +383,9 @@ public class UI extends JFrame {
 					if (Log.ERROR) error("Error connecting to XIM1.", ex);
 					statusBar.setMessage("XIM1 connection failed.");
 					if (ex instanceof IOException && ex.getMessage().contains("DEVICE_NOT_FOUND"))
-						Util.errorDialog(UI.this, "Connect Error", "The XIM1 device could not be found.");
+						Util.errorDialog(UI.this, "XIM1 Connect Error", "The XIM1 device could not be found.");
 					else
-						Util.errorDialog(UI.this, "Connect Error", "An error occurred while attempting to connect to the XIM1.");
+						Util.errorDialog(UI.this, "XIM1 Connect Error", "An error occurred while attempting to connect to the XIM1.");
 				}
 			}
 		});

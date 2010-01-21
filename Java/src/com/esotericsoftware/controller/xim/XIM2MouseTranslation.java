@@ -21,7 +21,7 @@ public class XIM2MouseTranslation implements MouseTranslation {
 	private static final int UPDATE_FREQUENCY = 120;
 
 	static {
-		XIM2.load();
+		XIM2.isValid(false);
 	}
 
 	private float smoothness, yxRatio, translationExponent, diagonalDampen;
