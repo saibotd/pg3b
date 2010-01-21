@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
-	Name="xim"
+	Name="xim2"
 	ProjectGUID="{628230F0-FD85-476D-90E1-6DA2BB4B7921}"
-	RootNamespace="xim"
+	RootNamespace="xim2"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="196613"
 	>
@@ -44,7 +44,7 @@
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
 				AdditionalIncludeDirectories="&quot;$(JAVA_HOME)\include&quot;;&quot;$(JAVA_HOME)\include\win32&quot;;ximsdk"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;XIM_EXPORTS"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;XIM2_EXPORTS"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
@@ -63,7 +63,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="XIMCore.lib"
-				OutputFile="$(OutDir)\xim32.dll"
+				OutputFile="$(OutDir)\xim2.dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="ximsdk"
 				GenerateDebugInformation="true"
@@ -92,7 +92,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(OutDir)\xim32.dll&quot; ..\..\deploy\native\"
+				CommandLine="copy &quot;$(OutDir)\xim2.dll&quot; ..\..\deploy\native\"
 			/>
 		</Configuration>
 	</Configurations>
@@ -105,7 +105,7 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\xim.cpp"
+				RelativePath=".\xim2.cpp"
 				>
 			</File>
 		</Filter>

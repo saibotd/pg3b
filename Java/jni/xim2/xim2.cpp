@@ -11,22 +11,22 @@
 
 extern "C" {
 
-JNIEXPORT jint JNICALL Java_com_esotericsoftware_controller_xim_XIM_connect
+JNIEXPORT jint JNICALL Java_com_esotericsoftware_controller_xim_XIM2_connect
 (JNIEnv* env, jclass c) {
 	return XIMConnect();
 }
 
-JNIEXPORT void JNICALL Java_com_esotericsoftware_controller_xim_XIM_disconnect
+JNIEXPORT void JNICALL Java_com_esotericsoftware_controller_xim_XIM2_disconnect
 (JNIEnv* env, jclass c) {
 	XIMDisconnect();
 }
 
-JNIEXPORT jint JNICALL Java_com_esotericsoftware_controller_xim_XIM_setMode
+JNIEXPORT jint JNICALL Java_com_esotericsoftware_controller_xim_XIM2_setMode
 (JNIEnv* env, jclass c, jint mode) {
 	return XIMSetMode(mode);
 }
 
-JNIEXPORT jint JNICALL Java_com_esotericsoftware_controller_xim_XIM_setState
+JNIEXPORT jint JNICALL Java_com_esotericsoftware_controller_xim_XIM2_setState
 (JNIEnv* env, jclass c, jobject byteBuffer, jfloat timeout) {
 	XIMXbox360Input *input = (XIMXbox360Input*)env->GetDirectBufferAddress(byteBuffer);
 	return XIMSendXbox360Input(input, timeout);
@@ -34,7 +34,7 @@ JNIEXPORT jint JNICALL Java_com_esotericsoftware_controller_xim_XIM_setState
 
 static XIMSMOOTHNESS smoothness;
 
-JNIEXPORT void JNICALL Java_com_esotericsoftware_controller_xim_XIMMouseTranslation_setSmoothness (
+JNIEXPORT void JNICALL Java_com_esotericsoftware_controller_xim_XIM2MouseTranslation_setSmoothness (
 	JNIEnv* env, jclass c,
 	jfloat intensity, jint inputUpdateFrequency, jfloat stickYXRatio, jfloat stickTranslationExponent,
 	jfloat stickSensitivity
@@ -45,7 +45,7 @@ JNIEXPORT void JNICALL Java_com_esotericsoftware_controller_xim_XIMMouseTranslat
 	);
 }
 
-JNIEXPORT void JNICALL Java_com_esotericsoftware_controller_xim_XIMMouseTranslation_computeStickValues (
+JNIEXPORT void JNICALL Java_com_esotericsoftware_controller_xim_XIM2MouseTranslation_computeStickValues (
 	JNIEnv* env, jclass c,
     jfloat deltaX, jfloat deltaY,
     jfloat stickYXRatio, jfloat stickTranslationExponent, jfloat stickSensitivity,

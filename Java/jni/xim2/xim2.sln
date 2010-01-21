@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 10.00
 # Visual C++ Express 2008
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "xim", "xim.vcproj", "{628230F0-FD85-476D-90E1-6DA2BB4B7921}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "xim2", "xim2.vcproj", "{628230F0-FD85-476D-90E1-6DA2BB4B7921}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

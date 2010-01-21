@@ -75,7 +75,6 @@ public class XIM1MouseTranslation implements MouseTranslation {
 			smoothness, byteBuffer);
 		stickValues[0] = byteBuffer.get(0) / 127f;
 		stickValues[1] = byteBuffer.get(1) / 127f;
-		System.out.println(stickValues[1]);
 		return stickValues;
 	}
 
