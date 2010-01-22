@@ -81,7 +81,6 @@ public class JInputXboxController extends XboxController {
 		if (axis == null) throw new IllegalArgumentException("axis cannot be null.");
 		if (!poll()) return 0;
 		Identifier.Axis id = null;
-		boolean invert = false;
 		switch (axis) {
 		case leftTrigger:
 		case rightTrigger:
@@ -96,18 +95,15 @@ public class JInputXboxController extends XboxController {
 			break;
 		case leftStickY:
 			id = Identifier.Axis.Y;
-			invert = true;
 			break;
 		case rightStickX:
 			id = Identifier.Axis.RX;
 			break;
 		case rightStickY:
 			id = Identifier.Axis.RY;
-			invert = true;
 			break;
 		}
 		float value = controller.getComponent(id).getPollData();
-		if (invert) value = -value;
 		return value;
 	}
 

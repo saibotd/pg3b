@@ -136,11 +136,11 @@ public class XInputXboxController extends XboxController {
 		case leftStickX:
 			return thumbLX / 32767f;
 		case leftStickY:
-			return thumbLY / 32767f;
+			return thumbLY / -32767f;
 		case rightStickX:
 			return thumbRX / 32767f;
 		case rightStickY:
-			return thumbRY / 32767f;
+			return thumbRY / -32767f;
 		case leftTrigger:
 			return leftTrigger / 255f;
 		case rightTrigger:
