@@ -22,7 +22,7 @@
     <cp>lib/pnuts-modules-1.2.1-20070724b.jar</cp>
     <cp>lib/rsyntaxtextarea-1.4.0.jar</cp>
     <cp>lib/RXTXcomm-2.2pre2-pg3b.jar</cp>
-    <cp>lib/yamlbeans-1.1.jar</cp>
+    <cp>lib/yamlbeans-1.3.jar</cp>
   </classPath>
   <jre>
     <path></path>
