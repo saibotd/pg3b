@@ -84,6 +84,8 @@ import com.esotericsoftware.minlog.Log;
 // BOZO - Record using target names.
 // BOZO - Draw target names on controller image.
 // BOZO - Script editor error message goes over record button.
+// BOZO - Customize config deactivate button.
+// BOZO - Make text mode exit button same as enter trigger.
 
 public class UI extends JFrame {
 	static public final String version = "0.1.22";

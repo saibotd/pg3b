@@ -34,6 +34,10 @@ public enum Button implements Target {
 		return alias;
 	}
 
+	public boolean isDpad () {
+		return this == up || this == down || this == left || this == right;
+	}
+
 	public String toString () {
 		return friendlyName;
 	}

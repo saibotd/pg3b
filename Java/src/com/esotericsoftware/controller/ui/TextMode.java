@@ -19,14 +19,16 @@ import com.esotericsoftware.controller.util.Listeners;
 import com.esotericsoftware.controller.util.Util;
 
 public class TextMode {
+
 	private TextMode () {
 	}
 
 	static private final HashMap<Character, Location> charToLocation = new HashMap();
-	static private final LinkedList presses = new LinkedList();
+	static private final LinkedList<Target> presses = new LinkedList();
 	static private boolean enabled, caps;
 	static private int currentPage, currentX, currentY, charsEntered, cursorPosition;
 	static private Listeners<Listener> listeners = new Listeners(Listeners.class);
+	static boolean ignoreEnter;
 
 	static {
 		char[] chars = {
@@ -51,7 +53,7 @@ public class TextMode {
 
 		Thread thread = new Thread("TextMode") {
 			public void run () {
-				Object object;
+				Target target;
 				while (true) {
 					synchronized (presses) {
 						if (presses.isEmpty()) {
@@ -61,22 +63,16 @@ public class TextMode {
 							}
 							continue;
 						}
-						object = presses.pop();
+						target = presses.pop();
 					}
 					Device device = UI.instance.getDevice();
 					if (device == null) continue;
+					boolean isButton = target instanceof Button;
 					try {
-						if (object instanceof Target) {
-							device.set((Target)object, 1);
-							Util.sleep(60);
-							device.set((Target)object, 0);
-						} else if (object instanceof ArrayList) {
-							for (Object target : (ArrayList)object)
-								device.set((Target)target, 1);
-							Util.sleep(60);
-							for (Object target : (ArrayList)object)
-								device.set((Target)target, 0);
-						}
+						device.set(target, isButton ? 1 : 0.5f);
+						Util.sleep(32);
+						device.set(target, 0);
+						Util.sleep(target == Button.a || target instanceof Axis ? 150 : 64);
 					} catch (IOException ex) {
 						if (ERROR) error("Error moving cursor to input text.", ex);
 						presses.clear();
@@ -89,6 +85,10 @@ public class TextMode {
 	}
 
 	static private Keyboard.Listener keyboardListener = new Keyboard.Listener() {
+		public void keyUp (int keyCode, char c) {
+			if (keyCode == VK_ENTER) ignoreEnter = false;
+		}
+
 		public void keyDown (int keyCode, char c) {
 			synchronized (presses) {
 				if (!enabled) return;
@@ -135,10 +135,8 @@ public class TextMode {
 					if (!Keyboard.instance.isCtrlDown()) return;
 					// Fall through.
 				case VK_ESCAPE:
-					if (!presses.isEmpty()) {
-						if (DEBUG) debug("Text input queue cleared.");
-						presses.clear();
-					}
+					if (DEBUG && !presses.isEmpty()) debug("Text input queue cleared.");
+					presses.clear();
 					setEnabled(false);
 					return;
 				}
@@ -166,6 +164,7 @@ public class TextMode {
 				caps = false;
 				charsEntered = 0;
 				cursorPosition = 0;
+				ignoreEnter = Keyboard.instance.isPressed(VK_ENTER);
 				Keyboard.instance.addListener(keyboardListener);
 				if (INFO) info("Entered text mode.");
 			} else {
@@ -216,13 +215,14 @@ public class TextMode {
 			if (DEBUG) debug("Queued text input: <delete>");
 			return;
 		case '\n':
+			if (ignoreEnter) return;
 			presses.add(Button.start);
 			if (DEBUG) debug("Queued text input: <start>");
 			setEnabled(false);
 			return;
 		}
 
-		Location location = charToLocation.get(c);
+		Location location = charToLocation.get(Character.toLowerCase(c));
 		if (location == null) return;
 
 		if (DEBUG) debug("Queued text input: " + c);
@@ -233,23 +233,21 @@ public class TextMode {
 		if (Math.abs(deltaX) > 6) incrementX = -incrementX;
 		int incrementY = currentY - targetY > 0 ? -1 : 1;
 		while (currentX != targetX || currentY != targetY) {
-			ArrayList<Target> targets = new ArrayList(2);
-			checkPage(location.page, targets);
+			checkPage(location.page);
 			if (currentX != targetX) {
 				currentX += incrementX;
-				targets.add(incrementX > 0 ? Button.right : Button.left);
+				presses.add(incrementX > 0 ? Button.right : Button.left);
 				if (currentX < 0) currentX += 12;
 				if (currentX == 12) currentX -= 12;
 			}
 			if (currentY != targetY && currentX != 0 && currentX != 11) {
-				targets.add(incrementY > 0 ? Button.down : Button.up);
+				presses.add(incrementY > 0 ? Button.down : Button.up);
 				currentY += incrementY;
 				if (currentY < 0) currentY += 5;
 				if (currentY == 5) currentY -= 5;
 			}
-			presses.add(targets);
 		}
-		checkPage(location.page, null);
+		checkPage(location.page);
 		if (caps != Character.isUpperCase(c) && Character.toUpperCase(c) != Character.toLowerCase(c)) {
 			caps = !caps;
 			presses.add(Button.leftStick);
@@ -259,16 +257,13 @@ public class TextMode {
 		cursorPosition++;
 	}
 
-	static private void checkPage (int page, ArrayList<Target> targets) {
+	static private void checkPage (int page) {
 		if (currentPage == page) return;
 		boolean forward = currentPage < page;
 		if (Math.abs(currentPage - page) > 1) forward = !forward;
 		currentPage = page;
-		Axis axis = forward ? Axis.rightTrigger : Axis.leftTrigger;
-		if (targets != null)
-			targets.add(axis);
-		else
-			presses.add(axis);
+		Axis axis = forward ? Axis.leftTrigger : Axis.rightTrigger;
+		presses.add(axis);
 	}
 
 	static public void addListener (Listener listener) {

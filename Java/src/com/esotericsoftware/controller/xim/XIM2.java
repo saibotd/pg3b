@@ -64,7 +64,7 @@ public class XIM2 extends Device {
 		int index = buttonToIndex[button.ordinal()];
 		synchronized (this) {
 			stateByteBuffer.put(index, (byte)(pressed ? 1 : 0));
-			if (collectingChangesThread != Thread.currentThread()) checkResult(setState(stateByteBuffer, 200));
+			if (collectingChangesThread != Thread.currentThread()) checkResult(setState(stateByteBuffer, 0));
 		}
 	}
 
@@ -72,7 +72,7 @@ public class XIM2 extends Device {
 		int index = axisToIndex[axis.ordinal()];
 		synchronized (this) {
 			axisStateBuffer.put(index, (short)(32767 * state));
-			if (collectingChangesThread != Thread.currentThread()) checkResult(setState(stateByteBuffer, 200));
+			if (collectingChangesThread != Thread.currentThread()) checkResult(setState(stateByteBuffer, 0));
 		}
 	}
 
@@ -153,5 +153,5 @@ public class XIM2 extends Device {
 
 	static native int setMode (int mode);
 
-	static native int setState (ByteBuffer byteBuffer, float timeout);
+	static native int setState (ByteBuffer byteBuffer, float delay);
 }

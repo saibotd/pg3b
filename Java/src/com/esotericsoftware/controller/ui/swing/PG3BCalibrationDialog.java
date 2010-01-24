@@ -116,7 +116,9 @@ public class PG3BCalibrationDialog extends JDialog {
 					throwCancelled();
 					Axis axis = calibration.axis;
 					setMessage("Reading " + axis + "...");
+					pg3b.softwareCalibration[axis.ordinal()] =null; 
 					calibration.rawValues = Diagnostics.getRawValues(axis, pg3b, controller);
+					pg3b.softwareCalibration[axis.ordinal()] = calibration.rawValues;
 					setPercentageComplete(++i / (float)count);
 					if (DEBUG) debug(axis + " chart:\n" + calibration.getChartURL());
 				}
@@ -170,8 +172,8 @@ public class PG3BCalibrationDialog extends JDialog {
 							Axis axis = calibration.axis;
 							setMessage("Calibrating " + axis + "...");
 							calibration.calibrationTable = Diagnostics.getCalibrationTable(axis, calibration.rawValues);
-							config.setCalibrationTable(axis, calibration.calibrationTable);
-							config.setCalibrated(axis, true);
+							// config.setCalibrationTable(axis, calibration.calibrationTable);
+							// config.setCalibrated(axis, true);
 							setPercentageComplete(++i / (float)count);
 							if (DEBUG) debug(axis + " chart:\n" + calibration.getChartURL());
 						}
@@ -334,8 +336,8 @@ public class PG3BCalibrationDialog extends JDialog {
 				} else {
 					calibrated.setLength(calibrated.length() - 1);
 					return new URL("http://chart.apis.google.com/chart?chs=640x320&chf=bg,s,ffffff|c,s,ffffff&chxt=x,y&"
-						+ "chxl=0:|0|63|127|191|255|1:|-1|0|1&cht=lc&chdl=Raw|Calibration&chco=ff0000,0000ff&chdlp=b&chd=t:" + raw + "|"
-						+ calibrated);
+						+ "chxl=0:|0|63|127|191|255|1:|-1|0|1&cht=lc&chdl=Raw|Calibration&chco=ff0000,0000ff&chdlp=b&chd=t:" + raw
+						+ "|" + calibrated);
 				}
 			} catch (MalformedURLException ex) {
 				throw new RuntimeException(ex);
