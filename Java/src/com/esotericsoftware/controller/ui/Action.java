@@ -20,4 +20,9 @@ public interface Action {
 	 * Returns true if this action is able to be executed.
 	 */
 	public boolean isValid ();
+
+	/**
+	 * Returns the general type of this action. Eg, "Device".
+	 */
+	public String getType ();
 }

@@ -397,7 +397,7 @@ public class ScriptEditor extends EditorPanel<Script> {
 				codeScroll = new RTextScrollPane(codeText);
 				getContentPanel().add(
 					codeScroll,
-					new GridBagConstraints(0, 0, 2, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0,
+					new GridBagConstraints(0, 0, 3, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0,
 						0, 0), 0, 0));
 			}
 		}
@@ -416,14 +416,14 @@ public class ScriptEditor extends EditorPanel<Script> {
 			executeButton = new JButton("Execute");
 			getContentPanel().add(
 				executeButton,
-				new GridBagConstraints(1, 1, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE,
+				new GridBagConstraints(2, 1, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE,
 					new Insets(6, 6, 6, 0), 0, 0));
 		}
 		{
 			recordButton = new JToggleButton("Record");
 			getContentPanel().add(
 				recordButton,
-				new GridBagConstraints(0, 1, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE,
+				new GridBagConstraints(1, 1, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE,
 					new Insets(6, 6, 6, 0), 0, 0));
 		}
 

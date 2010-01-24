@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
-import java.nio.ShortBuffer;
 import java.util.HashMap;
 
 import com.esotericsoftware.controller.device.Axis;
@@ -49,7 +48,6 @@ public class XIM1 extends Device {
 	}
 
 	private ByteBuffer stateByteBuffer;
-	private ShortBuffer axisStateBuffer;
 	private IntBuffer buttonStateBuffer;
 
 	public XIM1 () throws IOException {
@@ -58,8 +56,6 @@ public class XIM1 extends Device {
 		stateByteBuffer = ByteBuffer.allocateDirect(72);
 		stateByteBuffer.order(ByteOrder.nativeOrder());
 		buttonStateBuffer = stateByteBuffer.asIntBuffer();
-		stateByteBuffer.position(64);
-		axisStateBuffer = stateByteBuffer.slice().order(ByteOrder.nativeOrder()).asShortBuffer();
 	}
 
 	public void setButton (Button button, boolean pressed) throws IOException {
@@ -74,9 +70,9 @@ public class XIM1 extends Device {
 		int index = axisToIndex[axis.ordinal()];
 		synchronized (this) {
 			if (axis.isTrigger())
-				axisStateBuffer.put(index, (short)(state == 0 ? 0 : 1));
+				buttonStateBuffer.put(index, state == 0 ? 0 : 1);
 			else
-				axisStateBuffer.put(index, (short)(127 * state));
+				stateByteBuffer.put(index, (byte)(127 * state));
 			if (collectingChangesThread != Thread.currentThread()) checkResult(setState(stateByteBuffer));
 		}
 	}
@@ -132,10 +128,10 @@ public class XIM1 extends Device {
 
 	static private int[] axisToIndex = new int[Axis.values().length];
 	static {
-		axisToIndex[Axis.rightStickX.ordinal()] = 17;
-		axisToIndex[Axis.rightStickY.ordinal()] = 18;
-		axisToIndex[Axis.leftStickX.ordinal()] = 19;
-		axisToIndex[Axis.leftStickY.ordinal()] = 20;
+		axisToIndex[Axis.rightStickX.ordinal()] = 68;
+		axisToIndex[Axis.rightStickY.ordinal()] = 69;
+		axisToIndex[Axis.leftStickX.ordinal()] = 70;
+		axisToIndex[Axis.leftStickY.ordinal()] = 71;
 		axisToIndex[Axis.rightTrigger.ordinal()] = 3;
 		axisToIndex[Axis.leftTrigger.ordinal()] = 0;
 	}

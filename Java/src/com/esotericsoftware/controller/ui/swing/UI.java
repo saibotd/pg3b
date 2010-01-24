@@ -82,13 +82,11 @@ import com.esotericsoftware.minlog.Log;
 
 // BOZO - Duplicate config.
 // BOZO - Record using target names.
-// BOZO - Draw target names on controller image.
-// BOZO - Script editor error message goes over record button.
 // BOZO - Customize config deactivate button.
 // BOZO - Make text mode exit button same as enter trigger.
 
 public class UI extends JFrame {
-	static public final String version = "0.1.22";
+	static public final String version = "0.1.24";
 	static public UI instance;
 
 	static private Settings settings = Settings.get();
@@ -710,9 +708,6 @@ public class UI extends JFrame {
 					pg3bConnectMenuItem = menu.add(new JMenuItem("Connect to PG3B..."));
 					xim1ConnectMenuItem = menu.add(new JMenuItem("Connect to XIM1..."));
 					xim2ConnectMenuItem = menu.add(new JMenuItem("Connect to XIM2..."));
-				}
-				menu.addSeparator();
-				{
 					resetMenuItem = menu.add(new JMenuItem("Reset Device"));
 					disconnectDeviceMenuItem = menu.add(new JMenuItem("Disconnect Device"));
 				}

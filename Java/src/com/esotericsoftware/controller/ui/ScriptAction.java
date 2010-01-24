@@ -101,8 +101,12 @@ public class ScriptAction implements Action {
 		return null;
 	}
 
+	public String getType () {
+		return "Script";
+	}
+
 	public String toString () {
-		return "Script: " + scriptName.toString();
+		return scriptName;
 	}
 
 	/**

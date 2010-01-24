@@ -20,6 +20,11 @@ abstract public class Trigger {
 	}
 
 	/**
+	 * Returns the name of the source of this trigger. Eg, "Joystick".
+	 */
+	abstract public String getSourceName ();
+
+	/**
 	 * Returns the object that should be polled prior to this trigger being checked.
 	 */
 	abstract public Poller getPoller ();

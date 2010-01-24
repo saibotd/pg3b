@@ -49,6 +49,7 @@ abstract public class Device {
 	private float mouseDeltaX, mouseDeltaY;
 	private Stick mouseDeltaStick;
 	private Map<String, Target> alternateNameToTarget = new HashMap();
+	private Map<String, String> targetToAlternateName = new HashMap();
 
 	public Device () {
 		super();
@@ -298,10 +299,18 @@ abstract public class Device {
 	public void setTargetNames (Map<String, String> names) {
 		if (names == null) throw new IllegalArgumentException("names cannot be null.");
 		alternateNameToTarget.clear();
+		targetToAlternateName.clear();
 		for (Entry<String, String> entry : names.entrySet()) {
 			if (entry.getKey() == null || entry.getKey().length() == 0) continue;
-			alternateNameToTarget.put(entry.getValue().toLowerCase(), getTarget(entry.getKey()));
+			String name = entry.getValue();
+			Target target = getTarget(entry.getKey());
+			alternateNameToTarget.put(name.toLowerCase(), target);
+			targetToAlternateName.put(target.name(), name);
 		}
+	}
+
+	public Map<String, String> getTargetNames () {
+		return targetToAlternateName;
 	}
 
 	public void setDeadzone (Stick stick, Deadzone deadzone) {

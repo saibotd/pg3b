@@ -22,6 +22,11 @@ public class InputTrigger extends Trigger {
 		setAction(action);
 	}
 
+	public String getSourceName () {
+		if (input == null) return "";
+		return input.getInputDevice().toString();
+	}
+
 	public Input getInput () {
 		return input;
 	}
@@ -141,11 +146,8 @@ public class InputTrigger extends Trigger {
 		if (getShift()) buffer.append("shift+");
 		if (input == null)
 			buffer.append("<none>");
-		else {
+		else
 			buffer.append(input);
-			buffer.append(": ");
-			buffer.append(input.getInputDevice());
-		}
 		return buffer.toString();
 	}
 }

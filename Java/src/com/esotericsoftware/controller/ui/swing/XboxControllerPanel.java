@@ -5,6 +5,7 @@ import java.awt.AWTEvent;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -147,13 +148,13 @@ public class XboxControllerPanel extends JPanel {
 						dragStartY = y;
 					} else if (dragObject == Axis.leftStickX) {
 						dragStartX = 63;
-						dragStartY = 191;
+						dragStartY = 180;
 					} else if (dragObject == Axis.rightStickX) {
 						dragStartX = 331;
-						dragStartY = 275;
+						dragStartY = 264;
 					} else if (dragObject instanceof Button) {
 						dragStartX = 165;
-						dragStartY = 261;
+						dragStartY = 250;
 					}
 					repaint();
 				}
@@ -417,7 +418,34 @@ public class XboxControllerPanel extends JPanel {
 		if (controller != null)
 			drawString(g, controller.toString(), 250, 38);
 		else if (device != null) {
-			drawString(g, device.toString(), 250, 38);
+			drawString(g, device.toString(), 250, 32);
+			for (Entry<String, String> entry : device.getTargetNames().entrySet()) {
+				String alternateName = entry.getValue();
+				if (alternateName.length() == 0) continue;
+				String targetName = entry.getKey();
+				PackedImage packedImage = packedImages.get(targetName);
+				if (packedImage == null) continue;
+				int x = packedImage.offsetX + packedImage.image.getWidth() / 2;
+				int y = packedImage.offsetY + packedImage.image.getHeight() / 2;
+				Target target = Device.getTarget(targetName);
+				if (target == Button.leftShoulder || target == Button.rightShoulder)
+					y -= 7;
+				else if (target == Axis.leftTrigger) {
+					if (leftTrigger != 0) continue;
+					y -= 8;
+				} else if (target == Axis.rightTrigger) {
+					if (rightTrigger != 0) continue;
+					y -= 8;
+				} else if (target == Button.leftStick) {
+					if (device != null && dragStartX != -1 && overImageName != null && overImageName.equals(targetName)) continue;
+					y += 3;
+					x -= 2;
+				} else if (target == Button.rightStick) {
+					if (device != null && dragStartX != -1 && overImageName != null && overImageName.equals(targetName)) continue;
+					y += 4;
+				}
+				drawStringOutline(g, alternateName, x, y);
+			}
 		}
 
 		if (nameToStatus != null) {
@@ -438,7 +466,7 @@ public class XboxControllerPanel extends JPanel {
 		}
 
 		if (device != null && dragStartX != -1 && overImageName != null && !overImageName.endsWith("Trigger"))
-			packedImages.get("crosshair").draw(g, dragStartX - 11, dragStartY - 11);
+			packedImages.get("crosshair").draw(g, dragStartX - 11, dragStartY);
 	}
 
 	private float getTargetState (Target target) {
@@ -518,8 +546,22 @@ public class XboxControllerPanel extends JPanel {
 	}
 
 	private void drawString (Graphics g, String text, int x, int y) {
-		int width = g.getFontMetrics().stringWidth(text);
-		g.drawString(text, x - width / 2, y);
+		FontMetrics metrics = g.getFontMetrics();
+		x -= metrics.stringWidth(text) / 2;
+		g.drawString(text, x, y);
+	}
+
+	private void drawStringOutline (Graphics g, String text, int x, int y) {
+		FontMetrics metrics = g.getFontMetrics();
+		x -= metrics.stringWidth(text) / 2;
+		y += metrics.getAscent() / 2 - 1;
+		g.setColor(Color.black);
+		g.drawString(text, x + 1, y + 1);
+		g.drawString(text, x + 1, y - 1);
+		g.drawString(text, x - 1, y + 1);
+		g.drawString(text, x - 1, y - 1);
+		g.setColor(Color.white);
+		g.drawString(text, x, y);
 	}
 
 	public void setDevice (Device device) {

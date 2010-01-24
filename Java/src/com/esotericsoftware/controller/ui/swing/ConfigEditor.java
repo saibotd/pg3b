@@ -89,7 +89,8 @@ public class ConfigEditor extends EditorPanel<Config> {
 			owner.updateActiveConfig();
 		} else {
 			for (Trigger trigger : config.getTriggers())
-				triggersTableModel.addRow(new Object[] {trigger, trigger.getAction()});
+				triggersTableModel.addRow(new Object[] {trigger.getSourceName(), trigger, trigger.getAction(),
+					trigger.getAction().getType()});
 			setSelectedTrigger(lastSelectedTriggerIndex);
 
 			if (!config.getName().equals(settings.selectedConfig)) {
@@ -98,6 +99,10 @@ public class ConfigEditor extends EditorPanel<Config> {
 			}
 		}
 		activateButton.setEnabled(config != null);
+		if (device != null) {
+			device.setTargetNames(config.getTargetNames());
+			owner.getControllerPanel().repaint();
+		}
 		if (config != null && activateButton.isSelected()) config.setActive(true);
 	}
 
@@ -325,7 +330,7 @@ public class ConfigEditor extends EditorPanel<Config> {
 					}
 				};
 				scroll.setViewportView(triggersTable);
-				triggersTableModel = new DefaultTableModel(new String[][] {}, new String[] {"Trigger", "Action"});
+				triggersTableModel = new DefaultTableModel(new String[][] {}, new String[] {"Source", "Trigger", "Action", "Type"});
 				triggersTable.setModel(triggersTableModel);
 				triggersTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 				triggersTable.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
@@ -333,10 +338,9 @@ public class ConfigEditor extends EditorPanel<Config> {
 						int row, int column) {
 						hasFocus = false; // Disable cell focus.
 						Config config = getSelectedItem();
-						if (column == 1 && value instanceof DeviceAction) {
+						if (column == 2 && value instanceof DeviceAction) {
 							DeviceAction deviceAction = (DeviceAction)value;
 							StringBuilder buffer = new StringBuilder();
-							buffer.append("Device: ");
 							buffer.append(config.getTargetName(deviceAction.getTarget()));
 							if (deviceAction.getDirection() != Direction.both) {
 								buffer.append(' ');
@@ -348,10 +352,10 @@ public class ConfigEditor extends EditorPanel<Config> {
 						label.setBorder(new EmptyBorder(new Insets(0, 4, 0, 0))); // Padding.
 						label.setForeground(isSelected ? table.getSelectionForeground() : null);
 						// Highlight invalid triggers and actions.
-						if (column == 0) {
+						if (column <= 1) {
 							Trigger trigger = config.getTriggers().get(row);
 							if (!trigger.isValid()) label.setForeground(Color.red);
-						} else if (column == 1) {
+						} else if (column >= 2) {
 							Action action = config.getTriggers().get(row).getAction();
 							if (action == null || !action.isValid()) label.setForeground(Color.red);
 						}
@@ -367,8 +371,10 @@ public class ConfigEditor extends EditorPanel<Config> {
 				});
 				triggersTable.setRowHeight(triggersTable.getRowHeight() + 9);
 				TableColumnModel columnModel = triggersTable.getColumnModel();
-				columnModel.getColumn(0).setPreferredWidth(500);
-				columnModel.getColumn(1).setPreferredWidth(500);
+				columnModel.getColumn(0).setPreferredWidth(200);
+				columnModel.getColumn(1).setPreferredWidth(300);
+				columnModel.getColumn(2).setPreferredWidth(300);
+				columnModel.getColumn(3).setPreferredWidth(200);
 			}
 		}
 		{

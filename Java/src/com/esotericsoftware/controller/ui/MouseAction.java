@@ -34,6 +34,10 @@ public class MouseAction implements Action {
 		this.translation = translation;
 	}
 
+	public String getType () {
+		return "";
+	}
+
 	public String toString () {
 		return "Mouse Translation";
 	}

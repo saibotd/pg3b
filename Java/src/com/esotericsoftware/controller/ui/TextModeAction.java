@@ -17,6 +17,10 @@ public class TextModeAction implements Action {
 		TextMode.setEnabled(false);
 	}
 
+	public String getType () {
+		return "";
+	}
+
 	public String toString () {
 		return "Text Mode";
 	}

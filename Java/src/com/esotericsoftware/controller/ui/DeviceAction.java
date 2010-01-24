@@ -95,10 +95,13 @@ public class DeviceAction implements Action {
 		}
 	}
 
+	public String getType () {
+		return "Device";
+	}
+
 	public String toString () {
 		if (target == null) return "";
 		StringBuilder buffer = new StringBuilder();
-		buffer.append("Device: ");
 		buffer.append(target);
 		if (direction != Direction.both) {
 			buffer.append(' ');
