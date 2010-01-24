@@ -232,6 +232,8 @@ public class Config extends Editable {
 						device.apply();
 					} catch (IOException ignored) {
 					}
+					device.setDeadzone(Stick.left, null);
+					device.setDeadzone(Stick.right, null);
 				}
 				if (INFO) info("Deactivated config: " + config.getName());
 				EventQueue.invokeLater(new Runnable() {

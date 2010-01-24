@@ -132,6 +132,7 @@ public class XInputXboxController extends XboxController {
 	}
 
 	public float get (Axis axis) {
+		if (!poll()) return 0;
 		switch (axis) {
 		case leftStickX:
 			return thumbLX / 32767f;
@@ -150,6 +151,7 @@ public class XInputXboxController extends XboxController {
 	}
 
 	public boolean get (Button button) {
+		if (!poll()) return false;
 		switch (button) {
 		case up:
 			return (buttons & BUTTON_DPAD_UP) == BUTTON_DPAD_UP;

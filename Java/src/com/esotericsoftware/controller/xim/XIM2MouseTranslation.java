@@ -18,14 +18,14 @@ import com.esotericsoftware.controller.device.Stick;
 import com.esotericsoftware.controller.ui.MouseTranslation;
 
 public class XIM2MouseTranslation implements MouseTranslation {
-	private static final int UPDATE_FREQUENCY = 120;
+	private static final int UPDATE_FREQUENCY = 60;
 
 	static {
 		XIM2.isValid(false);
 	}
 
-	private float smoothness, yxRatio, translationExponent, diagonalDampen;
-	private int sensitivity;
+	private float smoothness = 0.3f, yxRatio = 1.5f, translationExponent = 0.75f, diagonalDampen = 0.25f;
+	private int sensitivity = 1250;
 
 	private transient float actualSmoothness, actualYXRatio, actualTranslationExponent;
 	private transient int actualSensitivity;

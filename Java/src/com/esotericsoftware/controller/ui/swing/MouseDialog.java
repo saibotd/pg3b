@@ -56,7 +56,7 @@ public class MouseDialog extends JDialog {
 			yxRatioSpinner.setValue(ximTranslation.getYXRatio());
 			smoothnessSpinner.setValue(ximTranslation.getSmoothness());
 			diagonalDampenSpinner.setValue(ximTranslation.getDiagonalDampen());
-			sensitivitySpinner.setValue(ximTranslation.getSensitivity());
+			sensitivitySpinner.setValue((float)ximTranslation.getSensitivity());
 			translationExponentSpinner.setValue(ximTranslation.getTranslationExponent());
 		} else if (translation instanceof XIM1MouseTranslation) {
 			XIM1MouseTranslation ximTranslation = (XIM1MouseTranslation)translation;

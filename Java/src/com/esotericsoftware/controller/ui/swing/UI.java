@@ -80,8 +80,13 @@ import com.esotericsoftware.controller.xim.XIM1;
 import com.esotericsoftware.controller.xim.XIM2;
 import com.esotericsoftware.minlog.Log;
 
+// BOZO - Duplicate config.
+// BOZO - Record using target names.
+// BOZO - Draw target names on controller image.
+// BOZO - Script editor error message goes over record button.
+
 public class UI extends JFrame {
-	static public final String version = "0.1.21";
+	static public final String version = "0.1.22";
 	static public UI instance;
 
 	static private Settings settings = Settings.get();
@@ -95,7 +100,7 @@ public class UI extends JFrame {
 		disconnectControllerMenuItem, controllerConnectMenuItem, exitMenuItem;
 	private JCheckBoxMenuItem showControllerMenuItem, showLogMenuItem, pg3bDebugEnabledMenuItem, pg3bCalibrationEnabledMenuItem,
 		activationDisablesInputMenuItem, xim2ThumbsticksEnabledMenuItem;
-	private JMenuItem roundTripMenuItem, clearMenuItem, pg3bCalibrateMenuItem, pg3bSetControllerTypeMenuItem;
+	private JMenuItem roundTripMenuItem, clearMenuItem, resetMenuItem, pg3bCalibrateMenuItem, pg3bSetControllerTypeMenuItem;
 
 	private XboxControllerPanel controllerPanel;
 	private StatusBar statusBar;
@@ -144,6 +149,7 @@ public class UI extends JFrame {
 		statusBar.setController(null);
 
 		roundTripMenuItem.setEnabled(false);
+		resetMenuItem.setEnabled(false);
 		disconnectDeviceMenuItem.setEnabled(false);
 		disconnectControllerMenuItem.setEnabled(false);
 		clearMenuItem.setEnabled(false);
@@ -243,6 +249,7 @@ public class UI extends JFrame {
 				configTab.getConfigEditor().setDevice(device);
 
 				disconnectDeviceMenuItem.setEnabled(device != null);
+				resetMenuItem.setEnabled(device != null);
 				roundTripMenuItem.setEnabled(device != null && controller != null);
 
 				pg3bCalibrateMenuItem.setEnabled(controller != null);
@@ -500,6 +507,16 @@ public class UI extends JFrame {
 			}
 		});
 
+		resetMenuItem.addActionListener(new ActionListener() {
+			public void actionPerformed (ActionEvent event) {
+				try {
+					device.reset();
+				} catch (IOException ex) {
+					if (Log.ERROR) error("Error resetting device.", ex);
+				}
+			}
+		});
+
 		pg3bCalibrateMenuItem.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
 				new PG3BCalibrationDialog(UI.this, (PG3B)device, controller);
@@ -691,6 +708,10 @@ public class UI extends JFrame {
 					pg3bConnectMenuItem = menu.add(new JMenuItem("Connect to PG3B..."));
 					xim1ConnectMenuItem = menu.add(new JMenuItem("Connect to XIM1..."));
 					xim2ConnectMenuItem = menu.add(new JMenuItem("Connect to XIM2..."));
+				}
+				menu.addSeparator();
+				{
+					resetMenuItem = menu.add(new JMenuItem("Reset Device"));
 					disconnectDeviceMenuItem = menu.add(new JMenuItem("Disconnect Device"));
 				}
 				menu.addSeparator();

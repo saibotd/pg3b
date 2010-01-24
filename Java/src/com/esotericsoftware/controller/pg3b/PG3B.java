@@ -55,6 +55,7 @@ public class PG3B extends Device {
 	private final PG3BConfig config;
 	private final char[] buffer = new char[256];
 	private boolean debugEnabled, calibrationEnabled;
+	private byte[][] softwareCalibration;
 
 	/**
 	 * Creates a new PG3B with a timeout of 300.
@@ -103,6 +104,10 @@ public class PG3B extends Device {
 			setCalibrationEnabled(true);
 
 			config = new PG3BConfig(this);
+
+			softwareCalibration = new byte[Axis.values().length][];
+			for (Axis axis : Axis.values())
+				softwareCalibration[axis.ordinal()] = config.getCalibrationTable(axis);
 		} catch (Exception ex) {
 			close();
 			throw new IOException("Error opening connection on port: " + port, ex);
@@ -230,11 +235,15 @@ public class PG3B extends Device {
 
 	public void setAxis (Axis axis, float state) throws IOException {
 		float wiperValue;
-		if (axis == Axis.leftTrigger || axis == Axis.rightTrigger)
+		if (axis.isTrigger())
 			wiperValue = 255 - state * 255;
-		else {
-			wiperValue = (state + 1) * 127;
-			if (axis != Axis.leftStickY && axis != Axis.rightStickY) wiperValue = 255 - wiperValue;
+		else
+			wiperValue = 255 - (state + 1) * 127;
+
+		if (calibrationEnabled) {
+			float moo = wiperValue;
+			wiperValue = softwareCalibration[axis.ordinal()][(int)wiperValue];
+			System.out.println("before " + moo + ",  after " + wiperValue);
 		}
 
 		short actionKey = getActionKey(ActionDevice.xbox, (short)axis.ordinal());

@@ -41,10 +41,9 @@ public class Diagnostics {
 		pg3b.reset();
 
 		try {
-			boolean isTrigger = axis == Axis.leftTrigger || axis == Axis.rightTrigger;
 			float[] actualValues = new float[256];
 			for (int wiper = 0; wiper <= 255; wiper++) {
-				float deflection = isTrigger ? wiper / 255f : wiper / 255f * 2 - 1;
+				float deflection = axis.isTrigger() ? wiper / 255f : wiper / 255f * 2 - 1;
 				pg3b.set(axis, deflection);
 				if (Thread.interrupted()) return null;
 				try {
@@ -68,16 +67,14 @@ public class Diagnostics {
 	static public byte[] getCalibrationTable (Axis axis, float[] rawValues) {
 		if (axis == null) throw new IllegalArgumentException("axis cannot be null.");
 
-		boolean isTrigger = axis == Axis.leftTrigger || axis == Axis.rightTrigger;
-
 		byte[] calibrationTable = new byte[256];
 		int minusOneIndex = findClosestIndex(rawValues, -1);
 		int zeroIndex = findClosestIndex(rawValues, 0);
 		int plusOneIndex = findClosestIndex(rawValues, 1);
 		for (int wiper = 0; wiper <= 255; wiper++) {
-			float deflection = isTrigger ? wiper / 255f : wiper / 255f * 2 - 1;
+			float deflection = axis.isTrigger() ? wiper / 255f : wiper / 255f * 2 - 1;
 			int match = zeroIndex;
-			for (int index = minusOneIndex; index <= plusOneIndex; index++)
+			for (int index = 0; index < 256; index++)
 				if (Math.abs(rawValues[index] - deflection) < Math.abs(rawValues[match] - deflection)) match = index;
 			calibrationTable[wiper] = (byte)match;
 		}

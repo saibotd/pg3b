@@ -58,11 +58,13 @@ public class DeviceDeadzoneDialog extends JDialog {
 			device.reset();
 		} catch (IOException ignored) {
 		}
+		device.setDeadzone(Stick.left, null);
+		device.setDeadzone(Stick.right, null);
 
 		Deadzone leftDeadzone = config.getLeftDeadzone();
 		if (leftDeadzone != null) {
 			leftXSpinner.setValue(leftDeadzone.getSizeX());
-			leftXSpinner.setValue(leftDeadzone.getSizeY());
+			leftYSpinner.setValue(leftDeadzone.getSizeY());
 			leftShapeCombo.setSelectedIndex(leftDeadzone instanceof Deadzone.Square ? 0 : 1);
 			setAxis(Axis.leftStickX, leftXSpinner);
 			setAxis(Axis.leftStickY, leftYSpinner);

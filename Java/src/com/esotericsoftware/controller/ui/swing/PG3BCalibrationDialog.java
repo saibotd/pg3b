@@ -45,7 +45,7 @@ import com.esotericsoftware.controller.util.Util;
 import com.esotericsoftware.minlog.Log;
 
 public class PG3BCalibrationDialog extends JDialog {
-	static private List<AxisCalibration> calibrations = new ArrayList();
+	static public List<AxisCalibration> calibrations = new ArrayList();
 	static {
 		for (Axis axis : Axis.values())
 			calibrations.add(new AxisCalibration(axis));
@@ -281,7 +281,7 @@ public class PG3BCalibrationDialog extends JDialog {
 					leftPanel.add(refreshButton);
 				}
 				{
-					calibrateButton = new JButton("Calibrate");
+					calibrateButton = new JButton("Recalibrate");
 					leftPanel.add(calibrateButton);
 					calibrateButton.setEnabled(false);
 				}
@@ -314,7 +314,7 @@ public class PG3BCalibrationDialog extends JDialog {
 			try {
 				if (rawValues == null) {
 					return new URL("http://chart.apis.google.com/chart?chs=640x320&chf=bg,s,ffffff|c,s,ffffff&chxt=x,y&"
-						+ "chxl=0:|0|63|127|191|255|1:|-1|0|1&cht=lc&chdl=Raw|Calibrated&chco=ff0000,0000ff&chdlp=b&chd=t:|");
+						+ "chxl=0:|0|63|127|191|255|1:|-1|0|1&cht=lc&chdl=Raw|Calibration&chco=ff0000,0000ff&chdlp=b&chd=t:|");
 				}
 				StringBuilder raw = new StringBuilder(1024);
 				StringBuilder calibrated = new StringBuilder(1024);
@@ -330,11 +330,11 @@ public class PG3BCalibrationDialog extends JDialog {
 				raw.setLength(raw.length() - 1);
 				if (calibrationTable == null) {
 					return new URL("http://chart.apis.google.com/chart?chs=640x320&chf=bg,s,ffffff|c,s,ffffff&chxt=x,y&"
-						+ "chxl=0:|0|63|127|191|255|1:|-1|0|1&cht=lc&chdl=Raw|Calibrated&chco=ff0000,0000ff&chdlp=b&chd=t:" + raw);
+						+ "chxl=0:|0|63|127|191|255|1:|-1|0|1&cht=lc&chdl=Raw|Calibration&chco=ff0000,0000ff&chdlp=b&chd=t:" + raw);
 				} else {
 					calibrated.setLength(calibrated.length() - 1);
 					return new URL("http://chart.apis.google.com/chart?chs=640x320&chf=bg,s,ffffff|c,s,ffffff&chxt=x,y&"
-						+ "chxl=0:|0|63|127|191|255|1:|-1|0|1&cht=lc&chdl=Raw|Calibrated&chco=ff0000,0000ff&chdlp=b&chd=t:" + raw + "|"
+						+ "chxl=0:|0|63|127|191|255|1:|-1|0|1&cht=lc&chdl=Raw|Calibration&chco=ff0000,0000ff&chdlp=b&chd=t:" + raw + "|"
 						+ calibrated);
 				}
 			} catch (MalformedURLException ex) {
