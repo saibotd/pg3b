@@ -237,7 +237,7 @@ public class PG3B extends Device {
 			wiperValue = 255 - state * 255;
 		else
 			wiperValue = 255 - (state + 1) * 127;
-
+ 
 		short actionKey = getActionKey(ActionDevice.xbox, (short)axis.ordinal());
 		short actionCode = getActionCode(actionKey, (short)wiperValue);
 		commandWord(Command.action, actionCode);

@@ -76,7 +76,7 @@ abstract public class Device {
 
 		synchronized (this) {
 			int ordinal = button.ordinal();
-			if (collectingChangesThread == Thread.currentThread()) {
+			if (false && collectingChangesThread == Thread.currentThread()) {
 				buttonStates[ordinal] = pressed;
 				return;
 			}
@@ -108,11 +108,13 @@ abstract public class Device {
 
 		synchronized (this) {
 			int ordinal = axis.ordinal();
-			if (collectingChangesThread == Thread.currentThread()) {
+			if (false && collectingChangesThread == Thread.currentThread()) {
 				axisStates[ordinal] = state;
 				return;
 			}
 			if (axisStates[ordinal] == state) return;
+			if (state ==0)
+			System.out.println(state);
 			setAxis(axis, state);
 			axisDeflections[ordinal] = state;
 			axisStates[ordinal] = state;
@@ -332,6 +334,7 @@ abstract public class Device {
 		float[] mouseDelta = new float[] {mouseDeltaX, mouseDeltaY};
 		mouseDeltaX = 0;
 		mouseDeltaY = 0;
+		mouseDeltaStick = null;
 		return mouseDelta;
 	}
 

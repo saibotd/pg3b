@@ -85,10 +85,9 @@ import com.esotericsoftware.minlog.Log;
 // BOZO - Customize config deactivate button.
 // BOZO - Make text mode exit button same as enter trigger.
 // BOZO - Reconnect PG3B, reset debug, etc.
-// BOZO - Deadzone causes right stick to flash on xbox passthru?
 
 public class UI extends JFrame {
-	static public final String version = "0.1.25";
+	static public final String version = "0.1.26";
 	static public UI instance;
 
 	static private Settings settings = Settings.get();
