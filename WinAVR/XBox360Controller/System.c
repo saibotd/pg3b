@@ -129,8 +129,7 @@ uint8_t SYS_ControllerModel( void )
 uint8_t SYS_CalibratedValue( uint8_t xboxTarget, uint8_t rawValue )
 {
     if( config.calibration & ( 1 << xboxTarget ) )
-        return eeprom_read_byte( (void *)( ( xboxTarget << EEPROM_CALIBRATION_BITS ) + rawValue ) );
-
+        return eeprom_read_byte( (void *)( ( (xboxTarget * EEPROM_CALIBRATION_BITS + 1) << 5 ) + rawValue ) );
     return rawValue;
 }
 
