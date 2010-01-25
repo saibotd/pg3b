@@ -116,9 +116,7 @@ public class PG3BCalibrationDialog extends JDialog {
 					throwCancelled();
 					Axis axis = calibration.axis;
 					setMessage("Reading " + axis + "...");
-					pg3b.softwareCalibration[axis.ordinal()] =null; 
 					calibration.rawValues = Diagnostics.getRawValues(axis, pg3b, controller);
-					pg3b.softwareCalibration[axis.ordinal()] = calibration.rawValues;
 					setPercentageComplete(++i / (float)count);
 					if (DEBUG) debug(axis + " chart:\n" + calibration.getChartURL());
 				}
@@ -172,8 +170,8 @@ public class PG3BCalibrationDialog extends JDialog {
 							Axis axis = calibration.axis;
 							setMessage("Calibrating " + axis + "...");
 							calibration.calibrationTable = Diagnostics.getCalibrationTable(axis, calibration.rawValues);
-							// config.setCalibrationTable(axis, calibration.calibrationTable);
-							// config.setCalibrated(axis, true);
+							config.setCalibrationTable(axis, calibration.calibrationTable);
+							config.setCalibrated(axis, true);
 							setPercentageComplete(++i / (float)count);
 							if (DEBUG) debug(axis + " chart:\n" + calibration.getChartURL());
 						}

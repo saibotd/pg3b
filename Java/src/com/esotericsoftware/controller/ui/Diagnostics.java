@@ -43,8 +43,8 @@ public class Diagnostics {
 		try {
 			float[] actualValues = new float[256];
 			for (int wiper = 0; wiper <= 255; wiper++) {
-				float deflection = axis.isTrigger() ? wiper / 255f : wiper / 255f * 2 - 1;
-				pg3b.set(axis, deflection);
+				float state = axis.isTrigger() ? wiper / 255f : (wiper - 255) / -127f - 1;
+				pg3b.set(axis, state);
 				if (Thread.interrupted()) return null;
 				try {
 					Thread.sleep(16);
@@ -68,49 +68,22 @@ public class Diagnostics {
 		if (axis == null) throw new IllegalArgumentException("axis cannot be null.");
 
 		byte[] calibrationTable = new byte[256];
-		int minusOneIndex = findClosestIndex(rawValues, -1);
-		int zeroIndex = findClosestIndex(rawValues, 0);
-		int plusOneIndex = findClosestIndex(rawValues, 1);
 		for (int wiper = 0; wiper <= 255; wiper++) {
-			float deflection = axis.isTrigger() ? wiper / 255f : wiper / 255f * 2 - 1;
-			int match = zeroIndex;
-			for (int index = 0; index < 256; index++)
-				if (Math.abs(rawValues[index] - deflection) < Math.abs(rawValues[match] - deflection)) match = index;
-			calibrationTable[wiper] = (byte)match;
+			float closestDiff = 99999;
+			int index = 0, closestIndex = 0;
+			float state = axis.isTrigger() ? wiper / 255f : (wiper - 255) / -127f - 1;
+			for (float v : rawValues) {
+				float diff = v - state;
+				if (Math.abs(diff) < closestDiff) {
+					closestDiff = Math.abs(diff);
+					closestIndex = index;
+				}
+				index++;
+			}
+			calibrationTable[wiper] = (byte)(closestIndex);
 		}
-		calibrationTable[0] = (byte)minusOneIndex;
-		calibrationTable[127] = (byte)zeroIndex;
-		calibrationTable[255] = (byte)plusOneIndex;
 
 		return calibrationTable;
-	}
-
-	static private int findClosestIndex (float[] rawValues, int target) {
-		// If target is negative, finds index of the last number closest to the target.
-		// Otherwise, finds index of the first number closest to the target.
-		int closestIndex = -1;
-		float closestToZero = Float.MAX_VALUE;
-		for (int i = 0; i < rawValues.length; i++) {
-			float absValue = Math.abs(rawValues[i] - target);
-			boolean isLess = target < 0 ? absValue <= closestToZero : absValue < closestToZero;
-			if (isLess) {
-				closestToZero = absValue;
-				closestIndex = i;
-			}
-		}
-		if (target == 0) {
-			// If looking for zero, handle the closest value to zero appearing multiple times in a row.
-			int zeroCount = 0;
-			for (int i = closestIndex + 1; i < rawValues.length; i++) {
-				float absValue = Math.abs(rawValues[i]);
-				if (absValue == closestToZero)
-					zeroCount++;
-				else
-					break;
-			}
-			closestIndex += zeroCount / 2;
-		}
-		return closestIndex;
 	}
 
 	/**

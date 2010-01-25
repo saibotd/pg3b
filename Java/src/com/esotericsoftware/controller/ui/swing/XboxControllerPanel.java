@@ -377,7 +377,7 @@ public class XboxControllerPanel extends JPanel {
 		float leftStickY = getTargetState(Axis.leftStickY);
 		float rightStickX = getTargetState(Axis.rightStickX);
 		float rightStickY = getTargetState(Axis.rightStickY);
-		if (device != null && dragStartX != -1) {
+		if (controller == null && device != null && dragStartX != -1) {
 			Object dragObject = getDragObject();
 			if (dragObject == Axis.leftTrigger)
 				leftTrigger = lastTriggerValue;

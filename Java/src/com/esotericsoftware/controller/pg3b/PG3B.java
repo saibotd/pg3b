@@ -55,7 +55,6 @@ public class PG3B extends Device {
 	private final PG3BConfig config;
 	private final char[] buffer = new char[256];
 	private boolean debugEnabled, calibrationEnabled;
-	public float[][] softwareCalibration;
 
 	/**
 	 * Creates a new PG3B with a timeout of 300.
@@ -104,11 +103,6 @@ public class PG3B extends Device {
 			setCalibrationEnabled(true);
 
 			config = new PG3BConfig(this);
-
-			softwareCalibration = new float[Axis.values().length][];
-			for (Axis axis : Axis.values()) {
-				config.setCalibrated(axis, false);
-			}
 		} catch (Exception ex) {
 			close();
 			throw new IOException("Error opening connection on port: " + port, ex);
@@ -139,7 +133,10 @@ public class PG3B extends Device {
 							if (TRACE) trace("Received: " + responsePrefix + response);
 							return hexStringToBytes(response, 1);
 						}
-						if (TRACE) trace("Debug: " + response);
+						if (TRACE) {
+							if (response.length() >= 3) response += " (" + Integer.parseInt(response.substring(2), 16) + ")";
+							trace("Debug: " + response);
+						}
 						response = input.readLine();
 						if (response == null) throw new IOException("Connection was closed.");
 					}
@@ -240,23 +237,6 @@ public class PG3B extends Device {
 			wiperValue = 255 - state * 255;
 		else
 			wiperValue = 255 - (state + 1) * 127;
-
-		if (softwareCalibration[axis.ordinal()] != null) {
-			float moo = wiperValue;
-			float[] rawValues = softwareCalibration[axis.ordinal()];
-			float closestDiff = 99999, c = 0;
-			int index = 0, closestIndex = 0;
-			for (float v : rawValues) {
-				float diff = Math.abs(v - state);
-				if (diff < closestDiff) {
-					c = v;
-					closestDiff = diff;
-					wiperValue = index;
-				}
-				index++;
-			}
-			wiperValue = 255 - wiperValue;
-		}
 
 		short actionKey = getActionKey(ActionDevice.xbox, (short)axis.ordinal());
 		short actionCode = getActionCode(actionKey, (short)wiperValue);

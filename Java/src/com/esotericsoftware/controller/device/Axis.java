@@ -8,8 +8,8 @@ public enum Axis implements Target {
 	// Ordinals defined by firmware.
 	leftStickX("Left Stick X", "LX"), //
 	leftStickY("Left Stick Y", "LY"), //
-	rightStickX("Right Stick X", "RY"), //
-	rightStickY("Right Stick Y", "RX"), //
+	rightStickX("Right Stick X", "RX"), //
+	rightStickY("Right Stick Y", "RY"), //
 	leftTrigger("Left Trigger", "LT"), //
 	rightTrigger("Right Trigger", "RT");
 

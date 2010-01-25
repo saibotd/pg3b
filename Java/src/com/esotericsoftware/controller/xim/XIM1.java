@@ -48,20 +48,18 @@ public class XIM1 extends Device {
 	}
 
 	private ByteBuffer stateByteBuffer;
-	private IntBuffer buttonStateBuffer;
 
 	public XIM1 () throws IOException {
 		checkResult(connect());
 
 		stateByteBuffer = ByteBuffer.allocateDirect(72);
 		stateByteBuffer.order(ByteOrder.nativeOrder());
-		buttonStateBuffer = stateByteBuffer.asIntBuffer();
 	}
 
 	public void setButton (Button button, boolean pressed) throws IOException {
 		int index = buttonToIndex[button.ordinal()];
 		synchronized (this) {
-			buttonStateBuffer.put(index, pressed ? 1 : 0);
+			stateByteBuffer.put(index * 4, (byte)(pressed ? 1 : 0));
 			if (collectingChangesThread != Thread.currentThread()) checkResult(setState(stateByteBuffer));
 		}
 	}
@@ -70,7 +68,7 @@ public class XIM1 extends Device {
 		int index = axisToIndex[axis.ordinal()];
 		synchronized (this) {
 			if (axis.isTrigger())
-				buttonStateBuffer.put(index, state == 0 ? 0 : 1);
+				stateByteBuffer.put(index * 4, (byte)(state == 0 ? 0 : 1));
 			else
 				stateByteBuffer.put(index, (byte)(127 * state));
 			if (collectingChangesThread != Thread.currentThread()) checkResult(setState(stateByteBuffer));
@@ -110,9 +108,9 @@ public class XIM1 extends Device {
 	static private int[] buttonToIndex = new int[Button.values().length];
 	static {
 		buttonToIndex[Button.leftShoulder.ordinal()] = 1;
-		buttonToIndex[Button.leftStick.ordinal()] = 2;
+		buttonToIndex[Button.rightStick.ordinal()] = 2;
 		buttonToIndex[Button.rightShoulder.ordinal()] = 4;
-		buttonToIndex[Button.rightStick.ordinal()] = 5;
+		buttonToIndex[Button.leftStick.ordinal()] = 5;
 		buttonToIndex[Button.a.ordinal()] = 6;
 		buttonToIndex[Button.b.ordinal()] = 7;
 		buttonToIndex[Button.x.ordinal()] = 8;
