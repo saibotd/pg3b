@@ -10,7 +10,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import javax.swing.BorderFactory;
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -30,6 +32,8 @@ public class MouseDialog extends JDialog {
 	private MouseTranslation translation;
 
 	private JSpinner yxRatioSpinner, smoothnessSpinner, diagonalDampenSpinner, sensitivitySpinner, translationExponentSpinner;
+	private JComboBox translationCombo;
+	private DefaultComboBoxModel translationComboModel;
 	private JButton saveButton, cancelButton;
 
 	public MouseDialog (UI owner, MouseTranslation translation) {
@@ -114,66 +118,29 @@ public class MouseDialog extends JDialog {
 	private void initializeLayout () {
 		getContentPane().setLayout(new GridBagLayout());
 		{
+			JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 6, 6));
+			getContentPane().add(
+				panel,
+				new GridBagConstraints(0, 1, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0,
+					0, 0, 0), 0, 0));
+			panel.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0, 0, 0)));
+			{
+				JLabel label = new JLabel("Translation:");
+				panel.add(label);
+			}
+			{
+				translationComboModel = new DefaultComboBoxModel();
+				translationCombo = new JComboBox();
+				panel.add(translationCombo);
+				translationCombo.setModel(translationComboModel);
+			}
+		}
+		{
 			JPanel panel = new JPanel(new GridBagLayout());
 			getContentPane().add(
 				panel,
-				new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(6, 6, 0,
+				new GridBagConstraints(0, 2, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(6, 6, 0,
 					6), 0, 0));
-			{
-				JLabel label = new JLabel("YX ratio:");
-				panel.add(label, new GridBagConstraints(0, 6, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE,
-					new Insets(0, 0, 0, 6), 0, 0));
-			}
-			{
-				yxRatioSpinner = new JSpinner();
-				panel.add(yxRatioSpinner, new GridBagConstraints(1, 6, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
-					GridBagConstraints.HORIZONTAL, new Insets(0, 0, 6, 0), 0, 0));
-				yxRatioSpinner.setModel(Util.newFloatSpinnerModel(1f, -3, 3, 0.05f));
-			}
-			{
-				translationExponentSpinner = new JSpinner();
-				panel.add(translationExponentSpinner, new GridBagConstraints(1, 9, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
-					GridBagConstraints.HORIZONTAL, new Insets(0, 0, 6, 0), 0, 0));
-				translationExponentSpinner.setModel(Util.newFloatSpinnerModel(0.75f, -2, 2, 0.05f));
-			}
-			{
-				sensitivitySpinner = new JSpinner();
-				panel.add(sensitivitySpinner, new GridBagConstraints(1, 10, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
-					GridBagConstraints.HORIZONTAL, new Insets(0, 0, 6, 0), 0, 0));
-				sensitivitySpinner.setModel(Util.newFloatSpinnerModel(1250, 1, 99999, 1));
-			}
-			{
-				JLabel label = new JLabel("Translation exponent:");
-				panel.add(label, new GridBagConstraints(0, 9, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE,
-					new Insets(0, 0, 0, 6), 0, 0));
-			}
-			{
-				diagonalDampenSpinner = new JSpinner();
-				panel.add(diagonalDampenSpinner, new GridBagConstraints(1, 11, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
-					GridBagConstraints.HORIZONTAL, new Insets(0, 0, 6, 0), 0, 0));
-				diagonalDampenSpinner.setModel(Util.newFloatSpinnerModel(0f, 0, 1, 0.05f));
-			}
-			{
-				smoothnessSpinner = new JSpinner();
-				panel.add(smoothnessSpinner, new GridBagConstraints(1, 12, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
-					GridBagConstraints.HORIZONTAL, new Insets(0, 0, 6, 0), 0, 0));
-				smoothnessSpinner.setModel(Util.newFloatSpinnerModel(0.3f, 0, 1, 0.05f));
-			}
-			{
-				JLabel label = new JLabel("Sensitivity:");
-				panel.add(label, new GridBagConstraints(0, 10, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE,
-					new Insets(0, 0, 0, 6), 0, 0));
-			}
-			{
-				JLabel label = new JLabel("Diagonal dampen:");
-				panel.add(label, new GridBagConstraints(0, 11, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE,
-					new Insets(0, 0, 0, 6), 0, 0));
-			}
-			{
-				JLabel label = new JLabel("Smoothness:");
-				panel.add(label, new GridBagConstraints(0, 12, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE,
-					new Insets(0, 0, 0, 6), 0, 0));
-			}
 		}
 		{
 			JPanel panel = new JPanel(new GridBagLayout());

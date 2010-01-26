@@ -2,7 +2,10 @@
 package com.esotericsoftware.controller.xim;
 
 import java.awt.EventQueue;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.awt.Insets;
 import java.awt.MouseInfo;
 import java.awt.Point;
 import java.io.IOException;
@@ -11,10 +14,15 @@ import java.nio.ByteOrder;
 
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JSpinner;
+import javax.swing.SpinnerNumberModel;
 
 import com.esotericsoftware.controller.device.Device;
 import com.esotericsoftware.controller.device.Stick;
 import com.esotericsoftware.controller.ui.MouseTranslation;
+import com.esotericsoftware.controller.util.Util;
+import com.esotericsoftware.controller.xim.XIM2MouseTranslation.XIM2Panel;
 
 public class XIM1MouseTranslation implements MouseTranslation {
 	private static final int UPDATE_FREQUENCY = 120;
@@ -102,6 +110,93 @@ public class XIM1MouseTranslation implements MouseTranslation {
 			device.set(stick, deflection[0], deflection[1]);
 		} catch (IOException ex) {
 			ex.printStackTrace();
+		}
+	}
+
+	public JPanel getPanel () {
+		return new XIM1Panel();
+	}
+
+	public void updateFromPanel (JPanel panel) {
+		((XIM1Panel)panel).update();
+	}
+
+	class XIM1Panel extends JPanel {
+		private JSpinner yxRatioSpinner;
+		private JSpinner translationExponentSpinner;
+		private JSpinner sensitivitySpinner;
+		private JSpinner diagonalDampenSpinner;
+		private JSpinner smoothnessSpinner;
+
+		public XIM1Panel () {
+			super(new GridBagLayout());
+			{
+				JLabel label = new JLabel("YX ratio:");
+				add(label, new GridBagConstraints(0, 6, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(
+					0, 0, 0, 6), 0, 0));
+			}
+			{
+				yxRatioSpinner = new JSpinner();
+				add(yxRatioSpinner, new GridBagConstraints(1, 6, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
+					GridBagConstraints.HORIZONTAL, new Insets(0, 0, 6, 0), 0, 0));
+				yxRatioSpinner.setModel(Util.newFloatSpinnerModel(1f, -3, 3, 0.05f));
+			}
+			{
+				JLabel label = new JLabel("Translation exponent:");
+				add(label, new GridBagConstraints(0, 9, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(
+					0, 0, 0, 6), 0, 0));
+			}
+			{
+				translationExponentSpinner = new JSpinner();
+				add(translationExponentSpinner, new GridBagConstraints(1, 9, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
+					GridBagConstraints.HORIZONTAL, new Insets(0, 0, 6, 0), 0, 0));
+				translationExponentSpinner.setModel(Util.newFloatSpinnerModel(0.75f, -2, 2, 0.05f));
+			}
+			{
+				JLabel label = new JLabel("Sensitivity:");
+				add(label, new GridBagConstraints(0, 10, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE,
+					new Insets(0, 0, 0, 6), 0, 0));
+			}
+			{
+				sensitivitySpinner = new JSpinner();
+				add(sensitivitySpinner, new GridBagConstraints(1, 10, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
+					GridBagConstraints.HORIZONTAL, new Insets(0, 0, 6, 0), 0, 0));
+				sensitivitySpinner.setModel(new SpinnerNumberModel(1250, 1, 99999, 1));
+			}
+			{
+				JLabel label = new JLabel("Diagonal dampen:");
+				add(label, new GridBagConstraints(0, 11, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE,
+					new Insets(0, 0, 0, 6), 0, 0));
+			}
+			{
+				diagonalDampenSpinner = new JSpinner();
+				add(diagonalDampenSpinner, new GridBagConstraints(1, 11, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
+					GridBagConstraints.HORIZONTAL, new Insets(0, 0, 6, 0), 0, 0));
+				diagonalDampenSpinner.setModel(Util.newFloatSpinnerModel(0f, 0, 1, 0.05f));
+			}
+			{
+				JLabel label = new JLabel("Smoothness:");
+				add(label, new GridBagConstraints(0, 12, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE,
+					new Insets(0, 0, 0, 6), 0, 0));
+			}
+			{
+				smoothnessSpinner = new JSpinner();
+				add(smoothnessSpinner, new GridBagConstraints(1, 12, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
+					GridBagConstraints.HORIZONTAL, new Insets(0, 0, 6, 0), 0, 0));
+				smoothnessSpinner.setModel(Util.newFloatSpinnerModel(0.3f, 0, 1, 0.05f));
+			}
+
+			yxRatioSpinner.setValue(getYXRatio());
+			smoothnessSpinner.setValue(getSmoothness());
+			sensitivitySpinner.setValue(getSensitivity());
+			translationExponentSpinner.setValue(getTranslationExponent());
+		}
+
+		public void update () {
+			setYXRatio((Float)yxRatioSpinner.getValue());
+			setSmoothness((Float)smoothnessSpinner.getValue());
+			setSensitivity((Integer)sensitivitySpinner.getValue());
+			setTranslationExponent((Float)translationExponentSpinner.getValue());
 		}
 	}
 
