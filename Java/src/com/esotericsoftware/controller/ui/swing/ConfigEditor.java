@@ -19,6 +19,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -54,10 +56,10 @@ import com.esotericsoftware.controller.util.Util;
 import com.esotericsoftware.minlog.Log;
 
 public class ConfigEditor extends EditorPanel<Config> {
-	private int lastSelectedTriggerIndex;
+	private Trigger lastSelectedTrigger;
 	private Device device;
 
-	private JTable triggersTable;
+	private TriggerTable triggersTable;
 	private DefaultTableModel triggersTableModel;
 	private JButton newTriggerButton, deleteTriggerButton, editTriggerButton;
 	private JButton deadzonesButton, mouseButton, targetsButton;
@@ -91,7 +93,7 @@ public class ConfigEditor extends EditorPanel<Config> {
 			for (Trigger trigger : config.getTriggers())
 				triggersTableModel.addRow(new Object[] {trigger.getSourceName(), trigger, trigger.getAction(),
 					trigger.getAction().getType()});
-			setSelectedTrigger(lastSelectedTriggerIndex);
+			setSelectedTrigger(lastSelectedTrigger);
 
 			if (!config.getName().equals(settings.selectedConfig)) {
 				settings.selectedConfig = config.getName();
@@ -107,19 +109,21 @@ public class ConfigEditor extends EditorPanel<Config> {
 	}
 
 	protected void clearItemSpecificState () {
-		lastSelectedTriggerIndex = -1;
+		lastSelectedTrigger = null;
 	}
 
 	public JToggleButton getActivateButton () {
 		return activateButton;
 	}
 
-	public void setSelectedTrigger (int index) {
-		if (index == -1) {
+	public void setSelectedTrigger (Trigger trigger) {
+		if (trigger == null) {
 			triggersTable.clearSelection();
 			return;
 		}
-		if (index >= triggersTable.getRowCount()) return;
+		int index = getSelectedItem().getTriggers().indexOf(trigger);
+		if (index == -1) return;
+		index = triggersTable.convertRow(index);
 		triggersTable.setRowSelectionInterval(index, index);
 		Util.scrollRowToVisisble(triggersTable, index);
 	}
@@ -231,7 +235,11 @@ public class ConfigEditor extends EditorPanel<Config> {
 
 		deleteTriggerButton.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
-				getSelectedItem().getTriggers().remove(triggersTable.getSelectedRow());
+				List<Trigger> triggers = getSelectedItem().getTriggers();
+				ArrayList<Trigger> triggersToDelete = new ArrayList();
+				for (int row : triggersTable.getSelectedRows())
+					triggersToDelete.add(triggersTable.getTrigger(row));
+				triggers.removeAll(triggersToDelete);
 				saveItem(true);
 			}
 		});
@@ -239,7 +247,7 @@ public class ConfigEditor extends EditorPanel<Config> {
 		editTriggerButton.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
 				Config config = getSelectedItem();
-				InputTrigger trigger = (InputTrigger)config.getTriggers().get(triggersTable.getSelectedRow());
+				InputTrigger trigger = (InputTrigger)triggersTable.getTrigger(triggersTable.getSelectedRow());
 				owner.getConfigTab().showInputTriggerPanel(config, trigger);
 			}
 		});
@@ -248,9 +256,10 @@ public class ConfigEditor extends EditorPanel<Config> {
 			public void valueChanged (ListSelectionEvent event) {
 				if (event.getValueIsAdjusting()) return;
 				Config config = getSelectedItem();
-				int selectedRow = triggersTable.getSelectedRow();
-				if (selectedRow != -1) lastSelectedTriggerIndex = selectedRow;
-				editTriggerButton.setEnabled(selectedRow != -1 && config.getTriggers().get(selectedRow) instanceof InputTrigger);
+				int[] selectedRows = triggersTable.getSelectedRows();
+				if (selectedRows.length == 1) lastSelectedTrigger = triggersTable.getTrigger(selectedRows[0]);
+				editTriggerButton.setEnabled(selectedRows.length == 1
+					&& triggersTable.getTrigger(selectedRows[0]) instanceof InputTrigger);
 			}
 		});
 
@@ -261,6 +270,8 @@ public class ConfigEditor extends EditorPanel<Config> {
 			}
 
 			public void mousePressed (MouseEvent event) {
+				int rowIndex = triggersTable.rowAtPoint(event.getPoint());
+				triggersTable.getSelectionModel().setSelectionInterval(rowIndex, rowIndex);
 				showPopup(event);
 			}
 
@@ -273,7 +284,7 @@ public class ConfigEditor extends EditorPanel<Config> {
 				int selectedRow = triggersTable.getSelectedRow();
 				if (selectedRow == -1) return;
 				Config config = getSelectedItem();
-				Action action = config.getTriggers().get(triggersTable.getSelectedRow()).getAction();
+				Action action = triggersTable.getTrigger(triggersTable.getSelectedRow()).getAction();
 				if (!(action instanceof ScriptAction)) return;
 				final Script script = ((ScriptAction)action).getScript();
 				if (script == null) return;
@@ -324,21 +335,18 @@ public class ConfigEditor extends EditorPanel<Config> {
 				new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0,
 					0), 0, 0));
 			{
-				triggersTable = new JTable() {
-					public boolean isCellEditable (int row, int column) {
-						return false;
-					}
-				};
+				triggersTable = new TriggerTable();
 				scroll.setViewportView(triggersTable);
 				triggersTableModel = new DefaultTableModel(new String[][] {}, new String[] {"Source", "Trigger", "Action", "Type"});
 				triggersTable.setModel(triggersTableModel);
-				triggersTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+				triggersTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 				triggersTable.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
 					public Component getTableCellRendererComponent (JTable table, Object value, boolean isSelected, boolean hasFocus,
 						int row, int column) {
 						hasFocus = false; // Disable cell focus.
 						Config config = getSelectedItem();
 						if (column == 2 && value instanceof DeviceAction) {
+							// Use target names.
 							DeviceAction deviceAction = (DeviceAction)value;
 							StringBuilder buffer = new StringBuilder();
 							buffer.append(config.getTargetName(deviceAction.getTarget()));
@@ -353,20 +361,13 @@ public class ConfigEditor extends EditorPanel<Config> {
 						label.setForeground(isSelected ? table.getSelectionForeground() : null);
 						// Highlight invalid triggers and actions.
 						if (column <= 1) {
-							Trigger trigger = config.getTriggers().get(row);
+							Trigger trigger = triggersTable.getTrigger(row);
 							if (!trigger.isValid()) label.setForeground(Color.red);
 						} else if (column >= 2) {
-							Action action = config.getTriggers().get(row).getAction();
+							Action action = triggersTable.getTrigger(row).getAction();
 							if (action == null || !action.isValid()) label.setForeground(Color.red);
 						}
 						return label;
-					}
-				});
-				triggersTable.addMouseListener(new MouseAdapter() {
-					public void mousePressed (MouseEvent event) {
-						if (event.getButton() == 1) return;
-						int rowIndex = triggersTable.rowAtPoint(event.getPoint());
-						triggersTable.getSelectionModel().setSelectionInterval(rowIndex, rowIndex);
 					}
 				});
 				triggersTable.setRowHeight(triggersTable.getRowHeight() + 9);
@@ -375,6 +376,14 @@ public class ConfigEditor extends EditorPanel<Config> {
 				columnModel.getColumn(1).setPreferredWidth(300);
 				columnModel.getColumn(2).setPreferredWidth(300);
 				columnModel.getColumn(3).setPreferredWidth(200);
+				try {
+					triggersTable.getClass().getMethod("setAutoCreateRowSorter", boolean.class).invoke(triggersTable, true);
+					triggersTable.rowSorter = triggersTable.getClass().getMethod("getRowSorter").invoke(triggersTable);
+					triggersTable.rowSorter.getClass().getMethod("toggleSortOrder", int.class).invoke(triggersTable.rowSorter, 1);
+					triggersTable.convertRowIndexToModel = triggersTable.rowSorter.getClass().getMethod("convertRowIndexToModel",
+						int.class);
+				} catch (Exception ignored) {
+				}
 			}
 		}
 		{
@@ -441,5 +450,30 @@ public class ConfigEditor extends EditorPanel<Config> {
 		this.device = device;
 		triggersTable.repaint();
 		deadzonesButton.setEnabled(device != null && getSelectedItem() != null);
+	}
+
+	private class TriggerTable extends JTable {
+		public Method convertRowIndexToModel;
+		public Object rowSorter;
+
+		public boolean isCellEditable (int row, int column) {
+			return false;
+		}
+
+		public Trigger getTrigger (int row) {
+			Config config = getSelectedItem();
+			if (config == null) return null;
+			return config.getTriggers().get(convertRow(row));
+		}
+
+		public int convertRow (int row) {
+			if (rowSorter != null) {
+				try {
+					row = (Integer)triggersTable.convertRowIndexToModel.invoke(triggersTable.rowSorter, row);
+				} catch (Exception ignored) {
+				}
+			}
+			return row;
+		}
 	}
 }

@@ -173,6 +173,22 @@ public class Keyboard implements InputDevice {
 		public String toString () {
 			return getName(keyCode);
 		}
+
+		public int hashCode () {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + keyCode;
+			return result;
+		}
+
+		public boolean equals (Object obj) {
+			if (this == obj) return true;
+			if (obj == null) return false;
+			if (getClass() != obj.getClass()) return false;
+			KeyboardInput other = (KeyboardInput)obj;
+			if (keyCode != other.keyCode) return false;
+			return true;
+		}
 	}
 
 	static public class Listener {

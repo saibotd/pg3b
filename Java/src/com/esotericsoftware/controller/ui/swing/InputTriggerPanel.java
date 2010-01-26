@@ -4,6 +4,7 @@ package com.esotericsoftware.controller.ui.swing;
 import java.awt.AWTEvent;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.EventQueue;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
@@ -70,7 +71,7 @@ public class InputTriggerPanel extends JPanel {
 	private TimerTask monitorControllersTask;
 	private float startMouseX, startMouseY;
 	private Target highlighted;
-	MouseTranslation translation;
+	private MouseTranslation translation;
 
 	private JPanel titlePanel, axisButtonPanel, targetPanel;
 	private JLabel triggerLabel;
@@ -262,7 +263,7 @@ public class InputTriggerPanel extends JPanel {
 			trigger.setCtrl(ctrlCheckBox.isSelected());
 			trigger.setAlt(altCheckBox.isSelected());
 			trigger.setShift(shiftCheckBox.isSelected());
-			triggerLabel.setText(trigger.toString());
+			triggerLabel.setText(trigger.toString() + ": " + trigger.getSourceName());
 			trigger.setCtrl(ctrl);
 			trigger.setAlt(alt);
 			trigger.setShift(shift);
@@ -325,7 +326,13 @@ public class InputTriggerPanel extends JPanel {
 				mouseRadio.setSelected(true);
 				targetCombo.setSelectedItem(null);
 				scriptCombo.setSelectedItem(null);
-				new MouseDialog(owner, translation).setVisible(true);
+				final MouseDialog mouseDialog = new MouseDialog(owner, translation);
+				mouseDialog.setSaveRunnable(new Runnable() {
+					public void run () {
+						translation = mouseDialog.getMouseTranslation();
+					}
+				});
+				mouseDialog.setVisible(true);
 			}
 		});
 
@@ -489,7 +496,11 @@ public class InputTriggerPanel extends JPanel {
 
 				if (isNewTrigger) config.getTriggers().add(trigger);
 				owner.getConfigTab().getConfigEditor().saveItem(true);
-				owner.getConfigTab().getConfigEditor().setSelectedTrigger(config.getTriggers().indexOf(trigger));
+				EventQueue.invokeLater(new Runnable() {
+					public void run () {
+						owner.getConfigTab().getConfigEditor().setSelectedTrigger(trigger);
+					}
+				});
 			}
 		});
 

@@ -104,6 +104,7 @@ public class Editable implements Cloneable {
 		yamlConfig.setClassTag("mouse-settings", MouseAction.class);
 		yamlConfig.setClassTag("xim1-translation", XIM1MouseTranslation.class);
 		yamlConfig.setClassTag("xim2-translation", XIM2MouseTranslation.class);
+		yamlConfig.setClassTag("default-translation", DefaultMouseTranslation.class);
 		yamlConfig.setClassTag("text-mode", TextModeAction.class);
 
 		yamlConfig.setPropertyElementType(Config.class, "triggers", InputTrigger.class);

@@ -17,6 +17,7 @@ import com.esotericsoftware.controller.device.Deadzone;
 import com.esotericsoftware.controller.device.Device;
 import com.esotericsoftware.controller.device.Stick;
 import com.esotericsoftware.controller.device.Target;
+import com.esotericsoftware.controller.input.Mouse;
 import com.esotericsoftware.controller.ui.swing.UI;
 
 /**
@@ -67,6 +68,7 @@ public class Config extends Editable {
 	}
 
 	public void setMouseTranslation (MouseTranslation mouseTranslation) {
+		System.out.println(mouseTranslation);
 		this.mouseTranslation = mouseTranslation;
 	}
 
@@ -160,6 +162,7 @@ public class Config extends Editable {
 			});
 			hasError = false;
 			Device device = UI.instance.getDevice();
+			MouseTranslation originalMouseTranslation = config.getMouseTranslation();
 			try {
 				if (device != null) {
 					device.setDeadzone(Stick.left, config.getLeftDeadzone());
@@ -183,7 +186,7 @@ public class Config extends Editable {
 				ArrayList<Trigger> activeTriggers = new ArrayList();
 				ArrayList<Trigger> deactivateTriggers = new ArrayList();
 				while (running) {
-					Thread.yield();
+					Thread.sleep(1);
 
 					for (Poller poller : pollers)
 						poller.poll();
@@ -235,6 +238,7 @@ public class Config extends Editable {
 					device.setDeadzone(Stick.left, null);
 					device.setDeadzone(Stick.right, null);
 				}
+				config.setMouseTranslation(originalMouseTranslation);
 				if (INFO) info("Deactivated config: " + config.getName());
 				EventQueue.invokeLater(new Runnable() {
 					public void run () {

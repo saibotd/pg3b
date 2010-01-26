@@ -31,8 +31,8 @@ public class XIM1MouseTranslation implements MouseTranslation {
 		XIM1.isValid(false);
 	}
 
-	private float smoothness, yxRatio, translationExponent;
-	private float sensitivity;
+	private float smoothness = 0.2f, yxRatio = 2, translationExponent = 0.5f;
+	private float sensitivity = 7.2f;
 
 	private transient float[] stickValues = new float[2];
 	private transient ByteBuffer byteBuffer;
@@ -111,6 +111,7 @@ public class XIM1MouseTranslation implements MouseTranslation {
 		} catch (IOException ex) {
 			ex.printStackTrace();
 		}
+		if (deflection[0] == 0 && deflection[1] == 0) device.clearMouseDeltaStick();
 	}
 
 	public JPanel getPanel () {
@@ -121,11 +122,14 @@ public class XIM1MouseTranslation implements MouseTranslation {
 		((XIM1Panel)panel).update();
 	}
 
+	public String toString () {
+		return "XIM1";
+	}
+
 	class XIM1Panel extends JPanel {
 		private JSpinner yxRatioSpinner;
 		private JSpinner translationExponentSpinner;
 		private JSpinner sensitivitySpinner;
-		private JSpinner diagonalDampenSpinner;
 		private JSpinner smoothnessSpinner;
 
 		public XIM1Panel () {
@@ -162,17 +166,6 @@ public class XIM1MouseTranslation implements MouseTranslation {
 				add(sensitivitySpinner, new GridBagConstraints(1, 10, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
 					GridBagConstraints.HORIZONTAL, new Insets(0, 0, 6, 0), 0, 0));
 				sensitivitySpinner.setModel(new SpinnerNumberModel(1250, 1, 99999, 1));
-			}
-			{
-				JLabel label = new JLabel("Diagonal dampen:");
-				add(label, new GridBagConstraints(0, 11, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE,
-					new Insets(0, 0, 0, 6), 0, 0));
-			}
-			{
-				diagonalDampenSpinner = new JSpinner();
-				add(diagonalDampenSpinner, new GridBagConstraints(1, 11, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
-					GridBagConstraints.HORIZONTAL, new Insets(0, 0, 6, 0), 0, 0));
-				diagonalDampenSpinner.setModel(Util.newFloatSpinnerModel(0f, 0, 1, 0.05f));
 			}
 			{
 				JLabel label = new JLabel("Smoothness:");

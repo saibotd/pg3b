@@ -187,7 +187,7 @@ public class ScriptEditor extends EditorPanel<Script> {
 	protected JPopupMenu getPopupMenu () {
 		final Script script = getSelectedItem();
 		final ConfigEditor configEditor = owner.getConfigTab().getConfigEditor();
-		final HashMap<Config, Integer> configs = new HashMap();
+		final HashMap<Config, Trigger> configs = new HashMap();
 		outer: //
 		for (Config config : configEditor.getItems()) {
 			int i = 0;
@@ -195,7 +195,7 @@ public class ScriptEditor extends EditorPanel<Script> {
 				Action action = trigger.getAction();
 				if (action instanceof ScriptAction) {
 					if (((ScriptAction)action).getScript() == script) {
-						configs.put(config, i);
+						configs.put(config, trigger);
 						continue outer;
 					}
 				}

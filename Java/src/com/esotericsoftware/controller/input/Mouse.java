@@ -214,6 +214,28 @@ public class Mouse implements InputDevice {
 			if (mouseWheel) return "Wheel";
 			return "<none>";
 		}
+
+		public int hashCode () {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + ((axis == null) ? 0 : axis.hashCode());
+			result = prime * result + button;
+			result = prime * result + (mouseWheel ? 1231 : 1237);
+			return result;
+		}
+
+		public boolean equals (Object obj) {
+			if (this == obj) return true;
+			if (obj == null) return false;
+			if (getClass() != obj.getClass()) return false;
+			MouseInput other = (MouseInput)obj;
+			if (axis == null) {
+				if (other.axis != null) return false;
+			} else if (!axis.equals(other.axis)) return false;
+			if (button != other.button) return false;
+			if (mouseWheel != other.mouseWheel) return false;
+			return true;
+		}
 	}
 
 	static public class Listener {

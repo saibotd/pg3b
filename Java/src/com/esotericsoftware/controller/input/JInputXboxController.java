@@ -268,6 +268,32 @@ public class JInputXboxController extends XboxController {
 			if (axis != null) return axis + " axis";
 			return "<none>";
 		}
+
+		public int hashCode () {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + ((axis == null) ? 0 : axis.hashCode());
+			result = prime * result + ((button == null) ? 0 : button.hashCode());
+			result = prime * result + ((controllerName == null) ? 0 : controllerName.hashCode());
+			return result;
+		}
+
+		public boolean equals (Object obj) {
+			if (this == obj) return true;
+			if (obj == null) return false;
+			if (getClass() != obj.getClass()) return false;
+			ControllerInput other = (ControllerInput)obj;
+			if (axis == null) {
+				if (other.axis != null) return false;
+			} else if (!axis.equals(other.axis)) return false;
+			if (button == null) {
+				if (other.button != null) return false;
+			} else if (!button.equals(other.button)) return false;
+			if (controllerName == null) {
+				if (other.controllerName != null) return false;
+			} else if (!controllerName.equals(other.controllerName)) return false;
+			return true;
+		}
 	}
 
 	static public List<XboxController> getJInputControllers () {

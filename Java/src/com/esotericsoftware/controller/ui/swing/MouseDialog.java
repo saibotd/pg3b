@@ -1,6 +1,7 @@
 
 package com.esotericsoftware.controller.ui.swing;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
@@ -16,11 +17,9 @@ import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JSpinner;
 
 import com.esotericsoftware.controller.ui.DefaultMouseTranslation;
 import com.esotericsoftware.controller.ui.MouseTranslation;
-import com.esotericsoftware.controller.util.Util;
 import com.esotericsoftware.controller.xim.XIM1;
 import com.esotericsoftware.controller.xim.XIM1MouseTranslation;
 import com.esotericsoftware.controller.xim.XIM2;
@@ -29,53 +28,29 @@ import com.esotericsoftware.controller.xim.XIM2MouseTranslation;
 public class MouseDialog extends JDialog {
 	private final UI owner;
 	private Runnable saveRunnable;
-	private MouseTranslation translation;
 
-	private JSpinner yxRatioSpinner, smoothnessSpinner, diagonalDampenSpinner, sensitivitySpinner, translationExponentSpinner;
 	private JComboBox translationCombo;
 	private DefaultComboBoxModel translationComboModel;
 	private JButton saveButton, cancelButton;
+	private JPanel transitionPanel;
 
 	public MouseDialog (UI owner, MouseTranslation translation) {
 		super(owner, "Mouse Translation", true);
 		this.owner = owner;
-
-		if (translation == null) {
-			if (XIM2.isValid(false))
-				translation = new XIM2MouseTranslation();
-			else if (XIM1.isValid(false))
-				translation = new XIM1MouseTranslation();
-			else
-				translation = new DefaultMouseTranslation();
-		}
-		this.translation = translation;
 
 		initializeLayout();
 		initializeEvents();
 
 		setLocationRelativeTo(owner);
 
-		if (translation instanceof XIM2MouseTranslation) {
-			XIM2MouseTranslation ximTranslation = (XIM2MouseTranslation)translation;
-			yxRatioSpinner.setValue(ximTranslation.getYXRatio());
-			smoothnessSpinner.setValue(ximTranslation.getSmoothness());
-			diagonalDampenSpinner.setValue(ximTranslation.getDiagonalDampen());
-			sensitivitySpinner.setValue((float)ximTranslation.getSensitivity());
-			translationExponentSpinner.setValue(ximTranslation.getTranslationExponent());
-		} else if (translation instanceof XIM1MouseTranslation) {
-			XIM1MouseTranslation ximTranslation = (XIM1MouseTranslation)translation;
-			yxRatioSpinner.setValue(ximTranslation.getYXRatio());
-			smoothnessSpinner.setValue(ximTranslation.getSmoothness());
-			sensitivitySpinner.setValue(ximTranslation.getSensitivity());
-			translationExponentSpinner.setValue(ximTranslation.getTranslationExponent());
-			diagonalDampenSpinner.setEnabled(false);
-		} else {
-			yxRatioSpinner.setEnabled(false);
-			smoothnessSpinner.setEnabled(false);
-			sensitivitySpinner.setEnabled(false);
-			translationExponentSpinner.setEnabled(false);
-			diagonalDampenSpinner.setEnabled(false);
-		}
+		if (XIM2.isValid(false))
+			translationComboModel.addElement(translation instanceof XIM2MouseTranslation ? translation : new XIM2MouseTranslation());
+		if (XIM1.isValid(false))
+			translationComboModel.addElement(translation instanceof XIM1MouseTranslation ? translation : new XIM1MouseTranslation());
+		translationComboModel.addElement(translation instanceof DefaultMouseTranslation ? translation
+			: new DefaultMouseTranslation());
+		
+		translationCombo.setSelectedItem(translation);
 	}
 
 	public void setSaveRunnable (Runnable saveRunnable) {
@@ -83,26 +58,22 @@ public class MouseDialog extends JDialog {
 	}
 
 	public MouseTranslation getMouseTranslation () {
-		return translation;
+		return (MouseTranslation)translationCombo.getSelectedItem();
 	}
 
 	private void initializeEvents () {
+		translationCombo.addActionListener(new ActionListener() {
+			public void actionPerformed (ActionEvent event) {
+				transitionPanel.removeAll();
+				transitionPanel.add(getMouseTranslation().getPanel());
+				MouseDialog.this.pack();
+			}
+		});
+
 		saveButton.addActionListener(new ActionListener() {
 			public void actionPerformed (ActionEvent event) {
-				if (translation instanceof XIM2MouseTranslation) {
-					XIM2MouseTranslation ximTranslation = (XIM2MouseTranslation)translation;
-					ximTranslation.setYXRatio((Float)yxRatioSpinner.getValue());
-					ximTranslation.setSmoothness((Float)smoothnessSpinner.getValue());
-					ximTranslation.setDiagonalDampen((Float)diagonalDampenSpinner.getValue());
-					ximTranslation.setSensitivity(((Float)sensitivitySpinner.getValue()).intValue());
-					ximTranslation.setTranslationExponent((Float)translationExponentSpinner.getValue());
-				} else if (translation instanceof XIM1MouseTranslation) {
-					XIM1MouseTranslation ximTranslation = (XIM1MouseTranslation)translation;
-					ximTranslation.setYXRatio((Float)yxRatioSpinner.getValue());
-					ximTranslation.setSmoothness((Float)smoothnessSpinner.getValue());
-					ximTranslation.setSensitivity((Float)sensitivitySpinner.getValue());
-					ximTranslation.setTranslationExponent((Float)translationExponentSpinner.getValue());
-				}
+				MouseTranslation translation = getMouseTranslation();
+				translation.updateFromPanel((JPanel)transitionPanel.getComponent(0));
 				if (saveRunnable != null) saveRunnable.run();
 				dispose();
 			}
@@ -136,9 +107,9 @@ public class MouseDialog extends JDialog {
 			}
 		}
 		{
-			JPanel panel = new JPanel(new GridBagLayout());
+			transitionPanel = new JPanel(new BorderLayout());
 			getContentPane().add(
-				panel,
+				transitionPanel,
 				new GridBagConstraints(0, 2, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(6, 6, 0,
 					6), 0, 0));
 		}

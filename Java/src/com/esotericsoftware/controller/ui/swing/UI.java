@@ -80,14 +80,14 @@ import com.esotericsoftware.controller.xim.XIM1;
 import com.esotericsoftware.controller.xim.XIM2;
 import com.esotericsoftware.minlog.Log;
 
-// BOZO - Duplicate config.
+// BOZO - Duplicate config menu items.
 // BOZO - Record using target names.
 // BOZO - Customize config deactivate button.
 // BOZO - Make text mode exit button same as enter trigger.
-// BOZO - Reconnect PG3B, reset debug, etc.
+// BOZO - Fix collect/apply device changes.
 
 public class UI extends JFrame {
-	static public final String version = "0.1.26";
+	static public final String version = "0.1.27";
 	static public UI instance;
 
 	static private Settings settings = Settings.get();
@@ -241,6 +241,23 @@ public class UI extends JFrame {
 
 		device = newDevice;
 		Package.getGlobalPackage().set("device".intern(), device);
+
+		if (device instanceof PG3B) {
+			PG3B pg3b = (PG3B)device;
+			try {
+				pg3b.setDebugEnabled(pg3bDebugEnabledMenuItem.isSelected());
+				pg3b.setCalibrationEnabled(pg3bCalibrationEnabledMenuItem.isSelected());
+			} catch (IOException ex) {
+				if (Log.ERROR) error("Error setting PG3B settings.", ex);
+			}
+		} else if (device instanceof XIM2) {
+			XIM2 xim2 = (XIM2)device;
+			try {
+				xim2.setThumsticksEnabled(xim2ThumbsticksEnabledMenuItem.isSelected());
+			} catch (IOException ex) {
+				if (Log.ERROR) error("Error setting XIM2 settings.", ex);
+			}
+		}
 
 		EventQueue.invokeLater(new Runnable() {
 			public void run () {
@@ -472,7 +489,16 @@ public class UI extends JFrame {
 			public boolean dispatchKeyEvent (KeyEvent event) {
 				Config config = Config.getActive();
 				if (config != null) {
-					if (event.isControlDown() && event.getKeyCode() == KeyEvent.VK_F4) config.setActive(false);
+					if (event.isControlDown() && event.getKeyCode() == KeyEvent.VK_F4) {
+						config.setActive(false);
+						if (device != null) {
+							try {
+								device.reset();
+							} catch (IOException ex) {
+								if (Log.ERROR) error("Error resetting device.", ex);
+							}
+						}
+					}
 				}
 				if (disableKeyboard) event.consume();
 				return false;

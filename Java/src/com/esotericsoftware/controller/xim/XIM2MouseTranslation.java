@@ -134,6 +134,7 @@ public class XIM2MouseTranslation implements MouseTranslation {
 		} catch (IOException ex) {
 			ex.printStackTrace();
 		}
+		if (deflection[0] == 0 && deflection[1] == 0) device.clearMouseDeltaStick();
 	}
 
 	public JPanel getPanel () {
@@ -142,6 +143,10 @@ public class XIM2MouseTranslation implements MouseTranslation {
 
 	public void updateFromPanel (JPanel panel) {
 		((XIM2Panel)panel).update();
+	}
+
+	public String toString () {
+		return "XIM2";
 	}
 
 	class XIM2Panel extends JPanel {

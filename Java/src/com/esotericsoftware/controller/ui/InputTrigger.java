@@ -150,4 +150,36 @@ public class InputTrigger extends Trigger {
 			buffer.append(input);
 		return buffer.toString();
 	}
+
+	public int hashCode () {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + (alt ? 1231 : 1237);
+		result = prime * result + (ctrl ? 1231 : 1237);
+		result = prime * result + ((deadzone == null) ? 0 : deadzone.hashCode());
+		result = prime * result + ((input == null) ? 0 : input.hashCode());
+		result = prime * result + (invert ? 1231 : 1237);
+		result = prime * result + (noModifiers ? 1231 : 1237);
+		result = prime * result + (shift ? 1231 : 1237);
+		return result;
+	}
+
+	public boolean equals (Object obj) {
+		if (this == obj) return true;
+		if (!super.equals(obj)) return false;
+		if (getClass() != obj.getClass()) return false;
+		InputTrigger other = (InputTrigger)obj;
+		if (alt != other.alt) return false;
+		if (ctrl != other.ctrl) return false;
+		if (deadzone == null) {
+			if (other.deadzone != null) return false;
+		} else if (!deadzone.equals(other.deadzone)) return false;
+		if (input == null) {
+			if (other.input != null) return false;
+		} else if (!input.equals(other.input)) return false;
+		if (invert != other.invert) return false;
+		if (noModifiers != other.noModifiers) return false;
+		if (shift != other.shift) return false;
+		return true;
+	}
 }
