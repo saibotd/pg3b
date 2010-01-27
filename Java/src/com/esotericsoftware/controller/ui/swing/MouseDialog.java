@@ -45,11 +45,11 @@ public class MouseDialog extends JDialog {
 
 		if (XIM2.isValid(false))
 			translationComboModel.addElement(translation instanceof XIM2MouseTranslation ? translation : new XIM2MouseTranslation());
-		if (XIM1.isValid(false))
+		else if (XIM1.isValid(false))
 			translationComboModel.addElement(translation instanceof XIM1MouseTranslation ? translation : new XIM1MouseTranslation());
 		translationComboModel.addElement(translation instanceof DefaultMouseTranslation ? translation
 			: new DefaultMouseTranslation());
-		
+
 		translationCombo.setSelectedItem(translation);
 	}
 

@@ -210,7 +210,7 @@ public class XIM1MouseTranslation implements MouseTranslation {
 		public void update () {
 			setYXRatio((Float)yxRatioSpinner.getValue());
 			setSmoothness((Float)smoothnessSpinner.getValue());
-			setSensitivity((Integer)sensitivitySpinner.getValue());
+			setSensitivity((Float)sensitivitySpinner.getValue());
 			setTranslationExponent((Float)translationExponentSpinner.getValue());
 		}
 	}
