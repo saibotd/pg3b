@@ -68,7 +68,6 @@ public class Config extends Editable {
 	}
 
 	public void setMouseTranslation (MouseTranslation mouseTranslation) {
-		System.out.println(mouseTranslation);
 		this.mouseTranslation = mouseTranslation;
 	}
 
@@ -179,7 +178,7 @@ public class Config extends Editable {
 
 					trigger.getAction().reset(config, trigger);
 				}
-				// Poll initially to clear any values.
+				// Poll initially to clear any old values.
 				for (Poller poller : pollers)
 					poller.poll();
 				// Triggers are applied in activation order so those that manipulate the same targets work correctly.

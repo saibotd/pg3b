@@ -496,11 +496,6 @@ public class InputTriggerPanel extends JPanel {
 
 				if (isNewTrigger) config.getTriggers().add(trigger);
 				owner.getConfigTab().getConfigEditor().saveItem(true);
-				EventQueue.invokeLater(new Runnable() {
-					public void run () {
-						owner.getConfigTab().getConfigEditor().setSelectedTrigger(trigger);
-					}
-				});
 			}
 		});
 

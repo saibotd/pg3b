@@ -114,8 +114,8 @@ public class InputTrigger extends Trigger {
 	}
 
 	public boolean isActive () {
-		if (input == null) return false;
-		return input.getState() != 0 && checkModifiers();
+		if (input == null) return false;		
+		return getPayload() != 0 && checkModifiers();
 	}
 
 	public Float getPayload () {

@@ -99,6 +99,28 @@ public class DeviceAction implements Action {
 		return "Device";
 	}
 
+	public int hashCode () {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((direction == null) ? 0 : direction.hashCode());
+		result = prime * result + ((target == null) ? 0 : target.hashCode());
+		return result;
+	}
+
+	public boolean equals (Object obj) {
+		if (this == obj) return true;
+		if (obj == null) return false;
+		if (getClass() != obj.getClass()) return false;
+		DeviceAction other = (DeviceAction)obj;
+		if (direction == null) {
+			if (other.direction != null) return false;
+		} else if (!direction.equals(other.direction)) return false;
+		if (target == null) {
+			if (other.target != null) return false;
+		} else if (!target.equals(other.target)) return false;
+		return true;
+	}
+
 	public String toString () {
 		if (target == null) return "";
 		StringBuilder buffer = new StringBuilder();

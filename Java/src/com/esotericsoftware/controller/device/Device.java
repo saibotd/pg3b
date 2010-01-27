@@ -76,7 +76,7 @@ abstract public class Device {
 
 		synchronized (this) {
 			int ordinal = button.ordinal();
-			if (false && collectingChangesThread == Thread.currentThread()) {
+			if (collectingChangesThread == Thread.currentThread()) {
 				buttonStates[ordinal] = pressed;
 				return;
 			}
@@ -108,7 +108,7 @@ abstract public class Device {
 
 		synchronized (this) {
 			int ordinal = axis.ordinal();
-			if (false && collectingChangesThread == Thread.currentThread()) {
+			if (collectingChangesThread == Thread.currentThread()) {
 				axisStates[ordinal] = state;
 				return;
 			}

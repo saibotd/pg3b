@@ -105,6 +105,24 @@ public class ScriptAction implements Action {
 		return "Script";
 	}
 
+	public int hashCode () {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((scriptName == null) ? 0 : scriptName.hashCode());
+		return result;
+	}
+
+	public boolean equals (Object obj) {
+		if (this == obj) return true;
+		if (obj == null) return false;
+		if (getClass() != obj.getClass()) return false;
+		ScriptAction other = (ScriptAction)obj;
+		if (scriptName == null) {
+			if (other.scriptName != null) return false;
+		} else if (!scriptName.equals(other.scriptName)) return false;
+		return true;
+	}
+
 	public String toString () {
 		return scriptName;
 	}

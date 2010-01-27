@@ -122,6 +122,28 @@ public class XIM1MouseTranslation implements MouseTranslation {
 		((XIM1Panel)panel).update();
 	}
 
+	public int hashCode () {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + Float.floatToIntBits(sensitivity);
+		result = prime * result + Float.floatToIntBits(smoothness);
+		result = prime * result + Float.floatToIntBits(translationExponent);
+		result = prime * result + Float.floatToIntBits(yxRatio);
+		return result;
+	}
+
+	public boolean equals (Object obj) {
+		if (this == obj) return true;
+		if (obj == null) return false;
+		if (getClass() != obj.getClass()) return false;
+		XIM1MouseTranslation other = (XIM1MouseTranslation)obj;
+		if (Float.floatToIntBits(sensitivity) != Float.floatToIntBits(other.sensitivity)) return false;
+		if (Float.floatToIntBits(smoothness) != Float.floatToIntBits(other.smoothness)) return false;
+		if (Float.floatToIntBits(translationExponent) != Float.floatToIntBits(other.translationExponent)) return false;
+		if (Float.floatToIntBits(yxRatio) != Float.floatToIntBits(other.yxRatio)) return false;
+		return true;
+	}
+
 	public String toString () {
 		return "XIM1";
 	}

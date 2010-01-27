@@ -84,7 +84,6 @@ import com.esotericsoftware.minlog.Log;
 // BOZO - Record using target names.
 // BOZO - Customize config deactivate button.
 // BOZO - Make text mode exit button same as enter trigger.
-// BOZO - Fix collect/apply device changes.
 
 public class UI extends JFrame {
 	static public final String version = "0.1.27";

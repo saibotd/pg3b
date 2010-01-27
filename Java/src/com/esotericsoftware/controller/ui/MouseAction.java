@@ -38,6 +38,24 @@ public class MouseAction implements Action {
 		return "";
 	}
 
+	public int hashCode () {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((translation == null) ? 0 : translation.hashCode());
+		return result;
+	}
+
+	public boolean equals (Object obj) {
+		if (this == obj) return true;
+		if (obj == null) return false;
+		if (getClass() != obj.getClass()) return false;
+		MouseAction other = (MouseAction)obj;
+		if (translation == null) {
+			if (other.translation != null) return false;
+		} else if (!translation.equals(other.translation)) return false;
+		return true;
+	}
+
 	public String toString () {
 		return "Mouse Translation";
 	}
