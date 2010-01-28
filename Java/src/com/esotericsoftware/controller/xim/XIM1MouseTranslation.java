@@ -25,7 +25,7 @@ import com.esotericsoftware.controller.util.Util;
 import com.esotericsoftware.controller.xim.XIM2MouseTranslation.XIM2Panel;
 
 public class XIM1MouseTranslation implements MouseTranslation {
-	private static final int UPDATE_FREQUENCY = 120;
+	private static final int UPDATE_FREQUENCY = 60;
 
 	static {
 		XIM1.isValid(false);
