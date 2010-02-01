@@ -72,27 +72,23 @@ public class DeviceAction implements Action {
 		case left:
 			if (payload > 0) payload = -payload;
 		}
-		try {
-			// If the target is an axis and the trigger was activated by a mouse axis...
-			if (target instanceof Axis && trigger instanceof InputTrigger) {
-				Input input = ((InputTrigger)trigger).getInput();
-				if (input instanceof Mouse.MouseInput) {
-					if (input.isAxis()) {
-						float deltaX = 0, deltaY = 0;
-						if (input.isAxisX())
-							deltaX = payload;
-						else
-							deltaY = payload;
-						device.addMouseDelta(((Axis)target).getStick(), deltaX, deltaY);
-						return payload;
-					}
+		// If the target is an axis and the trigger was activated by a mouse axis...
+		if (target instanceof Axis && trigger instanceof InputTrigger) {
+			Input input = ((InputTrigger)trigger).getInput();
+			if (input instanceof Mouse.MouseInput) {
+				if (input.isAxis()) {
+					float deltaX = 0, deltaY = 0;
+					if (input.isAxisX())
+						deltaX = payload;
+					else
+						deltaY = payload;
+					device.addMouseDelta(((Axis)target).getStick(), deltaX, deltaY);
+					return payload;
 				}
 			}
-			device.set(target, payload);
-			return payload;
-		} catch (IOException ex) {
-			throw new RuntimeException("Error executing action: " + this);
 		}
+		device.set(target, payload);
+		return payload;
 	}
 
 	public String getType () {

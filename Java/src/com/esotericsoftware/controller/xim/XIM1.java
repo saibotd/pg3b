@@ -56,22 +56,22 @@ public class XIM1 extends Device {
 		stateByteBuffer.order(ByteOrder.nativeOrder());
 	}
 
-	public void setButton (Button button, boolean pressed) throws IOException {
+	protected void setButton (Button button, boolean pressed) throws IOException {
 		int index = buttonToIndex[button.ordinal()];
 		synchronized (this) {
 			stateByteBuffer.put(index * 4, (byte)(pressed ? 1 : 0));
-			if (collectingChangesThread != Thread.currentThread()) checkResult(setState(stateByteBuffer));
+			checkResult(setState(stateByteBuffer));
 		}
 	}
 
-	public void setAxis (Axis axis, float state) throws IOException {
+	protected void setAxis (Axis axis, float state) throws IOException {
 		int index = axisToIndex[axis.ordinal()];
 		synchronized (this) {
 			if (axis.isTrigger())
 				stateByteBuffer.put(index * 4, (byte)(state == 0 ? 0 : 1));
 			else
 				stateByteBuffer.put(index, (byte)(127 * state));
-			if (collectingChangesThread != Thread.currentThread()) checkResult(setState(stateByteBuffer));
+			checkResult(setState(stateByteBuffer));
 		}
 	}
 

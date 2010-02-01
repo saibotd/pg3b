@@ -69,10 +69,12 @@ public class TextMode {
 					if (device == null) continue;
 					boolean isButton = target instanceof Button;
 					try {
-						device.set(target, isButton ? 1 : 0.5f);
-						Util.sleep(32);
-						device.set(target, 0);
-						Util.sleep(target == Button.a || target instanceof Axis ? 150 : 64);
+						device.apply(target, isButton ? 1 : 0.5f);
+						// Util.sleep(32);
+						Util.sleep(96);
+						device.apply(target, 0);
+						// Util.sleep(target == Button.a || target instanceof Axis ? 150 : 64);
+						Util.sleep(target == Button.a || target instanceof Axis ? 224 : 192);
 					} catch (IOException ex) {
 						if (ERROR) error("Error moving cursor to input text.", ex);
 						presses.clear();

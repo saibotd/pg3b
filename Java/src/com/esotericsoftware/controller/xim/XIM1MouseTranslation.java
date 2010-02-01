@@ -106,11 +106,7 @@ public class XIM1MouseTranslation implements MouseTranslation {
 		}
 		float[] mouseDelta = device.getMouseDelta();
 		float[] deflection = getDeflection(mouseDelta[0], mouseDelta[1]);
-		try {
-			device.set(stick, deflection[0], deflection[1]);
-		} catch (IOException ex) {
-			ex.printStackTrace();
-		}
+		device.set(stick, deflection[0], deflection[1]);
 		if (deflection[0] == 0 && deflection[1] == 0) device.clearMouseDeltaStick();
 	}
 

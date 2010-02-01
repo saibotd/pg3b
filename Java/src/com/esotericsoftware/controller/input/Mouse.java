@@ -158,9 +158,14 @@ public class Mouse implements InputDevice {
 	}
 
 	static public class MouseInput implements Input {
+		static private final long MOUSEWHEEL_CHANGE_TIME = 32;
+
 		private String axis;
 		private int button;
 		private boolean mouseWheel;
+
+		private transient long mouseWheelTime;
+		private transient int lastMoustWheel;
 
 		public MouseInput () {
 		}
@@ -181,7 +186,16 @@ public class Mouse implements InputDevice {
 			if (button > 0) return instance.isPressed(button) ? 1 : 0;
 			if ("x".equals(axis)) return instance.currentDeltaX;
 			if ("y".equals(axis)) return instance.currentDeltaY;
-			if (mouseWheel) return instance.currentMouseWheel;
+			if (mouseWheel) {
+				if (mouseWheelTime > 0) {
+					if (System.currentTimeMillis() < mouseWheelTime) return lastMoustWheel;
+					mouseWheelTime = 0;
+				}
+				lastMoustWheel = instance.currentMouseWheel;
+				if (lastMoustWheel != 0) 
+					mouseWheelTime = System.currentTimeMillis() + MOUSEWHEEL_CHANGE_TIME;
+				return lastMoustWheel;
+			}
 			return 0;
 		}
 

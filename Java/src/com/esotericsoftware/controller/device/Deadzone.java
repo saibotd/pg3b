@@ -38,6 +38,7 @@ public abstract class Deadzone {
 			float[] deflection = new float[2];
 			deflection[0] = (1 - sizeX) * x + sizeX * Math.signum(x);
 			deflection[1] = (1 - sizeY) * y + sizeY * Math.signum(y);
+			if (deflection[0] != 0 || deflection[1] != 0) System.out.println("output : " + deflection[0] + ", " + deflection[1]);
 			return deflection;
 		}
 
@@ -47,6 +48,7 @@ public abstract class Deadzone {
 			float absY = Math.abs(y);
 			deflection[0] = absX < sizeX ? 0 : (absX - sizeX) / (1 - sizeX) * Math.signum(x);
 			deflection[1] = absY < sizeY ? 0 : (absY - sizeY) / (1 - sizeY) * Math.signum(y);
+			if (deflection[0] != 0 || deflection[1] != 0) System.out.println("input : " + deflection[0] + ", " + deflection[1]);
 			return deflection;
 		}
 	}

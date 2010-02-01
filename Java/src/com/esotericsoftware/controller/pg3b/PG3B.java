@@ -224,14 +224,14 @@ public class PG3B extends Device {
 		return (short)(d << 12 | target << 8);
 	}
 
-	public void setButton (Button button, boolean pressed) throws IOException {
+	protected void setButton (Button button, boolean pressed) throws IOException {
 		int state = pressed ? 6 : 7;
 		short actionKey = getActionKey(ActionDevice.xbox, (short)state);
 		short actionCode = getActionCode(actionKey, (short)button.ordinal());
 		commandWord(Command.action, actionCode);
 	}
 
-	public void setAxis (Axis axis, float state) throws IOException {
+	protected void setAxis (Axis axis, float state) throws IOException {
 		float wiperValue;
 		if (axis.isTrigger())
 			wiperValue = 255 - state * 255;

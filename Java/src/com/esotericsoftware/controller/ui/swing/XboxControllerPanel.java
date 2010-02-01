@@ -276,7 +276,7 @@ public class XboxControllerPanel extends JPanel {
 	void triggerDragged (Axis axis, float value) {
 		repaint();
 		try {
-			if (device != null) device.set(axis, value);
+			if (device != null) device.apply(axis, value);
 		} catch (IOException ex) {
 			ex.printStackTrace();
 		}
@@ -286,7 +286,7 @@ public class XboxControllerPanel extends JPanel {
 	void stickDragged (Axis axis, float value) {
 		repaint();
 		try {
-			if (device != null) device.set(axis, value);
+			if (device != null) device.apply(axis, value);
 		} catch (IOException ex) {
 			ex.printStackTrace();
 		}
@@ -297,7 +297,7 @@ public class XboxControllerPanel extends JPanel {
 		if (pressed && device != null) Sound.play("click");
 		repaint();
 		try {
-			if (device != null) device.set(button, pressed);
+			if (device != null) device.apply(button, pressed);
 		} catch (IOException ex) {
 			ex.printStackTrace();
 		}
@@ -307,7 +307,7 @@ public class XboxControllerPanel extends JPanel {
 	void dpadDragged (Button button, boolean pressed) {
 		repaint();
 		try {
-			if (device != null) device.set(button, pressed);
+			if (device != null) device.apply(button, pressed);
 		} catch (IOException ex) {
 			ex.printStackTrace();
 		}

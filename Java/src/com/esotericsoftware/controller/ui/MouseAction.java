@@ -1,6 +1,8 @@
 
 package com.esotericsoftware.controller.ui;
 
+import static com.esotericsoftware.minlog.Log.*;
+
 public class MouseAction implements Action {
 	private MouseTranslation translation;
 	private transient MouseTranslation oldTranslation;
@@ -11,9 +13,13 @@ public class MouseAction implements Action {
 			if (current != translation) {
 				oldTranslation = current;
 				config.setMouseTranslation(translation);
+				if (DEBUG) debug("Mouse translation changed.");
 			}
 		} else {
-			if (oldTranslation != null) config.setMouseTranslation(oldTranslation);
+			if (oldTranslation != null) {
+				config.setMouseTranslation(oldTranslation);
+				if (DEBUG) debug("Mouse translation reverted.");
+			}
 		}
 		return null;
 	}

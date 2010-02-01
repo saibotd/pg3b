@@ -195,22 +195,20 @@ public class Config extends Editable {
 						boolean wasActive = activeTriggers.contains(trigger);
 						if (trigger.isActive()) {
 							if (!wasActive) {
-								if (TRACE) debug("Trigger \"" + trigger + "\" is active with state: " + trigger.getPayload());
+								if (TRACE) trace("Trigger \"" + trigger + "\" is active with state: " + trigger.getPayload());
 								activeTriggers.add(trigger);
 								// Execute "activate" function outside apply/collect.
 								execute(trigger);
 							}
 						} else {
 							if (wasActive) {
-								if (TRACE) debug("Trigger \"" + trigger + "\" is inactive with state: " + trigger.getPayload());
+								if (TRACE) trace("Trigger \"" + trigger + "\" is inactive with state: " + trigger.getPayload());
 								activeTriggers.remove(trigger);
 								// Execute "deactivate" function inside apply/collect.
 								deactivateTriggers.add(trigger);
 							}
 						}
 					}
-
-					if (device != null) device.collect();
 
 					for (int i = 0, n = deactivateTriggers.size(); i < n; i++)
 						execute(deactivateTriggers.get(i));

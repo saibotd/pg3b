@@ -105,7 +105,7 @@ public class Diagnostics {
 				status.put(button, success);
 			} finally {
 				try {
-					pg3b.set(button, false);
+					pg3b.apply(button, false);
 				} catch (IOException ignored) {
 				}
 			}
@@ -123,7 +123,7 @@ public class Diagnostics {
 				status.put(axis, success);
 			} finally {
 				try {
-					pg3b.set(axis, 0);
+					pg3b.apply(axis, 0);
 				} catch (IOException ignored) {
 				}
 			}
@@ -137,7 +137,7 @@ public class Diagnostics {
 	 */
 	static public boolean waitForButton (Device pg3b, XboxController controller, Button button, boolean pressed) {
 		try {
-			pg3b.set(button, pressed);
+			pg3b.apply(button, pressed);
 			long startTime = System.currentTimeMillis();
 			while (controller.get(button) != pressed) {
 				if (System.currentTimeMillis() - startTime > TIMEOUT) {
@@ -158,7 +158,7 @@ public class Diagnostics {
 	 */
 	static public boolean waitForAxis (Device pg3b, XboxController controller, Axis axis, float value) {
 		try {
-			pg3b.set(axis, value);
+			pg3b.apply(axis, value);
 			long startTime = System.currentTimeMillis();
 			while (true) {
 				float actualValue = controller.get(axis);

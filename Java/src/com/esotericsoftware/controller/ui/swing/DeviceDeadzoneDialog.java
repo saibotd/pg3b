@@ -139,7 +139,7 @@ public class DeviceDeadzoneDialog extends JDialog {
 		JPanel panel = axis.getStick() == Stick.left ? leftStickPanel : rightStickPanel;
 		String title = axis.getStick() == Stick.left ? "Left Stick" : "Right Stick";
 		try {
-			device.set(axis, (Float)spinner.getValue());
+			device.apply(axis, (Float)spinner.getValue());
 			panel.setBorder(BorderFactory.createTitledBorder(title));
 		} catch (IOException ex) {
 			if (DEBUG) debug("Error setting axis: " + axis, ex);

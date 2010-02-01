@@ -60,19 +60,20 @@ public class XIM2 extends Device {
 		axisStateBuffer = stateByteBuffer.slice().order(ByteOrder.nativeOrder()).asShortBuffer();
 	}
 
-	public void setButton (Button button, boolean pressed) throws IOException {
+	protected void setButton (Button button, boolean pressed) throws IOException {
 		int index = buttonToIndex[button.ordinal()];
 		synchronized (this) {
 			stateByteBuffer.put(index, (byte)(pressed ? 1 : 0));
-			if (collectingChangesThread != Thread.currentThread()) checkResult(setState(stateByteBuffer, 0));
+			checkResult(setState(stateByteBuffer, 0));
 		}
 	}
 
-	public void setAxis (Axis axis, float state) throws IOException {
+	protected void setAxis (Axis axis, float state) throws IOException {
 		int index = axisToIndex[axis.ordinal()];
+		if (axis.isY()) state = -state;
 		synchronized (this) {
 			axisStateBuffer.put(index, (short)(32767 * state));
-			if (collectingChangesThread != Thread.currentThread()) checkResult(setState(stateByteBuffer, 0));
+			checkResult(setState(stateByteBuffer, 0));
 		}
 	}
 

@@ -37,11 +37,7 @@ public class DefaultMouseTranslation implements MouseTranslation {
 			y = 1;
 		else if (mouseDelta[1] < 0) y = -1;
 
-		try {
-			device.set(stick, x, y);
-		} catch (IOException ex) {
-			ex.printStackTrace();
-		}
+		device.set(stick, x, y);
 		if (x == 0 && y == 0) device.clearMouseDeltaStick();
 	}
 

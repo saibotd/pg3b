@@ -260,7 +260,6 @@ public class ScriptEditor extends EditorPanel<Script> {
 					ScriptAction.execute(pnuts, context, ScriptAction.FUNCTION_ACTIVATE, 1);
 					Device device = owner.getDevice();
 					try {
-						if (device != null) device.collect();
 						ScriptAction.execute(pnuts, context, ScriptAction.FUNCTION_CONTINUOUS, 1);
 						ScriptAction.execute(pnuts, context, ScriptAction.FUNCTION_DEACTIVATE, 0);
 					} finally {
