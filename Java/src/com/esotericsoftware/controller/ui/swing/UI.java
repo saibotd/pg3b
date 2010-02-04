@@ -356,39 +356,50 @@ public class UI extends JFrame {
 					statusBar.setMessage("XIM2 connection failed.");
 					return;
 				}
-				try {
-					setDevice(new XIM2());
-					statusBar.setMessage("XIM2 connected.");
-				} catch (Throwable ex) {
-					if (ex instanceof IOException && ex.getMessage().contains("NEEDS_CALIBRATION")) {
-						final String ximPath = WindowsRegistry.get("HKCU/Software/XIM", "");
-						if (ximPath != null) {
-							if (!new File(ximPath + "\\XIMCalibrate.exe").exists()) {
-								Util.errorDialog(UI.this, "XIM2 Connect Error", "XIMCalibrate.exe could not be found.");
-								return;
+				new LoaderDialog("Connecting to XIM2") {
+					public void load () throws Exception {
+						setMessage("Opening XIM2...");
+						try {
+							setDevice(new XIM2());
+							statusBar.setMessage("XIM2 connected.");
+						} catch (Throwable ex) {
+							if (ex instanceof IOException && ex.getMessage().contains("NEEDS_CALIBRATION")) {
+								final String ximPath = WindowsRegistry.get("HKCU/Software/XIM", "");
+								if (ximPath != null) {
+									if (!new File(ximPath + "\\XIMCalibrate.exe").exists()) {
+										Util.errorDialog(UI.this, "XIM2 Connect Error", "XIMCalibrate.exe could not be found.");
+										return;
+									}
+									if (DEBUG) debug("Running XIM2 calibration tool.", ex);
+									setVisible(false);
+									try {
+										Runtime.getRuntime().exec(ximPath + "\\XIMCalibrate.exe").waitFor();
+										if (DEBUG) debug("XIM2 calibration complete.", ex);
+										setDevice(new XIM2());
+										statusBar.setMessage("XIM2 connected.");
+										return;
+									} catch (Exception ex2) {
+										ex = ex2;
+									} finally {
+										UI.this.setVisible(true);
+									}
+								}
 							}
-							if (DEBUG) debug("Running XIM2 calibration tool.", ex);
-							setVisible(false);
-							try {
-								Runtime.getRuntime().exec(ximPath + "\\XIMCalibrate.exe").waitFor();
-								if (DEBUG) debug("XIM2 calibration complete.", ex);
-								setDevice(new XIM2());
-								statusBar.setMessage("XIM2 connected.");
-								return;
-							} catch (Exception ex2) {
-								ex = ex2;
-							} finally {
-								setVisible(true);
-							}
+							if (Log.ERROR) error("Error connecting to XIM2.", ex);
+							final Throwable exception = ex;
+							EventQueue.invokeLater(new Runnable() {
+								public void run () {
+									statusBar.setMessage("XIM2 connection failed.");
+									if (exception instanceof IOException && exception.getMessage().contains("DEVICE_NOT_FOUND"))
+										Util.errorDialog(UI.this, "XIM2 Connect Error", "The XIM2 device could not be found.");
+									else
+										Util.errorDialog(UI.this, "XIM2 Connect Error",
+											"An error occurred while attempting to connect to the XIM2.");
+								}
+							});
 						}
 					}
-					if (Log.ERROR) error("Error connecting to XIM2.", ex);
-					statusBar.setMessage("XIM2 connection failed.");
-					if (ex instanceof IOException && ex.getMessage().contains("DEVICE_NOT_FOUND"))
-						Util.errorDialog(UI.this, "XIM2 Connect Error", "The XIM2 device could not be found.");
-					else
-						Util.errorDialog(UI.this, "XIM2 Connect Error", "An error occurred while attempting to connect to the XIM2.");
-				}
+				}.start("XIM2Connect");
 			}
 		});
 
@@ -400,17 +411,28 @@ public class UI extends JFrame {
 					statusBar.setMessage("XIM1 connection failed.");
 					return;
 				}
-				try {
-					setDevice(new XIM1());
-					statusBar.setMessage("XIM1 connected.");
-				} catch (Throwable ex) {
-					if (Log.ERROR) error("Error connecting to XIM1.", ex);
-					statusBar.setMessage("XIM1 connection failed.");
-					if (ex instanceof IOException && ex.getMessage().contains("DEVICE_NOT_FOUND"))
-						Util.errorDialog(UI.this, "XIM1 Connect Error", "The XIM1 device could not be found.");
-					else
-						Util.errorDialog(UI.this, "XIM1 Connect Error", "An error occurred while attempting to connect to the XIM1.");
-				}
+				new LoaderDialog("Connecting to XIM1") {
+					public void load () throws Exception {
+						setMessage("Opening XIM1...");
+						try {
+							setDevice(new XIM1());
+							statusBar.setMessage("XIM1 connected.");
+						} catch (final Throwable ex) {
+							if (Log.ERROR) error("Error connecting to XIM1.", ex);
+							EventQueue.invokeLater(new Runnable() {
+								public void run () {
+									statusBar.setMessage("XIM1 connection failed.");
+									if (ex instanceof IOException && ex.getMessage().contains("DEVICE_NOT_FOUND"))
+										Util.errorDialog(UI.this, "XIM1 Connect Error", "The XIM1 device could not be found.");
+									else
+										Util.errorDialog(UI.this, "XIM1 Connect Error",
+											"An error occurred while attempting to connect to the XIM1.");
+								}
+							});
+						}
+					}
+				}.start("XIM1Connect");
+
 			}
 		});
 
